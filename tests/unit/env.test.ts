@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanEnv, envSchema } from "@/lib/env";
+import { cleanEnv, envSchema, isPublicSupabaseKey } from "@/lib/env";
 
 const parse = (vars: Record<string, string>) => envSchema.parse(cleanEnv(vars));
 
@@ -25,5 +25,17 @@ describe("environment variables", () => {
   it("still refuses values that are actually wrong", () => {
     expect(() => parse({ YOUCAM_MODE: "on" })).toThrow();
     expect(() => parse({ STRIPE_SECRET_KEY: "sk_live_123" })).toThrow();
+  });
+
+  it("refuses Supabase's public key where the secret key belongs", () => {
+    const jwt = (role: string) =>
+      ["e30", Buffer.from(JSON.stringify({ role })).toString("base64url"), "sig"].join(".");
+    expect(isPublicSupabaseKey("sb_publishable_abc")).toBe(true);
+    expect(isPublicSupabaseKey(jwt("anon"))).toBe(true);
+    expect(isPublicSupabaseKey(jwt("service_role"))).toBe(false);
+    expect(isPublicSupabaseKey("sb_secret_abc")).toBe(false);
+    expect(() => parse({ SUPABASE_SERVICE_ROLE_KEY: "sb_publishable_abc" })).toThrow(/public key/);
+    expect(() => parse({ SUPABASE_SECRET_KEY: jwt("anon") })).toThrow(/public key/);
+    expect(parse({ SUPABASE_SERVICE_ROLE_KEY: jwt("service_role") }).SUPABASE_SERVICE_ROLE_KEY).toBeDefined();
   });
 });

@@ -41,6 +41,10 @@ Results say **Demo analysis**: they're sample scores until YouCam is connected. 
 - **Database commands**: `pnpm db:migrate`, `db:seed`, `db:status` (see README).
 - **Tests**: 40 unit tests and 6 browser tests pass, and so does the production build. The browser tests always use the local store, so they never touch the real database. `pnpm test:supabase` runs 14 checks against the real project, including one that the public key sees no rows and no photos. It hasn't run yet: this workspace can't reach Supabase (see below).
 
+### Fixed after the first deploy
+
+- **Clinic pages errored on Vercel.** First cause: supabase-js needs Node 22, so the project now pins it. Second cause, from the Vercel log: "permission denied for table clinics". This project doesn't give new tables any Data API privileges by default, the server's role included. Migration `20261005130000_grants` grants them explicitly (DECISIONS D-038). Joshua runs it in the SQL editor.
+
 ### Blocked on network access
 
 This workspace still can't reach Supabase or YouCam's docs. Network changes only apply to **new** sessions, so adding a host mid-session didn't unblock this one. So:

@@ -5,6 +5,27 @@ import { z } from "zod";
 const optional = z.preprocess((v) => (v === "" ? undefined : v), z.string().optional());
 /** For choices from a fixed list: case doesn't matter, so "Live" works as well as "live". */
 const lower = (v: unknown) => (v === "" || v === undefined ? undefined : String(v).toLowerCase());
+
+/** True for Supabase's public key: sb_publishable_…, or an older JWT key whose role is anon. */
+export function isPublicSupabaseKey(key: string): boolean {
+  if (key.startsWith("sb_publishable_")) return true;
+  const payload = key.split(".")[1];
+  if (!payload) return false;
+  try {
+    return JSON.parse(Buffer.from(payload, "base64url").toString("utf8")).role === "anon";
+  } catch {
+    return false;
+  }
+}
+
+// The public key in the secret slot fails later as a baffling "permission denied". Say so up front.
+const secretKey = z.preprocess(
+  (v) => (v === "" ? undefined : v),
+  z
+    .string()
+    .refine((k) => !isPublicSupabaseKey(k), "This is Supabase's public key. Use the secret (service_role) key here.")
+    .optional(),
+);
 const flag = (fallback: boolean) =>
   z.preprocess((v) => (v === "" || v === undefined ? fallback : String(v).toLowerCase() === "true"), z.boolean());
 
@@ -21,9 +42,9 @@ export const envSchema = z.object({
 
   NEXT_PUBLIC_SUPABASE_URL: optional,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: optional,
-  SUPABASE_SERVICE_ROLE_KEY: optional,
+  SUPABASE_SERVICE_ROLE_KEY: secretKey,
   /** Supabase's newer name for the same secret (sb_secret_…). Either one works. */
-  SUPABASE_SECRET_KEY: optional,
+  SUPABASE_SECRET_KEY: secretKey,
   /** "local" forces the file store even when Supabase keys are present (browser tests use this). */
   REBLOOM_STORE: z.preprocess(lower, z.enum(["local", "supabase"]).optional()),
 
