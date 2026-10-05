@@ -23,6 +23,8 @@ const schema = z.object({
 
   YOUCAM_API_KEY: optional,
   YOUCAM_MODE: z.preprocess((v) => (v === "" ? undefined : v), z.enum(["live", "fixture"]).default("fixture")),
+  /** Total YouCam units bought so far. Raise this after a top-up. */
+  YOUCAM_UNIT_BUDGET: z.coerce.number().int().min(0).default(1000),
   /** Milliseconds a fixture analysis "takes", so the processing screen can be seen. */
   FIXTURE_DELAY_MS: z.coerce.number().int().min(0).default(9000),
 
