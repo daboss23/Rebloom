@@ -239,6 +239,18 @@ export const supabaseStore: Store = {
     if (inserted.error?.code === UNIQUE_VIOLATION) return (await find())!;
     return one<Report>(inserted, "getOrCreateReport");
   },
+  async updateReportContent(reportId, content, expectedUpdatedAt) {
+    const rows = check(
+      await db()
+        .from("reports")
+        .update({ content, updated_at: new Date().toISOString() })
+        .eq("id", reportId)
+        .eq("updated_at", expectedUpdatedAt)
+        .select("id"),
+      "updateReportContent",
+    );
+    return (rows ?? []).length === 1;
+  },
   async getReportByToken(token) {
     return maybe<Report>(await db().from("reports").select("*").eq("token", token).maybeSingle(), "getReportByToken");
   },

@@ -61,6 +61,11 @@ export interface Store {
   updateScan(id: string, patch: Partial<Omit<Scan, "id">>): Promise<Scan>;
 
   getOrCreateReport(clientId: string, now: Date): Promise<Report>;
+  /**
+   * Replaces the report's generated content (simulation state today, the Claude-written report later),
+   * only if nobody has written since `expectedUpdatedAt`. False when someone has: re-read and decide again.
+   */
+  updateReportContent(reportId: string, content: unknown, expectedUpdatedAt: string): Promise<boolean>;
   getReportByToken(token: string): Promise<Report | null>;
 
   /**

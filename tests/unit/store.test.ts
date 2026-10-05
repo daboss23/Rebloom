@@ -53,7 +53,8 @@ describe("local store", () => {
 
     const expired = await store.expiredSandboxes(new Date("2026-09-05T00:00:00Z"), 50);
     expect(expired.ids).toEqual(["old-sandbox"]);
-    expect(expired.storagePaths).toEqual(["old.jpg"]);
+    // The photo, and the simulated image that may sit beside it.
+    expect(expired.storagePaths).toEqual(["old.jpg", "old/simulation.jpg"]);
 
     await store.deleteSandboxes(expired.ids);
     expect(await store.getSandbox("old-sandbox")).toBeNull();
@@ -69,5 +70,18 @@ describe("local store", () => {
     const report = await store.getOrCreateReport(client.id, now);
     expect(report.token.length).toBeGreaterThanOrEqual(32);
     expect((await store.getOrCreateReport(client.id, now)).token).toBe(report.token);
+  });
+
+  it("lets only one of two racing report updates through", async () => {
+    const clinic = (await store.getClinicBySlug("maison-verre"))!;
+    const client = await store.createClient({ clinicId: clinic.id, sandboxId: "sb4", now });
+    const report = await store.getOrCreateReport(client.id, now);
+    const results = await Promise.all([
+      store.updateReportContent(report.id, { n: 1 }, report.updatedAt),
+      store.updateReportContent(report.id, { n: 2 }, report.updatedAt),
+    ]);
+    expect(results.filter(Boolean)).toHaveLength(1);
+    const fresh = (await store.getReportByToken(report.token))!;
+    expect(await store.updateReportContent(report.id, { n: 3 }, fresh.updatedAt)).toBe(true);
   });
 });

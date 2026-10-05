@@ -209,3 +209,54 @@ describe("HD detail in the wording", () => {
     expect(mostVisibleArea({ key: "pore", ui: 60, raw: 50, maskPath: null, areas: { zone_7: 40, zone_9: 50 } })).toBeNull();
   });
 });
+
+describe("what-to-expect simulation (DECISIONS D-047)", () => {
+  it("simulates only what the plan works on, gently, and in YouCam's names", async () => {
+    const { simulationIntensities, MAX_INTENSITY } = await import("@/lib/simulation/intensity");
+    const p = plan(result({ texture: 58, age_spot: 61, pore: 66 }), intake({ budgetBand: "2000_plus" }));
+    const intensities = simulationIntensities(p);
+    const covered = new Set(p.recommended.lines.flatMap((l) => l.covers));
+    expect(intensities.texture).toBe(MAX_INTENSITY);
+    // Pigmentation is "spot" to YouCam's simulation.
+    if (covered.has("age_spot")) expect(intensities.spot).toBeDefined();
+    expect(intensities.age_spot).toBeUndefined();
+    for (const v of Object.values(intensities)) {
+      expect(v).toBeGreaterThan(0);
+      expect(v).toBeLessThanOrEqual(MAX_INTENSITY);
+    }
+  });
+
+  it("shows less when fewer sessions than a full course are booked", async () => {
+    const { simulationIntensities, MAX_INTENSITY } = await import("@/lib/simulation/intensity");
+    const p = plan(result({ texture: 58 }), null);
+    const shortened = { ...p, recommended: { ...p.recommended, lines: p.recommended.lines.map((l) => ({ ...l, sessions: 1 })) } };
+    expect(simulationIntensities(shortened).texture).toBeLessThan(MAX_INTENSITY);
+  });
+
+  it("leaves out concerns YouCam can't simulate", async () => {
+    const { simulationIntensities } = await import("@/lib/simulation/intensity");
+    const p = plan(result({ firmness: 55, droopy_upper_eyelid: 58 }), null);
+    expect(Object.keys(simulationIntensities(p))).not.toContain("firmness");
+  });
+
+  it("dates the illustration to the progress scan", async () => {
+    const { illustratedWeek } = await import("@/lib/simulation/intensity");
+    const p = plan(liveScan, liveIntake);
+    const progress = p.timeline.find((s) => s.kind === "progress")!;
+    expect(illustratedWeek(p, "2026-10-05")).toBe(Math.round((Date.parse(progress.date) - Date.parse("2026-10-05")) / (7 * 86_400_000)));
+  });
+
+  it("charges what YouCam's docs say", async () => {
+    const { simulationUnitCost } = await import("@/lib/youcam/units");
+    expect([1, 4, 5, 10].map(simulationUnitCost)).toEqual([4, 4, 6, 6]);
+    expect(() => simulationUnitCost(11)).toThrow();
+  });
+
+  it("finds the result image wherever YouCam puts it", async () => {
+    process.env.YOUCAM_API_KEY ||= "test-key";
+    const { findImageUrl } = await import("@/lib/youcam/client");
+    expect(findImageUrl({ url: "https://s3.test/a.jpg" })).toBe("https://s3.test/a.jpg");
+    expect(findImageUrl({ output: [{ type: "simulation", url: "https://s3.test/b.jpg" }] })).toBe("https://s3.test/b.jpg");
+    expect(findImageUrl({ note: "none" })).toBeNull();
+  });
+});

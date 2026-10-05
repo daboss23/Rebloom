@@ -1,5 +1,17 @@
 # Progress
 
+## Session 3, part 3 · "What to expect": a simulation of the plan
+
+**Live reports now show today's photo beside YouCam's simulation of the client's plan** (DECISIONS D-047). It's captioned "Week 11, illustrated" (the week of the planned progress scan) and always labelled "An illustration of likely improvement based on your scan. Not a guaranteed result."
+- **Only what the plan treats** is simulated, at moderate strength, and less when fewer sessions are booked than a full course.
+- **It's made once per scan,** the first time the unlocked report is opened, so it only costs units for clients who left their details: 4 to 6 units each. The image is kept privately and reused.
+- **Demo-mode scans never get a simulation,** and if YouCam can't make one, the section is simply left out.
+- **The scan and its scores are never changed.** The simulation is a separate image next to the photo.
+- **Tests:** 97 unit tests, 15 against the real Supabase project (including the claim that stops two simulations starting at once), 7 browser tests in demo mode and 7 in live mode. The production build passes.
+- **To confirm:** the request field names come from the overview page you pasted. The parameter reference page would confirm them. The first live report you open is the real test: look for "What to expect" under "Your path".
+
+---
+
 ## Session 3, part 2 · YouCam HD skin analysis
 
 **Camera scans now use YouCam's HD analysis** (DECISIONS D-046): a sharper model, with wrinkles and pores scored by facial area. When a wrinkle or pore priority has area scores, the report says where it shows most, e.g. "Most visible at the crow's feet". Live HD reports are labelled "HD analysis".

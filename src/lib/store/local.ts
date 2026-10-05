@@ -234,6 +234,15 @@ export const localStore: Store = {
       return report;
     }, true),
   getReportByToken: (token) => tx((db) => db.reports.find((r) => r.token === token) ?? null),
+  updateReportContent: (reportId, content, expectedUpdatedAt) =>
+    tx((db) => {
+      const report = db.reports.find((r) => r.id === reportId);
+      if (!report || report.updatedAt !== expectedUpdatedAt) return false;
+      // Strictly later than the last write, so two writes in the same millisecond can't both match.
+      const next = Math.max(Date.now(), Date.parse(report.updatedAt) + 1);
+      Object.assign(report, { content, updatedAt: new Date(next).toISOString() });
+      return true;
+    }, true),
 
   deleteClientData: (clientId, now) =>
     tx((db) => {

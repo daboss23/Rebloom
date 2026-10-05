@@ -11,12 +11,17 @@ const CHECK_AUTH = { authorization: "Bearer e2e-cron-secret" };
 interface MockState {
   units: number;
   files: { fileId: string; uploaded: boolean; width: number; height: number; format: string }[];
-  tasks: { taskId: string; fileId: string; actions: string[]; outcome: string; polls: number; deleted: boolean }[];
+  tasks: { taskId: string; fileId: string; actions: string[]; outcome: string; polls: number; deleted: boolean; params?: Record<string, number>; cost?: number }[];
   events: { route: string; auth: boolean }[];
 }
 const mockState = async (request: APIRequestContext) => (await (await request.get(`${MOCK}/__mock/state`)).json()) as MockState;
 const ourLedger = async (request: APIRequestContext) =>
   (await (await request.get("/api/youcam/check", { headers: CHECK_AUTH })).json()).budget.remainingByOurLog as number;
+
+/** Live reports start a simulation as they open. Wait for it, so unit counts are settled. */
+async function simulationShown(page: Page) {
+  await expect(page.getByRole("region", { name: "What to expect" }).getByRole("img", { name: /An illustration of your skin/ })).toBeVisible({ timeout: 30_000 });
+}
 
 /** Creates a scan, uploads a flat photo of the given colour, starts analysis, opens the processing page. */
 async function scanPhoto(page: Page, colour: string, size: [number, number] = [810, 1080]): Promise<string> {
@@ -87,17 +92,18 @@ test("a live scan reads YouCam's scores, copies its masks, then deletes the phot
   expect([meta.width, meta.height, meta.hasAlpha]).toEqual([810, 1080, true]);
 
   // What YouCam saw: one JPEG upload with its own headers and no API key, 16 SD actions, then deletion.
+  await simulationShown(page);
   const state = await mockState(page.request);
-  const task = state.tasks.at(-1)!;
+  const task = state.tasks.filter((t) => !t.taskId.startsWith("sim_")).at(-1)!;
   expect(task).toMatchObject({ outcome: "success", deleted: true });
   expect(task.actions).toHaveLength(16);
   expect(task.polls).toBeGreaterThanOrEqual(3); // a 503 blip and a "running" were both ridden out
   expect(state.files.find((f) => f.fileId === task.fileId)).toMatchObject({ uploaded: true, width: 810, height: 1080, format: "jpeg" });
   expect(state.events.filter((e) => e.route.startsWith("PUT /upload/")).every((e) => !e.auth)).toBe(true);
 
-  // Units: YouCam charged 16, and our own ledger agrees.
-  expect(unitsBefore - state.units).toBe(16);
-  expect(ledgerBefore - (await ourLedger(page.request))).toBe(16);
+  // Units: the analysis cost 16, and our own ledger agrees with everything YouCam charged.
+  expect(task.cost).toBe(16);
+  expect(ledgerBefore - (await ourLedger(page.request))).toBe(unitsBefore - state.units);
 });
 
 test("a camera-size photo runs YouCam's HD analysis, at the HD unit price", async ({ page }) => {
@@ -109,13 +115,50 @@ test("a camera-size photo runs YouCam's HD analysis, at the HD unit price", asyn
 
   await expect(page.getByText(/HD analysis/)).toBeVisible();
   await expect(page.getByText("Demo analysis.")).toHaveCount(0);
-  const task = (await mockState(page.request)).tasks.at(-1)!;
+  await simulationShown(page);
+  const state = await mockState(page.request);
+  const task = state.tasks.filter((t) => !t.taskId.startsWith("sim_")).at(-1)!;
   expect(task.actions).toHaveLength(16);
   expect(task.actions.every((a) => a.startsWith("hd_"))).toBe(true);
 
-  // HD costs 22 units for 16 actions, and our ledger agrees.
-  expect(unitsBefore - (await mockState(page.request)).units).toBe(22);
-  expect(ledgerBefore - (await ourLedger(page.request))).toBe(22);
+  // HD costs 22 units for 16 actions, and our ledger agrees with everything YouCam charged.
+  expect(task.cost).toBe(22);
+  expect(ledgerBefore - (await ourLedger(page.request))).toBe(unitsBefore - state.units);
+});
+
+test("the report shows a labelled simulation of the plan, made once and kept privately", async ({ page }) => {
+  await completeIntake(page);
+  const before = await mockState(page.request);
+  const simsBefore = before.tasks.filter((t) => t.taskId.startsWith("sim_")).length;
+  const scanId = await scanPhoto(page, "#cbb8a6", [1080, 1440]);
+  await unlockReport(page);
+  const reportUrl = page.url();
+
+  const expect_ = page.getByRole("region", { name: "What to expect" });
+  await expect(expect_.getByRole("img", { name: /An illustration of your skin/ })).toBeVisible({ timeout: 30_000 });
+  await expect(expect_.getByText("Not a guaranteed result.", { exact: false })).toBeVisible();
+  if (process.env.SIMULATION_SCREENSHOT) await expect_.screenshot({ path: process.env.SIMULATION_SCREENSHOT });
+  const image = await page.request.get(`${reportUrl}/simulation/${scanId}/image`);
+  expect(image.headers()["content-type"]).toBe("image/jpeg");
+  const meta = await sharp(await image.body()).metadata();
+  expect([meta.width, meta.height]).toEqual([1080, 1440]);
+
+  // YouCam got only concerns the plan works on, at moderate intensities, and the task was deleted after copying.
+  const state = await mockState(page.request);
+  const sims = state.tasks.filter((t) => t.taskId.startsWith("sim_"));
+  expect(sims).toHaveLength(simsBefore + 1);
+  const sim = sims.at(-1)!;
+  expect(sim).toMatchObject({ deleted: true });
+  expect(Object.keys(sim.params ?? {}).length).toBeGreaterThan(0);
+  for (const v of Object.values(sim.params ?? {})) expect(v).toBeLessThanOrEqual(0.5);
+
+  // Opening the report again reuses the stored image: no second task, no more units.
+  await page.reload();
+  await expect(expect_.getByRole("img", { name: /An illustration of your skin/ })).toBeVisible();
+  const after = await mockState(page.request);
+  expect(after.tasks.filter((t) => t.taskId.startsWith("sim_"))).toHaveLength(simsBefore + 1);
+  // HD scan (22) plus one simulation (4 or 6), and nothing more.
+  expect(before.units - after.units).toBe(22 + sim.cost!);
 });
 
 test("a photo YouCam can't read gets that error's own retake instruction, and costs nothing", async ({ page }) => {
