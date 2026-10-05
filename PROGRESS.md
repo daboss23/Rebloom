@@ -1,5 +1,18 @@
 # Progress
 
+## Session 3, part 4 · Reports that answer the client
+
+**HD and the simulation both worked on Joshua's first HD scan** (20:22): YouCam HD returned scores by area for wrinkles and pores, and the simulation was made for 4 units. But the report read the same in every section, because the priorities were simply the three lowest scores, and YouCam's lowest are almost always eyes and firmness. The client's own goal, "sun spots", wasn't mentioned at all.
+
+Now (DECISIONS D-048):
+- **Priorities:** the lowest score first, then what matters most once the client's goals are weighed in.
+- **Their own words** are said back: "You told us about sun spots, and your scan shows room to improve here."
+- **The plan treats what they came in for:** that scan now gets RF Skin Tightening plus the Signature Peel Series for the sun spots ($1,290), instead of RF alone.
+- **Each line is specific:** where on the face it shows most (from HD), no repeated treatment sentences, and correct grammar.
+- **Tests:** 103 unit tests (including this exact scan), 7 browser tests in demo mode and 7 in live mode, and the production build all pass.
+
+---
+
 ## Session 3, part 3 · "What to expect": a simulation of the plan
 
 **Live reports now show today's photo beside YouCam's simulation of the client's plan** (DECISIONS D-047). It's captioned "Week 11, illustrated" (the week of the planned progress scan) and always labelled "An illustration of likely improvement based on your scan. Not a guaranteed result."

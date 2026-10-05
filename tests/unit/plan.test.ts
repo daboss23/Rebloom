@@ -3,10 +3,10 @@ import { MAISON_VERRE } from "@/data/clinics";
 import { SEED_PRODUCTS, SEED_TREATMENTS } from "@/data/menu";
 import type { Intake, ScanResult } from "@/lib/domain";
 import { checkCopy } from "@/lib/copy/check";
-import { buildPlan, formatPrice, nextOpenDay, statedConcerns } from "@/lib/plan/build";
+import { buildPlan, formatPrice, nextOpenDay, rankPriorities, statedConcerns } from "@/lib/plan/build";
 import { mentions, planRationale, priorityMeaning, subhead } from "@/lib/report/personal";
-import { priorities } from "@/lib/skin/normalize";
 import type { ConcernKey } from "@/lib/skin/concerns";
+
 
 const treatments = SEED_TREATMENTS.filter((t) => t.clinicId === MAISON_VERRE.id);
 const products = SEED_PRODUCTS.filter((p) => p.clinicId === MAISON_VERRE.id);
@@ -51,9 +51,9 @@ const liveIntake = intake({
 describe("what the client asked about", () => {
   it("reads ticked concerns and their own words", () => {
     const stated = statedConcerns(liveIntake);
-    expect(stated.get("dark_circle_v2")).toBe("dark circles");
-    expect(stated.get("age_spot")).toBe("uneven tone");
-    expect(stated.get("firmness")).toBe("firmness");
+    expect(stated.get("dark_circle_v2")).toEqual({ phrase: "dark circles", ownWords: true });
+    expect(stated.get("age_spot")).toEqual({ phrase: "uneven tone", ownWords: true });
+    expect(stated.get("firmness")).toEqual({ phrase: "firmness", ownWords: false });
   });
 });
 
@@ -151,7 +151,7 @@ describe("personal wording", () => {
     ] as const) {
       const p = plan(r, i);
       const stated = statedConcerns(i);
-      const top = priorities(r, 3);
+      const top = rankPriorities(r, stated);
       const text = [
         subhead(r),
         planRationale(p),
@@ -165,7 +165,7 @@ describe("personal wording", () => {
 
   it("answers what the client asked about, even when it isn't a priority", () => {
     const stated = statedConcerns(liveIntake);
-    const m = mentions(liveScan, stated, priorities(liveScan, 3), plan(liveScan, liveIntake));
+    const m = mentions(liveScan, stated, rankPriorities(liveScan, stated), plan(liveScan, liveIntake));
     expect(m.find((x) => x.phrase === "uneven tone")?.text).toMatch(/stronger areas/);
     // Firmness is a priority, so the priority line answers it, not a mention.
     expect(m.find((x) => x.phrase === "firmness")).toBeUndefined();
@@ -181,10 +181,10 @@ describe.skipIf(!process.env.SHOW_PLANS)("printout", () => {
     const joshua = result({ texture: 61, pore: 68, age_spot: 58, redness: 71, wrinkle: 86, firmness: 85, acne: 90, moisture: 71, radiance: 73, oiliness: 78, dark_circle_v2: 67, eye_bag: 81, droopy_upper_eyelid: 87, droopy_lower_eyelid: 84, tear_trough: 83 });
     const joshuaIntake = intake({ concerns: ["texture", "redness"], goalText: "Smoother skin and get rid of dark circles under eye", budgetBand: "500_1000" });
     const amelia = intake({ concerns: ["uneven_tone", "texture"], hasEvent: true, eventType: "wedding", eventDate: "2027-01-11", budgetBand: "1000_2000" });
-    for (const [name, r, i] of [["Samantha (live)", liveScan, liveIntake], ["Joshua (demo)", joshua, joshuaIntake], ["Amelia (brief)", result({ texture: 58, age_spot: 61, pore: 66 }), amelia]] as const) {
+    for (const [name, r, i] of [["HD scan (live)", hdScan, hdIntake], ["Samantha (live)", liveScan, liveIntake], ["Joshua (demo)", joshua, joshuaIntake], ["Amelia (brief)", result({ texture: 58, age_spot: 61, pore: 66 }), amelia]] as const) {
       const p = plan(r, i);
       const stated = statedConcerns(i);
-      const top = priorities(r, 3);
+      const top = rankPriorities(r, stated);
       console.log(`\n=== ${name}\n${subhead(r)}\nfocus: ${p.focus.map((f) => `${f.key} ${f.ui}${f.stated ? "*" : ""}`).join(", ")}`);
       top.forEach((c, n) => console.log(`  ${c.key} ${c.ui}: ${priorityMeaning(n, c, top.slice(0, n), stated, p)}`));
       mentions(r, stated, top, p).forEach((m) => console.log(`  mention: ${m.text}`));
@@ -195,6 +195,67 @@ describe.skipIf(!process.env.SHOW_PLANS)("printout", () => {
       p.timeline.forEach((s) => console.log(`  ${s.date} ${s.kind}${s.kind === "session" ? ` ${s.treatment.name} ${s.session}/${s.of}` : ""}`));
       p.homeCare.forEach((h) => console.log(`  home: ${h.product.name}: ${h.reason}`));
     }
+  });
+});
+
+// The first HD scan, October 5 at 20:22 (scores as YouCam returned them), and that client's intake.
+const hdScan: ScanResult = {
+  ...result({
+    texture: 99, pore: 95, age_spot: 89, redness: 84, wrinkle: 80, firmness: 76, acne: 97, moisture: 80, radiance: 83,
+    oiliness: 99, dark_circle_v2: 80, eye_bag: 79, droopy_upper_eyelid: 85, droopy_lower_eyelid: 76, tear_trough: 79,
+  }),
+};
+const rawOf: Partial<Record<ConcernKey, number>> = { firmness: 68.7, droopy_lower_eyelid: 68.3 };
+hdScan.concerns = hdScan.concerns.map((c) => ({
+  ...c,
+  raw: rawOf[c.key] ?? c.raw,
+  ...(c.key === "wrinkle" ? { areas: { forehead: 93, crowfeet: 97, glabellar: 97, periocular: 97, nasolabial: 93, marionette: 76 } } : {}),
+}));
+const hdIntake = intake({
+  concerns: ["uneven_tone", "fine_lines", "pores"],
+  goalText: "Get rid of a lot of these sun spots",
+  hasEvent: true,
+  eventType: "other",
+  eventDate: "2026-11-28",
+  budgetBand: "1000_2000",
+});
+
+describe("priorities answer what the client came in for", () => {
+  it("says the client's own words back", () => {
+    expect(statedConcerns(hdIntake).get("age_spot")).toEqual({ phrase: "sun spots", ownWords: true });
+  });
+
+  it("starts with the lowest score, breaking YouCam's display ties with the raw measurement", () => {
+    const top = rankPriorities(hdScan, statedConcerns(hdIntake));
+    expect(top[0].key).toBe("droopy_lower_eyelid"); // 76 shown, 68.3 measured, under firmness's 68.7
+  });
+
+  it("puts the concern the client wrote about among the priorities when the scan shows room", () => {
+    const top = rankPriorities(hdScan, statedConcerns(hdIntake)).map((c) => c.key);
+    expect(top).toContain("age_spot");
+    expect(top).toContain("wrinkle");
+  });
+
+  it("plans a treatment for what they came in for", () => {
+    const p = plan(hdScan, hdIntake);
+    expect(p.recommended.lines.flatMap((l) => l.covers)).toContain("age_spot");
+  });
+
+  it("never lifts a concern the scan reads as strong, however it was asked about", () => {
+    const top = rankPriorities(hdScan, statedConcerns(hdIntake)).map((c) => c.key);
+    expect(top).not.toContain("pore"); // asked about, but 95
+  });
+
+  it("reads like the person, not a template", () => {
+    const stated = statedConcerns(hdIntake);
+    const p = plan(hdScan, hdIntake);
+    const top = rankPriorities(hdScan, stated);
+    const lines = top.map((c, i) => priorityMeaning(i, c, top.slice(0, i), stated, p));
+    expect(lines.join(" ")).toMatch(/sun spots/);
+    expect(lines.join(" ")).toMatch(/mouth to chin/);
+    expect(new Set(lines).size).toBe(3);
+    const asked = mentions(hdScan, stated, top, p).map((m) => m.text).join(" ");
+    expect(asked).toMatch(/Pores are among your stronger areas/);
   });
 });
 

@@ -80,10 +80,11 @@ test("a live scan reads YouCam's scores, copies its masks, then deletes the phot
   const scanId = await scanPhoto(page, "#cbb8a6");
   await unlockReport(page);
 
-  // Real scores, no demo label. Priorities are the three lowest ui scores the API returned.
+  // Real scores, no demo label. Priorities: the lowest score (eye bags, 58), then what matters most once the
+  // client's goal is weighed in: they wrote "smoother" skin, so texture (74) comes before lower eyelid (63).
   await expect(page.getByText("Demo analysis.")).toHaveCount(0);
   const priorities = page.getByRole("heading", { level: 2, name: "Your three priorities" }).locator("xpath=..").getByRole("heading", { level: 3 });
-  await expect(priorities).toHaveText(["Eye bags", "Lower eyelid firmness", "Moisture"]);
+  await expect(priorities).toHaveText(["Eye bags", "Texture", "Lower eyelid firmness"]);
 
   // Masks were copied into our storage, at the photo's exact size, and are served only through the report link.
   const mask = await page.request.get(`${page.url()}/mask/${scanId}/eye_bag`);
