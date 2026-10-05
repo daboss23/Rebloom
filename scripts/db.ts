@@ -22,7 +22,9 @@ create table if not exists supabase_migrations.schema_migrations (
   version text primary key,
   statements text[],
   name text
-);`;
+);
+-- Not served by the Data API, but RLS on matches every other table. The owner (these tools) bypasses it.
+alter table supabase_migrations.schema_migrations enable row level security;`;
 
 const [command = "status", ...flags] = process.argv.slice(2);
 const print = flags.includes("--print");
