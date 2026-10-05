@@ -137,3 +137,65 @@ No image-generation tool is available in the build workspace, so the five AI-gen
 
 ## D-031 · Report gate: contact details after the scan, not during intake
 Brief 3.1 step 6. Name, email, phone and the reminders opt-in moved from intake and consent to a gate shown when analysis finishes. The client sees their report blurred behind the form. Security: the status API returns no report link until the client has an email, `/r/[token]` and its photo and mask routes 404 for clients without one, and the blurred layer uses a server-blurred photo (`/api/scans/[id]/preview`) plus placeholder score bars, never real scores. A completed scan with no contact details stays `started` (an abandoned scan); the client becomes a `lead` at the gate. The panel overlays the report at every width, since the client pages are a single 560px column.
+
+## D-032 · Supabase: server-only access, RLS on with no policies (C, Oct 5)
+The app reaches Supabase only from the server, with the secret key. Every table has row level security on and no policies, so the public key reads nothing, and the private `scans` bucket has no storage policies. Browsers upload through one-time signed URLs and see photos only through our own routes, after the report token is checked. Staff policies arrive with dashboard login in Week 3. An integration test checks that the public key gets no rows and no photos.
+
+## D-033 · Migrations run through Supabase's Management API (C, Oct 5)
+`pnpm db:migrate` sends each file in `supabase/migrations` over HTTPS in one transaction and records it in `supabase_migrations.schema_migrations`, the table the Supabase CLI uses, so the CLI can take over later. No database password or direct connection is needed. `--print` gives the same SQL for the SQL editor when the API isn't reachable.
+
+## D-034 · Unit totals are summed in the database (C, Oct 5)
+Supabase's Data API returns at most 1,000 rows per request, so adding up `api_usage` in the app would quietly undercount all-time spend once usage grows, and the reserve check would let units through. A small SQL function, `usage_totals`, does the sum. Only the server can call it.
+
+## D-035 · Usage rows outlive deleted clients and sandboxes (C, Oct 5)
+`api_usage` has no foreign keys. Deleting a client or an expired sandbox removes their photos and personal data but keeps the anonymous unit spend, so the budget stays right.
+
+## D-036 · The browser tests always use the local store (C, Oct 5)
+`REBLOOM_STORE=local` forces the file store even when Supabase keys are present. Playwright sets it, so browser tests never write to the real project. `pnpm test:supabase` is the separate, opt-in check against the real database.
+
+## D-037 · Node 22 everywhere; config values are trimmed (C, Oct 5)
+supabase-js sets up its realtime client as soon as it starts, and that needs the WebSocket class built into Node 22. On Node 20 every database call throws "native WebSocket not found", so `package.json` pins `engines.node` to `22.x`, which Vercel uses over the project setting. Separately, values pasted into a dashboard often carry a stray space or line break, so every variable is trimmed before checking, and choices like `YOUCAM_MODE` ignore case. Values that are actually wrong, such as a live Stripe key, still stop the app.
+
+## D-038 · Table privileges are granted in a migration, not left to project settings (C, Oct 5)
+The first deploy against Supabase failed with "permission denied for table clinics". This project doesn't expose new tables to the Data API automatically, so tables made in SQL had no privileges even for `service_role`, the server's role. (Row level security is a separate layer: `service_role` skips it but still needs privileges.) Migration `20261005130000_grants` now grants the server read and write on every table, revokes everything from `anon` and `authenticated`, and sets the same for future tables. The app no longer depends on how the project was set up, and the public key is refused outright instead of just seeing no rows. A startup check also refuses Supabase's public key in the secret-key variable, which would fail the same way.
+
+## D-039 · The face guide downloads during the questions; the camera shows at once (C, Oct 5)
+The face guide (MediaPipe engine and face model) is about 15 MB. It used to start downloading only after "Open the camera", and the camera feed stayed hidden behind "Preparing the camera" until it was ready, so on a phone connection the camera looked stuck. Now the files download in the background during the intake questions (network only, no processing), the guide starts setting up on the camera intro screen, and the feed appears as soon as the camera is on, with "Loading the face guide" until the checks begin. A browser test checks the download starts during the questions.
+
+## D-040 · The end of the scan: gears, a popup over the blurred report, "Send my results" (J + C, Oct 5)
+Joshua's changes after his first full run, refining D-031:
+- **Putting the report together.** After the analysis, the screen shows turning gears and "Putting your report together." for 8 seconds while it works through what the report contains. Every report still behind the gate gets this, however fast the analysis was. From Week 2 the Claude-written report is generated during this time, so 8 seconds becomes a minimum, not a pause.
+- **The blurred report** now has the full shape of a report: headline, text, an overall score, three priorities with numbers and bars, and the full analysis grid. The words and numbers are placeholders, never the client's real results (D-031 still holds).
+- **The gate is a popup** (a sheet from the bottom on phones) that arrives over the blurred report after a short beat, with the page behind it locked. The button says **Send my results**.
+- **After opting in, the client sees a confirmation, not the report.** It thanks them for completing their skin consultation with the clinic. The copy only says the results were sent once the report email is actually live (`REPORT_EMAIL_LIVE`, Week 2). Until then it says the report is ready, shows a small demo note that nothing was emailed, and offers **Open my report**. Once email is live, that becomes a quiet "open your report here" fallback under "check your spam folder", which keeps D-008: the report never depends on email reaching an inbox (Resend only reaches Joshua's address until the domain is verified in Week 4).
+
+## D-041 · YouCam's wire format, confirmed (C, Oct 5). Supersedes D-021
+Perfect Corp's documentation hosts are still blocked from the build workspace, so the live client is written against live-recorded v2.1 responses published by other hackathon entrants, cross-checked across three independent implementations. The flow:
+1. `POST /s2s/v2.0/file` with `{ files: [{ content_type, file_name, file_size }] }` returns `data.files[0].file_id` and a pre-signed `PUT` with exact headers. The upload sends those headers and no API key.
+2. `POST /s2s/v2.1/task/skin-analysis` with `src_file_id`, 16 SD `dst_actions` (15 concerns plus `skin_type`), `miniserver_args: { enable_mask_overlay: false }` and `format: "json"` (the default is a zip) returns `data.task_id`.
+3. `GET /s2s/v2.1/task/skin-analysis/{task_id}` returns `task_status` (`running`, `success`, `error`). On success, `results.output` is a list keyed by `type`; on error, `error` holds the code.
+4. `POST /s2s/v2.0/task/delete` with `{ task_id }` removes the photo and results at YouCam.
+
+Where reality differs from the brief's description:
+- The overall `all` score is **one number on the ui scale**, with no raw counterpart. Our raw overall is the mean of the concern raw scores, so it only moves when the measurements do.
+- `raw_score` is a float. We keep one decimal (thresholds are a few points wide); ui scores stay whole.
+- `skin_type` arrives as three zones (whole, T-zone, U-zone). Clients see none of it; the zones are kept for the practitioner brief.
+- **Mask links expire after about 2 hours** (results are kept 24), so masks are copied on the poll that sees success.
+- Masks are PNGs with alpha at the uploaded photo's size. We redraw each as white-on-transparent at the stored photo's exact size (from alpha, or from brightness if a mask is opaque), so the report tints live and demo masks the same way.
+- Units are charged only when a task succeeds.
+
+The first real scan is the final confirmation. If anything differs, `src/lib/youcam/parse.ts` is the one file to change, and its tests use the recorded shape in `tests/fixtures/youcam/`.
+
+## D-042 · How live analysis fails, and what it costs (C, Oct 5)
+- **YouCam won't start a task** (wrong key, out of units, unreachable): the scan runs as a clearly labelled demo instead of a dead end (extends D-022). The reason is kept on the scan (`errorCode` such as `live_start_credits`) and in the server log.
+- **Blips while polling** (rate limit, 5xx, network) never fail a scan; the next poll asks again. A live analysis still unfinished after 3 minutes is abandoned with a calm retry message, and a finalisation cut off mid-way is recovered rather than spinning forever.
+- **Photo errors** from YouCam (too dark, face too small, head turned, no face, and others) each get one plain instruction and a "Take a new photo" button.
+- **A mask that won't copy** costs that concern its overlay, never the scan.
+- **Units** are logged when a task starts, so limits count every attempt, and released when YouCam reports the task failed. A timed-out task keeps its units counted, since it may still finish.
+- **Privacy:** the task is deleted at YouCam as soon as scores and masks are in our storage, and after a failure. Signed mask links are never stored.
+
+## D-043 · The photo upload route follows the store in use (C, Oct 5)
+Bug fix. The local upload route decided from the Supabase keys whether to open, while the store was chosen separately. Before Supabase was wired in, any deploy with those keys set refused every photo upload (404), so no scan could finish. The route now asks which store is actually in use, so the two can't disagree again, whatever chooses the store (the keys, or `REBLOOM_STORE=local` in tests).
+
+## D-044 · A zero-unit YouCam connection check (C, Oct 5)
+`GET /api/youcam/check` with `Authorization: Bearer <CRON_SECRET>` reads the YouCam account balance, which costs nothing, and reports whether the key works, the mode, and our own unit ledger. It answers 404 to anyone without the secret. The setup page `/setup/youcam` puts a password box and a button in front of it, so nobody needs a terminal; the password travels in the request header, never the URL, and isn't stored.

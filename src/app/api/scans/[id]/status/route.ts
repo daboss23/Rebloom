@@ -1,6 +1,9 @@
 import { getOwnScan, json } from "@/lib/scans/access";
 import { advanceScan, viewScan } from "@/lib/scans/service";
 
+// The poll that finds a live result also copies its masks into storage.
+export const maxDuration = 60;
+
 /** One poll step: at most one provider check per request. */
 export async function GET(_request: Request, ctx: RouteContext<"/api/scans/[id]/status">) {
   const { id } = await ctx.params;

@@ -1,33 +1,6 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import sharp from "sharp";
-
-async function completeIntake(page: Page, clinic = "maison-verre") {
-  await page.goto(`/c/${clinic}`);
-  await page.getByRole("link", { name: "Begin" }).click();
-  await expect(page.getByRole("heading", { name: "Your photo, your choice." })).toBeVisible();
-  const cont = page.getByRole("button", { name: "Continue", exact: true });
-  await expect(cont).toBeDisabled();
-  await page.locator("label[for=biometric]").click();
-  await cont.click();
-
-  await expect(page.getByText("1 of 7")).toBeVisible();
-  await page.getByRole("button", { name: "Texture" }).click();
-  await cont.click();
-  await page.getByLabel("What you would like to change").fill("Smoother, more even skin for my wedding.");
-  await cont.click();
-  await page.getByRole("button", { name: "Yes, there's a date" }).click();
-  await page.getByRole("button", { name: "Wedding" }).click();
-  await page.getByLabel("Date").fill("2030-06-01");
-  await cont.click();
-  await page.getByRole("button", { name: "None yet" }).click();
-  await cont.click();
-  await page.getByRole("button", { name: "$1,000 to $2,000" }).click();
-  await cont.click();
-  await page.getByRole("group", { name: /retinoid/ }).getByRole("button", { name: "Yes" }).click();
-  await cont.click();
-  await page.getByRole("button", { name: "Continue to your photo" }).click();
-  await expect(page).toHaveURL(/\/capture$/);
-}
+import { completeIntake, GOOD_QUALITY, syntheticLandmarks } from "./helpers";
 
 test("a client moves from the scan page through consent and intake to the camera", async ({ page }) => {
   await completeIntake(page);
@@ -36,6 +9,16 @@ test("a client moves from the scan page through consent and intake to the camera
   // Chromium's fake camera shows no face, so the gate should ask for one and keep capture disabled.
   await expect(page.locator("p[aria-live=polite]")).toHaveText("Bring your face into the oval", { timeout: 30_000 });
   await expect(page.getByRole("button", { name: "Take photo" })).toBeDisabled();
+});
+
+test("the camera's face guide downloads during the questions, not after", async ({ page }) => {
+  const model = page.waitForRequest((r) => r.url().endsWith("/mediapipe/face_landmarker.task"), { timeout: 15_000 });
+  await page.goto("/c/maison-verre/consent");
+  await page.locator("label[for=biometric]").click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByText("1 of 7")).toBeVisible();
+  await model;
+  await expect(page).toHaveURL(/\/intake$/);
 });
 
 test("the intake can't be skipped", async ({ page }) => {
@@ -62,25 +45,10 @@ test("report links are private: a made-up token shows nothing", async ({ page })
   expect(res?.status()).toBe(404);
 });
 
-/** A synthetic face layout: only the landmarks the pipeline uses are placed. No real face involved. */
-function syntheticLandmarks(): [number, number][] {
-  const points: [number, number][] = Array.from({ length: 478 }, () => [0.5, 0.47]);
-  const set: Record<number, [number, number]> = {
-    10: [0.5, 0.2], 152: [0.5, 0.82], 1: [0.5, 0.52], 33: [0.36, 0.4], 133: [0.45, 0.4], 362: [0.55, 0.4],
-    263: [0.64, 0.4], 61: [0.42, 0.65], 291: [0.58, 0.65], 234: [0.17, 0.45], 454: [0.83, 0.45], 105: [0.4, 0.33], 334: [0.6, 0.33],
-  };
-  for (const [i, p] of Object.entries(set)) points[Number(i)] = p;
-  return points;
-}
-
 test("a scan runs end to end in fixture mode, and Delete my data removes it", async ({ page }) => {
   await completeIntake(page);
-  const quality = {
-    method: "upload", faceWidthRatio: 0.7, centerOffset: 0, yaw: 0, pitch: 0, roll: 0, luminance: 140,
-    clippedShare: 0, evenness: 0.95, warmth: 1.4, sharpness: 900, eyesOpen: 0.95, passedGate: true,
-  };
   const created = await page.request.post("/api/scans", {
-    data: { clinicSlug: "maison-verre", width: 810, height: 1080, quality, landmarks: syntheticLandmarks() },
+    data: { clinicSlug: "maison-verre", width: 810, height: 1080, quality: GOOD_QUALITY, landmarks: syntheticLandmarks() },
   });
   expect(created.ok()).toBe(true);
   const { scanId, upload } = await created.json();
@@ -90,14 +58,25 @@ test("a scan runs end to end in fixture mode, and Delete my data removes it", as
   expect((await page.request.post(`/api/scans/${scanId}/analyze`)).ok()).toBe(true);
 
   await page.goto(`/c/maison-verre/processing?scan=${scanId}`);
-  // The report gate: blurred report behind an opt-in. No report link or real score reaches the page yet.
-  await expect(page.getByRole("heading", { name: "Your report is ready." })).toBeVisible({ timeout: 30_000 });
+  // Once the analysis is in, the report is put together on screen before the gate opens.
+  await expect(page.getByRole("heading", { name: "Putting your report together." })).toBeVisible({ timeout: 30_000 });
+
+  // The report gate: a panel over the blurred report. No report link or real score reaches the page yet.
+  const gate = page.getByRole("dialog", { name: "Your skin report is ready." });
+  await expect(gate).toBeVisible({ timeout: 20_000 });
   expect(await page.content()).not.toContain("/r/");
   const preview = await page.request.get(`/api/scans/${scanId}/preview`);
   expect(preview.headers()["content-type"]).toBe("image/jpeg");
-  await page.getByLabel("First name").fill("Amelia");
-  await page.getByLabel("Email", { exact: true }).fill("amelia@example.com");
-  await page.getByRole("button", { name: "See my report" }).click();
+  await gate.getByLabel("First name").fill("Amelia");
+  await gate.getByLabel("Email", { exact: true }).fill("amelia@example.com");
+  await gate.getByRole("button", { name: "Send my results" }).click();
+
+  // Confirmation, in place. Email isn't live yet, so it must not claim anything was sent.
+  await expect(page.getByRole("heading", { name: "Amelia, your report is ready." })).toBeVisible();
+  await expect(page.getByText("Thank you for completing your skin consultation with Maison Verre.")).toBeVisible();
+  await expect(page.getByText("Demo: email isn't connected yet, so nothing was sent to amelia@example.com.")).toBeVisible();
+  await expect(page.getByText("on their way")).toHaveCount(0);
+  await page.getByRole("link", { name: "Open my report" }).click();
 
   await expect(page.getByRole("heading", { name: "Amelia, your skin is telling a clear story." })).toBeVisible();
   await expect(page.getByText("Demo analysis.")).toBeVisible();

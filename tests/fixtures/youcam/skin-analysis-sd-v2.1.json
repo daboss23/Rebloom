@@ -1,0 +1,185 @@
+{
+  "//": "Shape of a live YouCam v2.1 SD skin analysis result (format json, 16 actions), recorded October 3, 2026 on YouCam's own sample photo. Scores as recorded; links replaced. See DECISIONS D-041.",
+  "status": 200,
+  "data": {
+    "task_status": "success",
+    "error": null,
+    "results": {
+      "output": [
+        {
+          "type": "tear_trough",
+          "ui_score": 70,
+          "raw_score": 56.07,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/tear_trough.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "eye_bag",
+          "ui_score": 58,
+          "raw_score": 27.28,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/eye_bag.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "firmness",
+          "ui_score": 84,
+          "raw_score": 86.63,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/firmness.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "redness",
+          "ui_score": 97,
+          "raw_score": 98.3,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/redness.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "droopy_lower_eyelid",
+          "ui_score": 63,
+          "raw_score": 39.8,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/droopy_lower_eyelid.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "droopy_upper_eyelid",
+          "ui_score": 81,
+          "raw_score": 80.84,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/droopy_upper_eyelid.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "pore",
+          "ui_score": 79,
+          "raw_score": 76.49,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/pore.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "oiliness",
+          "ui_score": 65,
+          "raw_score": 44.69,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/oiliness.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "texture",
+          "ui_score": 74,
+          "raw_score": 64,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/texture.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "age_spot",
+          "ui_score": 72,
+          "raw_score": 74.18,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/age_spot.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "radiance",
+          "ui_score": 77,
+          "raw_score": 72.01,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/radiance.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "wrinkle",
+          "ui_score": 71,
+          "raw_score": 64.96,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/wrinkle.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "dark_circle_v2",
+          "ui_score": 72,
+          "raw_score": 68.3,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/dark_circle_v2.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "acne",
+          "ui_score": 99,
+          "raw_score": 100,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/acne.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "moisture",
+          "ui_score": 65,
+          "raw_score": 37.05,
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/moisture.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ],
+          "url": null
+        },
+        {
+          "type": "skin_type",
+          "region": "whole",
+          "skin_type": "Oily",
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/skin_type_whole.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ]
+        },
+        {
+          "type": "skin_type",
+          "region": "t_zone",
+          "skin_type": "Oily",
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/skin_type_t_zone.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ]
+        },
+        {
+          "type": "skin_type",
+          "region": "u_zone",
+          "skin_type": "Oily",
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/skin_type_u_zone.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ]
+        },
+        {
+          "type": "all",
+          "score": 75.13
+        },
+        {
+          "type": "skin_age",
+          "score": 52
+        },
+        {
+          "type": "resize_image",
+          "mask_urls": [
+            "https://example-bucket.s3.amazonaws.com/results/resize_image.png?X-Amz-Expires=7200&X-Amz-Signature=redacted"
+          ]
+        }
+      ]
+    }
+  }
+}

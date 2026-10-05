@@ -73,9 +73,9 @@ export function fixtureResult(scanId: string, concerns: readonly ConcernKey[], p
     const ui = Math.max(40, Math.min(98, profile.ui[key] + jitter()));
     result.concerns[key] = { ui_score: ui, raw_score: rawFromUi(ui) };
   }
+  // Like YouCam, one overall number on the ui scale.
   const uis = Object.values(result.concerns).map((c) => c!.ui_score);
-  const avg = Math.round(uis.reduce((a, b) => a + b, 0) / Math.max(1, uis.length));
-  result.all = { ui_score: avg, raw_score: rawFromUi(avg) };
+  result.all = Math.round(uis.reduce((a, b) => a + b, 0) / Math.max(1, uis.length));
   return result;
 }
 

@@ -50,7 +50,10 @@ export function CaptureFlow({ clinicSlug }: { clinicSlug: string }) {
     setInApp(isInAppBrowser(navigator.userAgent));
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
       setCameraUnavailable("The camera isn't available on this page. You can upload a photo instead.");
+      return;
     }
+    // Get the face guide ready while they read the tips. The camera screen reports any failure.
+    getLandmarker("VIDEO").catch(() => undefined);
   }, []);
 
   // Free the preview image when a shot is discarded.
