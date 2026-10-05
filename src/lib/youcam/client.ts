@@ -231,3 +231,75 @@ export async function getCredits(): Promise<number | null> {
   }
   return found ? Math.round(total * 100) / 100 : null;
 }
+
+// ── Skin simulation (DECISIONS D-047) ──────────────────────────────────────────────────────────
+// Confirmed from YouCam's docs: POST /s2s/v2.0/task/skin-simulation with a source file and a 0.0 to 1.0
+// intensity per concern, at least one above 0; poll GET .../{task_id}; 4 units for 1 to 4 concerns, 6 for 5 to 10.
+// Not yet confirmed (the parameter reference page wasn't available): the exact field names, and where the
+// result image sits in the response. Both live in this block only.
+const SIMULATION_PATH = "/s2s/v2.0/task/skin-simulation";
+
+/** Starts a skin simulation. `intensities` uses YouCam's concern names, e.g. { wrinkle: 0.4, spot: 0.3 }. */
+export async function createSkinSimulationTask(fileId: string, intensities: Record<string, number>): Promise<string> {
+  const body = await call(SIMULATION_PATH, { method: "POST", body: { src_file_id: fileId, ...intensities }, retries: 2 });
+  return read(taskCreated, body, SIMULATION_PATH).data.task_id;
+}
+
+export type SimulationTask =
+  | { status: "running" }
+  | { status: "success"; imageUrl: string }
+  | { status: "error"; code: string; message: string | null };
+
+/** The first image link in a result, wherever it sits: results.url, results.output[0].url, and so on. */
+export function findImageUrl(value: unknown, depth = 0): string | null {
+  if (depth > 5 || value === null || value === undefined) return null;
+  if (typeof value === "string") return /^https?:\/\//.test(value) ? value : null;
+  if (Array.isArray(value)) {
+    for (const v of value) {
+      const found = findImageUrl(v, depth + 1);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>);
+    // Prefer fields that name an image or result over anything else that happens to be a link.
+    entries.sort(([a], [b]) => Number(/url|image|result|output|dst/i.test(b)) - Number(/url|image|result|output|dst/i.test(a)));
+    for (const [, v] of entries) {
+      const found = findImageUrl(v, depth + 1);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/** One status check. No retries: the report's next poll is the retry. */
+export async function getSkinSimulationTask(taskId: string): Promise<SimulationTask> {
+  const path = `${SIMULATION_PATH}/${taskId}`;
+  const { data } = read(taskState, await call(path, { method: "GET" }), SIMULATION_PATH);
+  if (data.task_status === "success") {
+    const imageUrl = findImageUrl(data.results);
+    if (!imageUrl) throw new YouCamError("protocol", `${SIMULATION_PATH} succeeded without an image link`);
+    return { status: "success", imageUrl };
+  }
+  if (data.task_status === "error" || data.task_status === "failed") {
+    return { status: "error", code: data.error || "unknown_internal_error", message: data.error_message ?? null };
+  }
+  return { status: "running" };
+}
+
+/** Downloads a result image from YouCam's signed link. HTTPS only, except for a local test stand-in. */
+export async function downloadResultImage(url: string): Promise<Buffer> {
+  const protocol = new URL(url).protocol;
+  if (protocol !== "https:" && !(protocol === "http:" && env.YOUCAM_API_BASE.startsWith("http:"))) {
+    throw new YouCamError("protocol", "refusing a non-HTTPS result link");
+  }
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(TRANSFER_TIMEOUT_MS), cache: "no-store" });
+  } catch (error) {
+    throw new YouCamError("network", `result image unreachable: ${(error as Error).message}`);
+  }
+  if (!res.ok) throw new YouCamError(res.status >= 500 ? "server" : "protocol", `result image returned HTTP ${res.status}`, res.status);
+  return Buffer.from(await res.arrayBuffer());
+}

@@ -20,6 +20,7 @@ const SD_ACTIONS = new Set([
   "wrinkle", "droopy_upper_eyelid", "droopy_lower_eyelid", "firmness", "acne", "moisture", "eye_bag", "dark_circle_v2",
   "age_spot", "radiance", "redness", "oiliness", "pore", "texture", "tear_trough", "skin_type",
 ]);
+const SIM_CONCERNS = new Set(["radiance", "acne", "oiliness", "eye_bag", "dark_circle", "spot", "pore", "texture", "wrinkle", "redness"]);
 const hdName = (a) => (a === "dark_circle_v2" ? "hd_dark_circle" : `hd_${a}`);
 const HD_ACTIONS = new Set([...SD_ACTIONS].map(hdName));
 // Distinct scores, so the report's priorities are unambiguous: eye bags, lower eyelid, moisture.
@@ -167,7 +168,8 @@ const server = http.createServer(async (req, res) => {
       }
       if (!task.charged) {
         const n = task.actions.length;
-        units -= task.engine === "hd" ? (n <= 4 ? 12 : n <= 8 ? 16 : n <= 12 ? 20 : 22) : n <= 4 ? 9 : n <= 8 ? 12 : n <= 12 ? 14 : 16;
+        task.cost = task.engine === "hd" ? (n <= 4 ? 12 : n <= 8 ? 16 : n <= 12 ? 20 : 22) : n <= 4 ? 9 : n <= 8 ? 12 : n <= 12 ? 14 : 16;
+        units -= task.cost;
         task.charged = true;
       }
       return send(res, 200, { status: 200, data: { task_status: "success", error: null, results: { output: outputFor(task.taskId, task.engine) } } });
@@ -180,6 +182,43 @@ const server = http.createServer(async (req, res) => {
       const png = await maskPng(files.get(task.fileId), name.replace(/\.png$/, ""));
       res.writeHead(200, { "content-type": "image/png" });
       return res.end(png);
+    }
+
+    // Skin simulation (DECISIONS D-047): a 0.0 to 1.0 intensity per concern, at least one above 0.
+    if (route === "POST /s2s/v2.0/task/skin-simulation") {
+      if (!authed(req)) return unauthorized(res);
+      const body = JSON.parse((await readBody(req)).toString() || "{}");
+      const file = files.get(body.src_file_id);
+      const bad = (error) => send(res, 400, { status: 400, error, error_code: "InvalidParameters" });
+      if (!file?.uploaded) return bad("src_file_id was never uploaded");
+      const params = Object.entries(body).filter(([k]) => k !== "src_file_id");
+      if (params.some(([k, v]) => !SIM_CONCERNS.has(k) || typeof v !== "number" || v < 0 || v > 1)) return bad("unknown concern or intensity");
+      if (!params.some(([, v]) => v > 0)) return bad("at least one intensity must be above 0");
+      const taskId = `sim_${++seq}`;
+      tasks.set(taskId, { taskId, kind: "simulation", fileId: file.fileId, params: Object.fromEntries(params), polls: 0, deleted: false });
+      return send(res, 200, { status: 200, data: { task_id: taskId } });
+    }
+
+    if (req.method === "GET" && url.pathname.startsWith("/s2s/v2.0/task/skin-simulation/")) {
+      if (!authed(req)) return unauthorized(res);
+      const task = tasks.get(url.pathname.split("/").pop());
+      if (!task || task.deleted) return send(res, 400, { status: 400, error: "Invalid task ID" });
+      if (++task.polls === 1) return send(res, 200, { status: 200, data: { task_status: "running", results: null, error: null } });
+      if (!task.charged) {
+        task.cost = Object.keys(task.params).length <= 4 ? 4 : 6;
+        units -= task.cost;
+        task.charged = true;
+      }
+      return send(res, 200, { status: 200, data: { task_status: "success", error: null, results: { url: `${BASE}/sim/${task.taskId}.jpg?X-Amz-Signature=mock` } } });
+    }
+
+    if (req.method === "GET" && url.pathname.startsWith("/sim/")) {
+      const task = tasks.get(url.pathname.slice("/sim/".length).replace(/\.jpg$/, ""));
+      if (!task || task.deleted) return send(res, 404, { error: "NoSuchKey" });
+      // A softened copy of the upload stands in for the simulated face.
+      const jpg = await sharp(files.get(task.fileId).bytes).modulate({ brightness: 1.06 }).blur(1.2).jpeg().toBuffer();
+      res.writeHead(200, { "content-type": "image/jpeg" });
+      return res.end(jpg);
     }
 
     if (route === "POST /s2s/v2.0/task/delete") {

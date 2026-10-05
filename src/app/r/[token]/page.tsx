@@ -1,16 +1,18 @@
 import { DeleteData } from "@/components/report/DeleteData";
 import { FaceMap } from "@/components/report/FaceMap";
 import { HomeCare, Investment, PlanTimeline, ReadyWhenYouAre } from "@/components/report/PlanSections";
+import { WhatToExpect } from "@/components/report/WhatToExpect";
 import { Hairline, Label, ScoreBar, ScoreNumber } from "@/components/ui/Typography";
-import { addDays, formatLongDate, isoDateInZone } from "@/lib/clock";
+import { addDays, formatLongDate } from "@/lib/clock";
 import { EVENT_OPTIONS } from "@/lib/flow/intake-options";
-import { buildPlan, statedConcerns } from "@/lib/plan/build";
-import { loadReport } from "@/lib/report/load";
+import { statedConcerns } from "@/lib/plan/build";
+import { loadReport, reportPlan } from "@/lib/report/load";
 import { mentions, planRationale, priorityMeaning, subhead } from "@/lib/report/personal";
 import { sandboxNow } from "@/lib/sandbox";
+import { illustratedWeek } from "@/lib/simulation/intensity";
+import { simulationState, viewOf } from "@/lib/simulation/service";
 import { CONCERNS } from "@/lib/skin/concerns";
 import { priorities } from "@/lib/skin/normalize";
-import { getStore } from "@/lib/store";
 
 /**
  * The living report: real scores and masks, wording and a plan built from this client's own scan,
@@ -18,7 +20,7 @@ import { getStore } from "@/lib/store";
  */
 export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
   const { token } = await params;
-  const { client, clinic, intake, latest } = await loadReport(token);
+  const { client, clinic, intake, latest, report } = await loadReport(token);
   const result = latest.result!;
   const top = priorities(result, 3);
   const rest = result.concerns.filter((c) => !top.some((t) => t.key === c.key)).sort((a, b) => a.ui - b.ui);
@@ -27,18 +29,8 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
   const scanLabel = `Scan ${String(latest.scanNumber).padStart(2, "0")}`;
   const engineLabel = latest.source === "live" && result.engine === "hd" ? " · HD analysis" : "";
 
-  const store = getStore();
-  const [treatments, products] = await Promise.all([store.listTreatments(clinic.id), store.listProducts(clinic.id)]);
   const stated = statedConcerns(intake);
-  const plan = buildPlan({
-    result,
-    intake,
-    treatments,
-    products,
-    clinic,
-    // Dates count from the scan, so the plan doesn't drift each time the link is opened.
-    from: isoDateInZone(new Date(latest.completedAt ?? latest.createdAt), tz),
-  });
+  const { plan, from } = (await reportPlan(token))!;
   const hasPlan = plan.recommended.lines.length > 0;
   const asked = mentions(result, stated, top, plan);
 
@@ -134,6 +126,13 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
       {hasPlan ? (
         <>
           <PlanTimeline plan={plan} rationale={planRationale(plan)} clinic={clinic} intake={intake} />
+          <WhatToExpect
+            token={token}
+            scanId={latest.id}
+            // Demo readings never get a simulation: it would look like a prediction of real results.
+            initial={latest.source === "live" ? viewOf(simulationState(report, latest.id)).status : "none"}
+            week={illustratedWeek(plan, from)}
+          />
           <Investment plan={plan} budgetBand={intake?.budgetBand ?? null} />
           <HomeCare plan={plan} />
           <ReadyWhenYouAre plan={plan} clinic={clinic} />

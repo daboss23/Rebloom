@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { ObjectStorage, Store } from "@/lib/store/types";
+import { simulationPath } from "@/lib/store/scan-paths";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const secret = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
@@ -122,6 +123,19 @@ describe.skipIf(!url || !secret)("Supabase store (live project)", () => {
     expect((await store.getReportByToken(a.token))?.clientId).toBe(clientId);
   });
 
+  it("updates report content only if nobody wrote in between, so one of two racing claims wins", async () => {
+    const report = await store.getOrCreateReport(clientId, now);
+    const results = await Promise.all([
+      store.updateReportContent(report.id, { simulations: { a: { status: "starting" } } }, report.updatedAt),
+      store.updateReportContent(report.id, { simulations: { b: { status: "starting" } } }, report.updatedAt),
+    ]);
+    expect(results.filter(Boolean)).toHaveLength(1);
+    const fresh = (await store.getReportByToken(report.token))!;
+    // The stale timestamp no longer matches; the fresh one does.
+    expect(await store.updateReportContent(report.id, {}, report.updatedAt)).toBe(false);
+    expect(await store.updateReportContent(report.id, { simulations: {} }, fresh.updatedAt)).toBe(true);
+  });
+
   it("sums usage in the database", async () => {
     const usage = { provider: "anthropic" as const, feature: "integration_test", taskId: null, sandboxId, ipHash: "ip", createdAt: new Date().toISOString() };
     await store.logUsage({ ...usage, units: 3 });
@@ -175,7 +189,7 @@ describe.skipIf(!url || !secret)("Supabase store (live project)", () => {
 
   it("deletes a client's data and returns every file to remove", async () => {
     const { storagePaths } = await store.deleteClientData(clientId, now);
-    expect(storagePaths.sort()).toEqual([maskPath, photoPath].sort());
+    expect(storagePaths.sort()).toEqual([maskPath, photoPath, simulationPath(photoPath)].sort());
     expect(await store.getClient(clientId)).toBeNull();
     expect(await store.getScan(scanId)).toBeNull();
     expect(await store.getIntake(clientId)).toBeNull();
