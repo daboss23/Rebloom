@@ -1,25 +1,43 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { SentResults } from "@/app/c/[clinicSlug]/actions";
 import { ReportGate } from "@/components/flow/ReportGate";
+import { ThinkingCogs } from "@/components/flow/ThinkingCogs";
 import { ButtonLink } from "@/components/ui/Button";
-import { IconCheckCircle, IconCopy } from "@/components/ui/Icons";
 import { Label } from "@/components/ui/Typography";
 import type { ScanView } from "@/lib/scans/service";
 
 const STAGES = ["Reading texture", "Mapping tone", "Measuring pores and lines", "Writing your report"];
 
+/**
+ * After the analysis, the report is put together on screen for at least this long.
+ * In Week 2 the Claude-written report is generated here, so this becomes a minimum rather than a pause.
+ */
+const ASSEMBLE_MS = 8000;
+/** What "Writing your report" works through, about two seconds each. All of it is in the report. */
+const ASSEMBLE_STEPS = [
+  "Comparing your 15 measurements",
+  "Choosing your three priorities",
+  "Mapping them on your photo",
+  "Writing your report",
+];
+
 export function ProcessingView({
   scanId,
   clinicSlug,
-  firstName,
+  clinicName,
+  contact,
 }: {
   scanId: string;
   clinicSlug: string;
-  firstName: string;
+  clinicName: string;
+  /** Present once the client has opted in at the gate (for example, on a reload afterwards). */
+  contact: Omit<SentResults, "reportPath"> | null;
 }) {
   const [view, setView] = useState<ScanView | null>(null);
   const [connectionIssue, setConnectionIssue] = useState(false);
+  const [assembleStep, setAssembleStep] = useState(0);
 
   useEffect(() => {
     let stopped = false;
@@ -48,12 +66,23 @@ export function ProcessingView({
     };
   }, [scanId]);
 
-  if (view?.status === "complete" && view.locked) {
-    return <ReportGate clinicSlug={clinicSlug} scanId={scanId} demo={view.demo} />;
-  }
+  const complete = view?.status === "complete";
+  // Every report still behind the gate is put together on screen first, however quickly the analysis
+  // finished. A client who has already opted in goes straight to their confirmation.
+  const locked = complete && Boolean(view.locked);
+  const assembling = locked && assembleStep < ASSEMBLE_STEPS.length;
 
-  if (view?.status === "complete" && view.reportPath) {
-    return <Ready reportPath={view.reportPath} firstName={firstName} demo={view.demo} />;
+  // Walk through the report-writing steps, then open the gate.
+  useEffect(() => {
+    if (!locked) return;
+    const each = ASSEMBLE_MS / ASSEMBLE_STEPS.length;
+    const timers = ASSEMBLE_STEPS.map((_, i) => window.setTimeout(() => setAssembleStep(i + 1), each * (i + 1)));
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [locked]);
+
+  if (complete && !assembling) {
+    const sent: SentResults | null = view.reportPath && contact ? { ...contact, reportPath: view.reportPath } : null;
+    return <ReportGate clinicSlug={clinicSlug} clinicName={clinicName} scanId={scanId} demo={view.demo} sent={sent} />;
   }
 
   if (view?.status === "failed" && view.error) {
@@ -69,71 +98,45 @@ export function ProcessingView({
     );
   }
 
-  const current = view?.stageIndex ?? 0;
+  const current = assembling ? STAGES.length - 1 : (view?.stageIndex ?? 0);
   return (
-    <div className="pt-12 pb-8" role="status" aria-live="polite">
-      <Label>Your scan</Label>
-      <h1 className="t-h1 mt-4">{firstName ? `Thank you, ${firstName}.` : "Thank you."}</h1>
+    <div className="pt-10 pb-8" role="status" aria-live="polite">
+      <ThinkingCogs className="w-[92px] h-auto" />
+      <div className="mt-6">
+        <Label>Your scan</Label>
+      </div>
+      <h1 className="t-h1 mt-4">{assembling ? "Putting your report together." : "Reading your photo."}</h1>
       <p className="t-body mt-5">
-        We&apos;re reading your photo now. This usually takes under a minute. Please keep this page open.
+        {assembling
+          ? "Almost there. We're turning 15 measurements into your personal skin report."
+          : "This usually takes under a minute. Please keep this page open."}
       </p>
-      <ol className="mt-12 border-t border-mist">
+      <ol className="mt-10 border-t border-mist">
         {STAGES.map((stage, i) => {
           const state = i < current ? "done" : i === current ? "active" : "waiting";
           return (
-            <li key={stage} className="flex items-center gap-4 py-5 border-b border-mist">
-              <span
-                aria-hidden
-                className={`block h-[9px] w-[9px] rounded-full border ${
-                  state === "done" ? "bg-accent border-accent" : state === "active" ? "border-ink" : "border-mist"
-                }`}
-                style={state === "active" ? { animation: "breathe 2.4s ease-in-out infinite" } : undefined}
-              />
-              <span className={state === "waiting" ? "text-text-3" : "text-ink"}>{stage}</span>
-              <span className="sr-only">{state === "done" ? "done" : state === "active" ? "in progress" : "waiting"}</span>
+            <li key={stage} className="py-5 border-b border-mist">
+              <div className="flex items-center gap-4">
+                <span
+                  aria-hidden
+                  className={`block h-[9px] w-[9px] rounded-full border ${
+                    state === "done" ? "bg-accent border-accent" : state === "active" ? "border-ink" : "border-mist"
+                  }`}
+                  style={state === "active" ? { animation: "breathe 2.4s ease-in-out infinite" } : undefined}
+                />
+                <span className={state === "waiting" ? "text-text-3" : "text-ink"}>{stage}</span>
+                <span className="sr-only">{state === "done" ? "done" : state === "active" ? "in progress" : "waiting"}</span>
+              </div>
+              {assembling && state === "active" && (
+                <p key={assembleStep} className="fade t-caption mt-2 pl-[25px]">
+                  {ASSEMBLE_STEPS[Math.min(assembleStep, ASSEMBLE_STEPS.length - 1)]}
+                </p>
+              )}
             </li>
           );
         })}
       </ol>
       {connectionIssue && <p className="t-caption mt-6">Reconnecting. Your scan is safe.</p>}
-    </div>
-  );
-}
-
-function Ready({ reportPath, firstName, demo }: { reportPath: string; firstName: string; demo: boolean }) {
-  const [copied, setCopied] = useState(false);
-  const [origin, setOrigin] = useState("");
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- the origin only exists in the browser
-  useEffect(() => setOrigin(window.location.origin), []);
-  const url = `${origin}${reportPath}`;
-
-  return (
-    <div className="pt-12 reveal">
-      <IconCheckCircle width={28} height={28} className="text-bronze" />
-      <h1 className="t-h1 mt-6">{firstName ? `${firstName}, your report is ready.` : "Your report is ready."}</h1>
-      <p className="t-body mt-5">
-        This is your private link. Keep it somewhere safe: it&apos;s how you&apos;ll see your progress after each scan.
-      </p>
-      <div className="mt-8 border border-mist">
-        <p className="px-4 pt-4 t-label">Your private link</p>
-        <p className="px-4 pt-2 pb-4 text-[14px] text-ink break-all">{url}</p>
-        <button
-          type="button"
-          onClick={async () => {
-            await navigator.clipboard?.writeText(url).catch(() => undefined);
-            setCopied(true);
-          }}
-          className="w-full min-h-12 border-t border-mist flex items-center justify-center gap-2 text-[14px] text-ink hover:bg-ink/[0.03]"
-        >
-          <IconCopy width={16} height={16} /> {copied ? "Link copied" : "Copy link"}
-        </button>
-      </div>
-      {demo && (
-        <p className="t-caption mt-4">This scan used demo analysis, so the results are sample data rather than a reading of your photo.</p>
-      )}
-      <ButtonLink href={reportPath} block className="mt-8">
-        Open your report
-      </ButtonLink>
     </div>
   );
 }

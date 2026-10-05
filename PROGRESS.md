@@ -47,6 +47,11 @@ Results say **Demo analysis**: they're sample scores until YouCam is connected. 
 
 - **The camera looked stuck.** The feed stayed hidden until the 15 MB face guide had downloaded, and the download only started when the camera opened. It now downloads during the questions, and the feed shows as soon as the camera is on (D-039).
 
+### Changes from Joshua's first full run
+
+- **End of the scan** (DECISIONS D-040): turning gears and "Putting your report together." for 8 seconds, then a popup over a fully blurred report asking where to send the results ("Send my results"), then a thank-you confirmation. It never claims an email was sent until email is live.
+- **Priorities that feel the same every time.** True, for two reasons. The scores are demo data until live YouCam is connected (four sample profiles, so repeats are common). The sentence under each priority is a stock line per concern. Personal wording comes from the Claude-written report (Week 2), which needs `ANTHROPIC_API_KEY`.
+
 ### Blocked on network access
 
 This workspace still can't reach Supabase or YouCam's docs. Network changes only apply to **new** sessions, so adding a host mid-session didn't unblock this one. So:

@@ -6,6 +6,7 @@ import { CONSENT_VERSION } from "@/lib/flow/consent";
 import { INTAKE_STEPS, stepSchemas, unlockSchema, type IntakeStep } from "@/lib/flow/intake-schema";
 import { getOwnScan } from "@/lib/scans/access";
 import { hasBiometricConsent, loadFlow } from "@/lib/flow/load";
+import { REPORT_EMAIL_LIVE } from "@/lib/report/load";
 import {
   ensureSandboxId,
   requestIpHash,
@@ -18,6 +19,19 @@ import { getStore } from "@/lib/store";
 export interface ActionResult {
   ok: boolean;
   error?: string;
+}
+
+/** What the confirmation after the report gate shows. */
+export interface SentResults {
+  firstName: string;
+  email: string;
+  reportPath: string;
+  /** False until the report email is live: the page must not claim it was sent. */
+  emailed: boolean;
+}
+
+export interface UnlockResult extends ActionResult {
+  sent?: SentResults;
 }
 
 /** Records consent, creating the client for this browser if needed. */
@@ -83,13 +97,14 @@ export async function saveIntakeStep(slug: string, input: { step: IntakeStep; da
 /**
  * The report gate. Contact details unlock the report the client just scanned for (brief 3.1 step 6).
  * Until this runs, the browser never receives the report link or the real scores.
+ * The client stays on the page and sees a "results sent" confirmation, not the report itself.
  */
 export async function unlockReport(
   slug: string,
   scanId: string,
-  _prev: ActionResult | null,
+  _prev: UnlockResult | null,
   form: FormData,
-): Promise<ActionResult> {
+): Promise<UnlockResult> {
   const parsed = unlockSchema.safeParse({
     firstName: form.get("firstName") ?? "",
     email: form.get("email") ?? "",
@@ -122,5 +137,13 @@ export async function unlockReport(
     });
   }
   const report = await store.getOrCreateReport(client.id, now);
-  redirect(`/r/${report.token}`);
+  return {
+    ok: true,
+    sent: {
+      firstName: parsed.data.firstName,
+      email: parsed.data.email,
+      reportPath: `/r/${report.token}`,
+      emailed: REPORT_EMAIL_LIVE,
+    },
+  };
 }
