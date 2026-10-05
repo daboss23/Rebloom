@@ -50,6 +50,23 @@ test("the connection check reports a working key without spending units", async 
   expect((await mockState(request)).units).toBe(before);
 });
 
+test("the setup page checks the connection in the browser, behind the password", async ({ page }) => {
+  await page.goto("/setup/youcam");
+  const password = page.getByLabel("Password (CRON_SECRET)");
+  await password.fill("not-the-secret");
+  await page.getByRole("button", { name: "Check connection" }).click();
+  await expect(page.getByText("That password doesn't match CRON_SECRET on this site.")).toBeVisible();
+  await expect(page.getByText("Connected to YouCam.")).toHaveCount(0);
+
+  const units = (await mockState(page.request)).units;
+  await password.fill(" e2e-cron-secret ");
+  await page.getByRole("button", { name: "Check connection" }).click();
+  await expect(page.getByRole("heading", { name: "Connected to YouCam." })).toBeVisible();
+  await expect(page.getByText(units.toLocaleString("en-US"), { exact: true })).toBeVisible();
+  await expect(page.getByText("On. Scans use YouCam.")).toBeVisible();
+  expect(page.url()).not.toContain("e2e-cron-secret");
+});
+
 test("a live scan reads YouCam's scores, copies its masks, then deletes the photo at YouCam", async ({ page }) => {
   await completeIntake(page);
   const unitsBefore = (await mockState(page.request)).units;

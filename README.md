@@ -46,7 +46,7 @@ pnpm dev
 
 Open http://localhost:3000. With no environment variables, Rebloom uses a local file store in `.data/` and **fixture mode**: realistic sample skin results with zero API calls, clearly labelled "Demo analysis". The camera needs `localhost` or HTTPS.
 
-To use real services, copy `.env.example` to `.env.local` and fill in what you have. `YOUCAM_MODE=live` plus a `YOUCAM_API_KEY` switches to live analysis. To check the key without spending units:
+To use real services, copy `.env.example` to `.env.local` and fill in what you have. `YOUCAM_MODE=live` plus a `YOUCAM_API_KEY` switches to live analysis. To check the key without spending units, open `/setup/youcam` and enter the `CRON_SECRET`, or:
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/youcam/check
