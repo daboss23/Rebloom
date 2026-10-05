@@ -83,6 +83,14 @@ test("a scan runs end to end in fixture mode, and Delete my data removes it", as
   await expect(page.getByRole("heading", { name: "Your three priorities" })).toBeVisible();
   const reportUrl = page.url();
 
+  // A plan from the menu, timed to the wedding, priced in code.
+  await expect(page.getByRole("heading", { name: "Your path to June 1" })).toBeVisible();
+  await expect(page.getByText(/^Consultation and /)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your investment" })).toBeVisible();
+  await expect(page.getByText("Estimated total")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Call to book your first session" })).toHaveAttribute("href", "tel:+13105550142");
+  if (process.env.REPORT_SCREENSHOT) await page.screenshot({ path: process.env.REPORT_SCREENSHOT, fullPage: true });
+
   // Masks were drawn and are served only through the report link.
   const mask = await page.request.get(`${reportUrl}/mask/${scanId}/texture`);
   expect(mask.headers()["content-type"]).toBe("image/png");

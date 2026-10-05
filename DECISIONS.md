@@ -199,3 +199,15 @@ Bug fix. The local upload route decided from the Supabase keys whether to open, 
 
 ## D-044 · A zero-unit YouCam connection check (C, Oct 5)
 `GET /api/youcam/check` with `Authorization: Bearer <CRON_SECRET>` reads the YouCam account balance, which costs nothing, and reports whether the key works, the mode, and our own unit ledger. It answers 404 to anyone without the secret. The setup page `/setup/youcam` puts a password box and a button in front of it, so nobody needs a terminal; the password travels in the request header, never the URL, and isn't stored.
+
+## D-045 · A rules-based plan, priced in code, ahead of the Claude-written report (C, Oct 5)
+Joshua's first live scan worked, but the report still read as generic: the scores were real, the words around them were the same for everyone, and nothing used the client's answers. So the plan, investment and home care sections from brief 3.3 are built now, rules-based, in `src/lib/plan/build.ts`. This is the brief 8.3 fallback brought forward: it needs no API key, and when the Claude-written report arrives it writes the wording, never different numbers.
+- **What the plan works on:** the three lowest scores, plus the concern the client asked about that needs it most. Asking about a concern (ticked, or named in their own words, e.g. "dark circles") adds 12 points of need.
+- **Treatments:** only from the clinic's active menu. The first must work on the lowest score, since the report says that's where we'd begin. A second joins only if it covers enough more. At most two.
+- **Budget:** if the full plan goes over the client's band, a "Closer to your budget" option sits beside it: the best mix of up to two treatments, with fewer sessions if need be, that fits.
+- **Dates:** counted from the scan date, so the plan doesn't move each time the link opens. Clinic open days only, visits at least a week apart, nothing inside a treatment's rest period before an event (sessions are cut, and repriced, to fit). A progress scan follows two weeks after the last session.
+- **Prices:** every line and total computed from menu prices in code.
+- **Home care:** up to two products for the plan's concerns, with sun protection first whenever the plan includes light or resurfacing.
+- **Wording:** each priority says whether the client asked about it and which treatment in the plan works on it. What they asked about that isn't a priority gets a plain answer ("You mentioned uneven tone. Radiance and pigmentation are among your stronger areas on this scan").
+- **Booking:** the button calls the clinic, and "Questions? Text the clinic" opens a text. The first visit is labelled "suggested", since real availability arrives with booking in Week 2.
+The plan isn't stored yet. It's recomputed from the scan, intake and menu, which keeps it consistent until a practitioner confirms one (Week 3, `plans` table).
