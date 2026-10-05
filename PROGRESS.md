@@ -1,5 +1,28 @@
 # Progress
 
+## Session 3 · Monday October 5, 2026 · A plan and prices from each client's own results
+
+### What's done
+
+**The first live scan worked.** Samantha's scan at 15:11 UTC ran on YouCam for real: pores 73, dark circles 77, firmness 78, texture 99, and so on. The scores in the database are YouCam's. What still looked generic was everything around them: the same sentences for everyone, and nothing that used the client's answers.
+
+**The report now builds a plan from each client's scan, answers and the clinic's menu** (DECISIONS D-045):
+- **Priorities speak to the person.** Each one says whether they asked about it and which treatment in their plan works on it. The subhead names their own strongest areas.
+- **"What you asked about"** answers concerns they raised that aren't priorities, honestly, even when the scan says it's a strength.
+- **Your path:** dated sessions from the menu, on open days, a week or more apart, ending at their event if they gave one, with nothing inside a treatment's rest period before it.
+- **Your investment:** each treatment × sessions at menu prices, and the total, all computed in code. If it goes over their budget, a "Closer to your budget" option that fits.
+- **Between sessions:** up to two products from the clinic's shelf.
+- **Ready when you are:** a suggested first visit, "Call to book" and "Text the clinic".
+
+For Samantha's real scan: Microneedling × 3 for pores and firmness, Signature Facial × 3 for the dark circles she mentioned ($1,680), and inside her $500 to $1,000 budget, Microneedling × 1 and Signature Facial × 3 ($890).
+
+**Tests:** 79 unit tests (15 new, including the real live scan), 7 browser tests, the copy check and the production build all pass.
+
+### Still to come
+- The Claude-written wording on top of this plan (needs `ANTHROPIC_API_KEY`), and real booking with availability and a deposit.
+
+---
+
 ## Session 2 · Monday October 5, 2026 · YouCam connected
 
 ### What's done

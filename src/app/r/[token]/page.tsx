@@ -1,16 +1,20 @@
 import { DeleteData } from "@/components/report/DeleteData";
 import { FaceMap } from "@/components/report/FaceMap";
+import { HomeCare, Investment, PlanTimeline, ReadyWhenYouAre } from "@/components/report/PlanSections";
 import { Hairline, Label, ScoreBar, ScoreNumber } from "@/components/ui/Typography";
-import { addDays, formatLongDate } from "@/lib/clock";
+import { addDays, formatLongDate, isoDateInZone } from "@/lib/clock";
 import { EVENT_OPTIONS } from "@/lib/flow/intake-options";
+import { buildPlan, statedConcerns } from "@/lib/plan/build";
 import { loadReport } from "@/lib/report/load";
+import { mentions, planRationale, priorityMeaning, subhead } from "@/lib/report/personal";
 import { sandboxNow } from "@/lib/sandbox";
 import { CONCERNS } from "@/lib/skin/concerns";
 import { priorities } from "@/lib/skin/normalize";
+import { getStore } from "@/lib/store";
 
 /**
- * The living report, Week 1 version: real scores and masks, template copy.
- * Week 2 adds the Claude-written report, the plan, investment and booking.
+ * The living report: real scores and masks, wording and a plan built from this client's own scan,
+ * answers and the clinic's menu (DECISIONS D-045). The Claude-written report layers on top in Week 2.
  */
 export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
   const { token } = await params;
@@ -22,6 +26,21 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
   const tz = clinic.timezone;
   const scanLabel = `Scan ${String(latest.scanNumber).padStart(2, "0")}`;
 
+  const store = getStore();
+  const [treatments, products] = await Promise.all([store.listTreatments(clinic.id), store.listProducts(clinic.id)]);
+  const stated = statedConcerns(intake);
+  const plan = buildPlan({
+    result,
+    intake,
+    treatments,
+    products,
+    clinic,
+    // Dates count from the scan, so the plan doesn't drift each time the link is opened.
+    from: isoDateInZone(new Date(latest.completedAt ?? latest.createdAt), tz),
+  });
+  const hasPlan = plan.recommended.lines.length > 0;
+  const asked = mentions(result, stated, top, plan);
+
   let event: { label: string; weeks: number } | null = null;
   if (intake?.hasEvent && intake.eventDate && intake.eventType) {
     const date = new Date(`${intake.eventDate}T12:00:00Z`);
@@ -31,11 +50,6 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
     event = { label: `${name} · ${formatLongDate(addDays(date, 0), "UTC").replace(/, \d{4}$/, "")}`, weeks };
   }
 
-  const meaning = (i: number, key: (typeof top)[number]["key"]) =>
-    i === 0
-      ? `Your biggest opportunity, and the area most likely to show visible change with treatment.`
-      : CONCERNS[key].describes;
-
   return (
     <article className="pt-10 pb-4">
       <Label>
@@ -44,7 +58,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
       <h1 className="t-h1 mt-4 reveal">
         {client.firstName ? `${client.firstName}, your skin is telling a clear story.` : "Your skin is telling a clear story."}
       </h1>
-      <p className="t-body mt-4">Here&apos;s what we see, and where we&apos;d begin.</p>
+      <p className="t-body mt-4">{subhead(result)}</p>
 
       {event && (
         <div className="mt-8 bg-mist px-4 py-3 flex justify-between items-center text-[14px] text-ink">
@@ -85,10 +99,20 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
                 <ScoreNumber value={c.ui} />
               </div>
               <ScoreBar value={c.ui} className="mt-3" />
-              <p className="t-body mt-4">{meaning(i, c.key)}</p>
+              <p className="t-body mt-4">{priorityMeaning(i, c, top.slice(0, i), stated, plan)}</p>
             </li>
           ))}
         </ol>
+        {asked.length > 0 && (
+          <div className="mt-2 bg-mist px-4 py-4">
+            <p className="t-label">What you asked about</p>
+            {asked.map((m) => (
+              <p key={m.phrase} className="t-body mt-2">
+                {m.text}
+              </p>
+            ))}
+          </div>
+        )}
       </section>
 
       <details className="group mt-4 border border-mist">
@@ -105,13 +129,22 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
         </dl>
       </details>
 
-      <section className="mt-16 bg-ink on-dark px-6 py-10">
-        <h2 className="font-display font-light text-[30px] leading-tight text-porcelain">What happens next.</h2>
-        <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
-          {clinic.name} reviews every scan. Your personal plan, with dates and prices from our menu, will appear on this
-          page. Same link, always private.
-        </p>
-      </section>
+      {hasPlan ? (
+        <>
+          <PlanTimeline plan={plan} rationale={planRationale(plan)} clinic={clinic} intake={intake} />
+          <Investment plan={plan} budgetBand={intake?.budgetBand ?? null} />
+          <HomeCare plan={plan} />
+          <ReadyWhenYouAre plan={plan} clinic={clinic} />
+        </>
+      ) : (
+        <section className="mt-16 bg-ink on-dark px-6 py-10">
+          <h2 className="font-display font-light text-[30px] leading-tight text-porcelain">What happens next.</h2>
+          <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">
+            {clinic.name} reviews every scan and will suggest where to begin. Your plan will appear on this page. Same
+            link, always private.
+          </p>
+        </section>
+      )}
 
       <Hairline className="mt-16" />
       <p className="t-caption mt-6">
