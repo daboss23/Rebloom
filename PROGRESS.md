@@ -1,5 +1,16 @@
 # Progress
 
+## Session 3, part 2 · YouCam HD skin analysis
+
+**Camera scans now use YouCam's HD analysis** (DECISIONS D-046): a sharper model, with wrinkles and pores scored by facial area. When a wrinkle or pore priority has area scores, the report says where it shows most, e.g. "Most visible at the crow's feet". Live HD reports are labelled "HD analysis".
+- **Camera photos (1080 × 1440) always qualify.** Uploaded photos smaller than 1080 pixels on the short side run SD, because stretching them wouldn't add detail. The first live scan was a 539 × 719 upload, so it would still run SD.
+- **If YouCam ever refuses an HD request,** the scan reruns in SD, so it still gets a real reading.
+- **A full HD scan costs 22 units** instead of 16. With 1,000 units, that's roughly 40 HD scans, after the 64 units kept back for your own demo.
+- **Tests:** 91 unit tests, 7 browser tests in demo mode, and 6 browser tests in live mode, now including an HD scan. The production build passes.
+- **Still to confirm:** YouCam's documentation is still blocked from this workspace, so the HD details come from Perfect Corp's own pages via web search. Your first HD scan on a phone is the real check. Look for "HD analysis" next to the date on the report.
+
+---
+
 ## Session 3 · Monday October 5, 2026 · A plan and prices from each client's own results
 
 ### What's done

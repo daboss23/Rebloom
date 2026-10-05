@@ -3,7 +3,7 @@ import "server-only";
 // that scan simply runs in fixture mode and is labelled "Demo analysis".
 import { env, features } from "@/lib/env";
 import { getStore } from "@/lib/store";
-import { sdUnitCost } from "@/lib/youcam/units";
+import { unitCost } from "@/lib/youcam/units";
 import { SCORED_CONCERNS } from "@/lib/skin/concerns";
 
 export const LIMITS = {
@@ -36,7 +36,8 @@ export async function chooseAnalysisMode(input: {
     return { mode: "fixture", reason: "browser_limit" };
   }
   if (today.count >= LIMITS.globalPerDay) return { mode: "fixture", reason: "daily_cap" };
-  const nextCost = sdUnitCost(SCORED_CONCERNS.length + 1);
+  // Budgeted at the HD price: the engine is only known once the photo is read.
+  const nextCost = unitCost(env.YOUCAM_ENGINE, SCORED_CONCERNS.length + 1);
   if (env.YOUCAM_UNIT_BUDGET - ever.units - nextCost < LIMITS.reserveUnits) return { mode: "fixture", reason: "reserve" };
   return { mode: "live", reason: null };
 }

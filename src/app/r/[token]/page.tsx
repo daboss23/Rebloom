@@ -25,6 +25,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
   const now = await sandboxNow();
   const tz = clinic.timezone;
   const scanLabel = `Scan ${String(latest.scanNumber).padStart(2, "0")}`;
+  const engineLabel = latest.source === "live" && result.engine === "hd" ? " · HD analysis" : "";
 
   const store = getStore();
   const [treatments, products] = await Promise.all([store.listTreatments(clinic.id), store.listProducts(clinic.id)]);
@@ -54,6 +55,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
     <article className="pt-10 pb-4">
       <Label>
         {formatLongDate(latest.completedAt ?? latest.createdAt, tz)} · {scanLabel}
+        {engineLabel}
       </Label>
       <h1 className="t-h1 mt-4 reveal">
         {client.firstName ? `${client.firstName}, your skin is telling a clear story.` : "Your skin is telling a clear story."}

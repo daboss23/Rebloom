@@ -197,3 +197,15 @@ describe.skipIf(!process.env.SHOW_PLANS)("printout", () => {
     }
   });
 });
+
+describe("HD detail in the wording", () => {
+  it("says where on the face a wrinkle or pore priority shows most", async () => {
+    const { mostVisibleArea } = await import("@/lib/report/personal");
+    expect(mostVisibleArea({ key: "wrinkle", ui: 60, raw: 50, maskPath: null, areas: { forehead: 85, crowfeet: 60 } })).toBe(
+      "Most visible at the crow's feet.",
+    );
+    expect(mostVisibleArea({ key: "wrinkle", ui: 60, raw: 50, maskPath: null })).toBeNull();
+    // Area names we can't put into words are never shown.
+    expect(mostVisibleArea({ key: "pore", ui: 60, raw: 50, maskPath: null, areas: { zone_7: 40, zone_9: 50 } })).toBeNull();
+  });
+});

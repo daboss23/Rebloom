@@ -262,3 +262,140 @@ describe("error copy", () => {
     }
   });
 });
+
+describe("HD skin analysis (DECISIONS D-046)", () => {
+  type LiveModule = typeof import("@/lib/youcam/live");
+  let mod: LiveModule;
+  beforeAll(async () => {
+    mod = await import("@/lib/youcam/live");
+  });
+
+  const photo = (width: number, height: number) =>
+    sharp({ create: { width, height, channels: 3, background: "#cbb8a6" } }).jpeg().toBuffer();
+
+  const slot = () =>
+    ok({
+      files: [
+        {
+          file_id: "f1",
+          requests: [{ method: "PUT", url: "https://s3.test/put?sig=1", headers: { "Content-Type": "image/jpeg" } }],
+        },
+      ],
+    });
+
+  it("uses HD only when the photo has 1080 pixels on its short side, and never upscales", () => {
+    expect(mod.chooseEngine(1080, 1440, "hd")).toBe("hd");
+    expect(mod.chooseEngine(539, 719, "hd")).toBe("sd");
+    expect(mod.chooseEngine(1080, 1440, "sd")).toBe("sd");
+  });
+
+  it("names every HD action, and never mixes SD and HD", () => {
+    const actions = mod.skinActions("hd", SCORED_CONCERNS);
+    expect(actions).toHaveLength(16);
+    expect(actions).toContain("hd_dark_circle");
+    expect(actions).toContain("hd_skin_type");
+    expect(actions.every((a) => a.startsWith("hd_"))).toBe(true);
+  });
+
+  it("starts an HD task for a camera-size photo, at the HD unit price", async () => {
+    const calls = fakeYouCam({
+      "POST /s2s/v2.0/file": slot,
+      "PUT https://s3.test/put": () => new Response(null, { status: 200 }),
+      "POST /s2s/v2.1/task/skin-analysis": () => ok({ task_id: "hd-1" }),
+    });
+    const started = await live.start({
+      scanId: "s",
+      image: { bytes: await photo(1080, 1440), contentType: "image/jpeg" },
+      concerns: SCORED_CONCERNS,
+    });
+    expect(started).toEqual({ taskId: "hd-1", units: 22, engine: "hd" });
+    expect((calls[2].body as { dst_actions: string[] }).dst_actions[0]).toMatch(/^hd_/);
+  });
+
+  it("runs SD instead when YouCam refuses the HD request", async () => {
+    let attempt = 0;
+    const calls = fakeYouCam({
+      "POST /s2s/v2.0/file": slot,
+      "PUT https://s3.test/put": () => new Response(null, { status: 200 }),
+      "POST /s2s/v2.1/task/skin-analysis": () =>
+        ++attempt === 1
+          ? Response.json({ status: 400, error: "bad action", error_code: "InvalidParameters" }, { status: 400 })
+          : ok({ task_id: "sd-1" }),
+    });
+    const started = await live.start({
+      scanId: "s",
+      image: { bytes: await photo(1080, 1440), contentType: "image/jpeg" },
+      concerns: SCORED_CONCERNS,
+    });
+    expect(started).toEqual({ taskId: "sd-1", units: 16, engine: "sd" });
+    expect((calls[3].body as { dst_actions: string[] }).dst_actions).toEqual([...SCORED_CONCERNS, "skin_type"]);
+  });
+
+  it("charges HD prices by concern count", async () => {
+    const { unitCost } = await import("@/lib/youcam/units");
+    expect([1, 4, 5, 8, 9, 12, 13, 16].map((n) => unitCost("hd", n))).toEqual([12, 12, 16, 16, 20, 20, 22, 22]);
+  });
+
+  // The HD area shape isn't recorded live yet, so each plausible form is read the same way.
+  const areaForms: [string, unknown[]][] = [
+    [
+      "entries with an area",
+      [
+        { type: "hd_wrinkle", area: "whole", ui_score: 72, raw_score: 61.5, mask_urls: ["https://m/w.png"] },
+        { type: "hd_wrinkle", area: "forehead", ui_score: 85, raw_score: 80, mask_urls: ["https://m/wf.png"] },
+        { type: "hd_wrinkle", area: "crowfeet", ui_score: 60, raw_score: 50, mask_urls: ["https://m/wc.png"] },
+      ],
+    ],
+    [
+      "one entry with an object per area",
+      [
+        {
+          type: "hd_wrinkle",
+          whole: { ui_score: 72, raw_score: 61.5, mask_url: "https://m/w.png" },
+          forehead: { ui_score: 85, raw_score: 80, mask_url: "https://m/wf.png" },
+          crowfeet: { ui_score: 60, raw_score: 50, mask_url: "https://m/wc.png" },
+        },
+      ],
+    ],
+    [
+      "a type per area",
+      [
+        { type: "hd_wrinkle", ui_score: 72, raw_score: 61.5, mask_urls: ["https://m/w.png"] },
+        { type: "hd_wrinkle_forehead", ui_score: 85, raw_score: 80, mask_urls: ["https://m/wf.png"] },
+        { type: "hd_wrinkle_crowfeet", ui_score: 60, raw_score: 50, mask_urls: ["https://m/wc.png"] },
+      ],
+    ],
+  ];
+  for (const [name, wrinkle] of areaForms) {
+    it(`reads HD wrinkle areas sent as ${name}`, () => {
+      const raw = parseSkinOutput([
+        ...wrinkle,
+        { type: "hd_dark_circle", ui_score: 77, raw_score: 70.2, mask_urls: ["https://m/dc.png"] },
+        { type: "hd_skin_type", region: "whole", skin_type: "Normal" },
+      ]);
+      expect(raw.engine).toBe("hd");
+      expect(raw.concerns.wrinkle).toMatchObject({ ui_score: 72, raw_score: 61.5 });
+      expect(raw.concerns.wrinkle?.areas).toEqual({ forehead: { ui_score: 85, raw_score: 80 }, crowfeet: { ui_score: 60, raw_score: 50 } });
+      expect(raw.concerns.wrinkle?.mask_urls).toHaveLength(3);
+      expect(raw.concerns.dark_circle_v2).toMatchObject({ ui_score: 77 });
+      expect(raw.skin_type).toBe("normal");
+
+      const result = normalizeResult(raw);
+      expect(result.engine).toBe("hd");
+      expect(result.concerns.find((c) => c.key === "wrinkle")?.areas).toEqual({ forehead: 85, crowfeet: 60 });
+      expect(JSON.stringify(withoutMaskUrls(raw))).not.toContain("https://");
+    });
+  }
+
+  it("falls back to the mean of the areas when no whole-face score arrives", () => {
+    const raw = parseSkinOutput([
+      { type: "hd_pore", area: "nose", ui_score: 60, raw_score: 50 },
+      { type: "hd_pore", area: "cheek", ui_score: 80, raw_score: 70 },
+    ]);
+    expect(raw.concerns.pore).toMatchObject({ ui_score: 70, raw_score: 60 });
+  });
+
+  it("still reads SD results as SD", () => {
+    expect(parseSkinOutput(output).engine).toBe("sd");
+  });
+});

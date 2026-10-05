@@ -1,10 +1,22 @@
-// YouCam SD skin analysis unit costs, per request, by number of concerns (brief 6.3).
+// YouCam skin analysis unit costs, per request, by number of concerns (brief 6.3, DECISIONS D-046).
 // Failed tasks don't consume units.
-export function sdUnitCost(concernCount: number): number {
+
+export type SkinEngine = "sd" | "hd";
+
+const TIERS: [maxConcerns: number, sd: number, hd: number][] = [
+  [4, 9, 12],
+  [8, 12, 16],
+  [12, 14, 20],
+  [16, 16, 22],
+];
+
+export function unitCost(engine: SkinEngine, concernCount: number): number {
   if (concernCount <= 0) return 0;
-  if (concernCount <= 4) return 9;
-  if (concernCount <= 8) return 12;
-  if (concernCount <= 12) return 14;
-  if (concernCount <= 16) return 16;
-  throw new Error("SD skin analysis supports at most 16 concerns per request");
+  const tier = TIERS.find(([max]) => concernCount <= max);
+  if (!tier) throw new Error("Skin analysis supports at most 16 concerns per request");
+  return engine === "hd" ? tier[2] : tier[1];
+}
+
+export function sdUnitCost(concernCount: number): number {
+  return unitCost("sd", concernCount);
 }

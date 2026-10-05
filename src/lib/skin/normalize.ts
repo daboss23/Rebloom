@@ -12,7 +12,11 @@ const rawScore = (n: number) => Math.round(clamp(n) * 10) / 10;
 export function normalizeResult(raw: RawSkinResult): ScanResult {
   const concerns = SCORED_CONCERNS.flatMap((key) => {
     const c = raw.concerns[key];
-    return c ? [{ key, ui: uiScore(c.ui_score), raw: rawScore(c.raw_score), maskPath: null }] : [];
+    if (!c) return [];
+    const areas = c.areas
+      ? Object.fromEntries(Object.entries(c.areas).map(([area, a]) => [area, uiScore(a.ui_score)]))
+      : undefined;
+    return [{ key, ui: uiScore(c.ui_score), raw: rawScore(c.raw_score), maskPath: null, ...(areas ? { areas } : {}) }];
   });
   // YouCam's overall score is one number on the ui scale. The raw overall is ours:
   // the mean of the measured raw scores, so it moves only when the measurements do.
@@ -25,6 +29,7 @@ export function normalizeResult(raw: RawSkinResult): ScanResult {
     overall,
     skinAge: typeof raw.skin_age === "number" ? Math.round(raw.skin_age) : null,
     skinType: raw.skin_type ?? null,
+    ...(raw.engine ? { engine: raw.engine } : {}),
   };
 }
 

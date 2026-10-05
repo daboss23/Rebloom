@@ -19,13 +19,14 @@ const ourLedger = async (request: APIRequestContext) =>
   (await (await request.get("/api/youcam/check", { headers: CHECK_AUTH })).json()).budget.remainingByOurLog as number;
 
 /** Creates a scan, uploads a flat photo of the given colour, starts analysis, opens the processing page. */
-async function scanPhoto(page: Page, colour: string): Promise<string> {
+async function scanPhoto(page: Page, colour: string, size: [number, number] = [810, 1080]): Promise<string> {
+  const [width, height] = size;
   const created = await page.request.post("/api/scans", {
-    data: { clinicSlug: "maison-verre", width: 810, height: 1080, quality: GOOD_QUALITY, landmarks: syntheticLandmarks() },
+    data: { clinicSlug: "maison-verre", width, height, quality: GOOD_QUALITY, landmarks: syntheticLandmarks() },
   });
   expect(created.ok()).toBe(true);
   const { scanId, upload } = await created.json();
-  const photo = await sharp({ create: { width: 810, height: 1080, channels: 3, background: colour } }).jpeg().toBuffer();
+  const photo = await sharp({ create: { width, height, channels: 3, background: colour } }).jpeg().toBuffer();
   expect((await page.request.put(upload.url, { headers: upload.headers, data: photo })).status()).toBe(204);
   expect((await page.request.post(`/api/scans/${scanId}/analyze`)).ok()).toBe(true);
   await page.goto(`/c/maison-verre/processing?scan=${scanId}`);
@@ -97,6 +98,24 @@ test("a live scan reads YouCam's scores, copies its masks, then deletes the phot
   // Units: YouCam charged 16, and our own ledger agrees.
   expect(unitsBefore - state.units).toBe(16);
   expect(ledgerBefore - (await ourLedger(page.request))).toBe(16);
+});
+
+test("a camera-size photo runs YouCam's HD analysis, at the HD unit price", async ({ page }) => {
+  await completeIntake(page);
+  const unitsBefore = (await mockState(page.request)).units;
+  const ledgerBefore = await ourLedger(page.request);
+  await scanPhoto(page, "#cbb8a6", [1080, 1440]);
+  await unlockReport(page);
+
+  await expect(page.getByText(/HD analysis/)).toBeVisible();
+  await expect(page.getByText("Demo analysis.")).toHaveCount(0);
+  const task = (await mockState(page.request)).tasks.at(-1)!;
+  expect(task.actions).toHaveLength(16);
+  expect(task.actions.every((a) => a.startsWith("hd_"))).toBe(true);
+
+  // HD costs 22 units for 16 actions, and our ledger agrees.
+  expect(unitsBefore - (await mockState(page.request)).units).toBe(22);
+  expect(ledgerBefore - (await ourLedger(page.request))).toBe(22);
 });
 
 test("a photo YouCam can't read gets that error's own retake instruction, and costs nothing", async ({ page }) => {

@@ -19,6 +19,28 @@ export function subhead(result: ScanResult): string {
   return `${sentenceCase(joinLabels(strengths.map((s) => s.key)))} ${strengths.length === 1 ? "is" : "are"} already looking strong. Here's where we'd begin.`;
 }
 
+/** Where on the face, for HD's per-area wrinkle and pore scores. Unknown area names are never shown. */
+const AREA_PLACES: Record<string, string> = {
+  forehead: "across the forehead",
+  glabellar: "between the brows",
+  crowfeet: "at the crow's feet",
+  crows_feet: "at the crow's feet",
+  periocular: "around the eyes",
+  nasolabial: "in the smile lines",
+  marionette: "in the lines from mouth to chin",
+  nose: "around the nose",
+  cheek: "across the cheeks",
+  cheeks: "across the cheeks",
+};
+
+/** "Most visible at the crow's feet." from HD area scores: the lowest-scoring area we can name. */
+export function mostVisibleArea(concern: ConcernScore): string | null {
+  const named = Object.entries(concern.areas ?? {}).filter(([area]) => AREA_PLACES[area]);
+  if (named.length < 2) return null;
+  const [area] = named.sort((a, b) => a[1] - b[1])[0];
+  return `Most visible ${AREA_PLACES[area]}.`;
+}
+
 /** The plain-words meaning under each of the three priorities. */
 export function priorityMeaning(
   rank: number,
@@ -32,6 +54,8 @@ export function priorityMeaning(
       ? "Your biggest opportunity, and the area most likely to show visible change with treatment."
       : CONCERNS[concern.key].describes,
   ];
+  const where = mostVisibleArea(concern);
+  if (where) parts.push(where);
   const phrase = stated.get(concern.key);
   if (phrase) parts.push(rank === 0 ? `You mentioned ${phrase}, so we're starting in the same place.` : `You mentioned ${phrase} too, and your scan agrees.`);
 
