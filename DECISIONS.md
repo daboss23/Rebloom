@@ -231,3 +231,17 @@ Joshua asked for YouCam's AI Skin Simulation (brief 3.3 and 6.5). From YouCam's 
 - **Privacy:** the result is copied into our private storage at the photo's size, served only through the report link, deleted with the client's data, and the task is deleted at YouCam.
 - **Labelled every time:** "An illustration of likely improvement based on your scan. Not a guaranteed result. Everyone's skin responds differently." Captioned "Week N, illustrated", the week of the planned progress scan. If the simulation can't be made, the section simply isn't shown.
 - **Not yet confirmed:** the docs' parameter reference wasn't available, so the request sends `src_file_id` plus one field per concern (`wrinkle`, `spot`, `dark_circle`, ...) and the response is searched for the first image link. Both sit in one block of `src/lib/youcam/client.ts`. If YouCam rejects the request, nothing is charged and the section stays hidden.
+
+## D-048 · Priorities answer what the client came in for (J + C, Oct 5). Refines D-045
+Joshua's first HD scan read "the same on every section": firmness 76, lower eyelid 76, eye bags 79, all with RF Skin Tightening, while his own goal ("Get rid of a lot of these sun spots") wasn't mentioned at all. The scores were real, but two things made every report sound alike:
+- **YouCam's display scores bunch together** (most land between 75 and 99), and its lowest are nearly always around the eyes and firmness. Ranking by lowest score alone gives most people the same three priorities.
+- **The client's goal only nudged the plan**, never the priorities, and their words were said back as the ticked box ("uneven tone"), not what they wrote ("sun spots").
+
+Now:
+- **Priority 1 is still the lowest score**, the scan's honest starting point. Ties on the display score fall to YouCam's finer raw measurement (lower eyelid 68.3 before firmness 68.7).
+- **Priorities 2 and 3 weigh the client's goals in:** a concern they wrote about adds 20 points of need, one they ticked adds 12, but only where the scan shows room (under 92). Pores at 95 stay out however they were asked about, and the report says why.
+- **Their own words win** and are said back: "You told us about sun spots, and your scan shows room to improve here."
+- **Each line differs:** HD areas ("Most visible in the lines from mouth to chin"), "The same RF Skin Tightening sessions work on this too" instead of repeating the treatment, and a plain line when the plan doesn't target a priority.
+- Grammar: "Pores are", "Firmness is".
+
+For that scan the priorities become lower eyelid firmness, sun spots and wrinkles (mouth to chin), and the plan becomes RF Skin Tightening plus the Signature Peel Series ($1,290, inside the $1,000 to $2,000 band) instead of RF alone.

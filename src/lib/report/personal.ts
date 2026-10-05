@@ -3,7 +3,7 @@
 // (Week 2) replaces these sentences, and these stay as its fallback (brief 8.3).
 
 import type { ConcernScore, ScanResult } from "@/lib/domain";
-import { joinLabels, type Plan } from "@/lib/plan/build";
+import { joinLabels, type Plan, type Stated } from "@/lib/plan/build";
 import { CONCERNS, type ConcernKey } from "@/lib/skin/concerns";
 
 /** Scores at or above this read as a strength. */
@@ -11,6 +11,8 @@ const STRONG = 85;
 
 const label = (k: ConcernKey) => CONCERNS[k].label;
 const sentenceCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** "Pores are", "Firmness is": plural labels end in a single s. */
+const isAre = (name: string) => (/[^s]s$/i.test(name) ? "are" : "is");
 
 /** The two highest-scoring concerns, named in the subhead so it describes this face, not every face. */
 export function subhead(result: ScanResult): string {
@@ -46,33 +48,39 @@ export function priorityMeaning(
   rank: number,
   concern: ConcernScore,
   previous: ConcernScore[],
-  stated: Map<ConcernKey, string>,
+  stated: Map<ConcernKey, Stated>,
   plan: Plan,
 ): string {
-  const parts: string[] = [
-    rank === 0
-      ? "Your biggest opportunity, and the area most likely to show visible change with treatment."
-      : CONCERNS[concern.key].describes,
-  ];
+  const asked = stated.get(concern.key);
+  const parts: string[] = [];
+  if (rank === 0) {
+    parts.push("Your lowest score, and the area most likely to show visible change with treatment.");
+    if (asked) parts.push(`You mentioned ${asked.phrase} too, so we're starting in the same place.`);
+  } else if (asked) {
+    parts.push(
+      asked.ownWords
+        ? `You told us about ${asked.phrase}, and your scan shows room to improve here.`
+        : `You mentioned ${asked.phrase}, and your scan agrees there's room here.`,
+    );
+  } else {
+    parts.push(CONCERNS[concern.key].describes);
+  }
   const where = mostVisibleArea(concern);
   if (where) parts.push(where);
-  const phrase = stated.get(concern.key);
-  if (phrase) parts.push(rank === 0 ? `You mentioned ${phrase}, so we're starting in the same place.` : `You mentioned ${phrase} too, and your scan agrees.`);
 
   const line = plan.recommended.lines.find((l) => l.covers.includes(concern.key));
-  if (line) {
-    const shared = previous.find((p) => line.covers.includes(p.key));
-    parts.push(
-      shared
-        ? `${line.treatment.name} works on this as well as ${label(shared.key).toLowerCase()}, so one plan covers both.`
-        : `${line.treatment.name} in your plan focuses here.`,
-    );
+  if (!line) {
+    parts.push("Your practitioner will talk you through the options at your consultation.");
+  } else if (previous.some((p) => line.covers.includes(p.key))) {
+    parts.push(`The same ${line.treatment.name} sessions work on this too.`);
+  } else {
+    parts.push(`${line.treatment.name} in your plan focuses here.`);
   }
   return parts.join(" ");
 }
 
 export interface Mention {
-  /** What the client asked about, in their words, e.g. "uneven tone". */
+  /** What the client asked about, in their words, e.g. "sun spots". */
   phrase: string;
   text: string;
 }
@@ -81,10 +89,10 @@ export interface Mention {
  * What the client asked about that isn't among the three priorities. Saying plainly what the scan
  * sees there builds more trust than leaving the question unanswered.
  */
-export function mentions(result: ScanResult, stated: Map<ConcernKey, string>, top: ConcernScore[], plan: Plan): Mention[] {
+export function mentions(result: ScanResult, stated: Map<ConcernKey, Stated>, top: ConcernScore[], plan: Plan): Mention[] {
   const groups = new Map<string, ConcernScore[]>();
   for (const c of result.concerns) {
-    const phrase = stated.get(c.key);
+    const phrase = stated.get(c.key)?.phrase;
     if (phrase) groups.set(phrase, [...(groups.get(phrase) ?? []), c]);
   }
   const out: Mention[] = [];
@@ -95,21 +103,18 @@ export function mentions(result: ScanResult, stated: Map<ConcernKey, string>, to
     const lowest = sorted[0];
     if (lowest.ui >= STRONG) {
       const names = sentenceCase(joinLabels(sorted.map((c) => c.key)));
-      out.push({
-        phrase,
-        text: `You mentioned ${phrase}. ${names} ${sorted.length === 1 ? "is" : "are"} among your stronger areas on this scan, so it isn't where we'd begin.`,
-      });
+      const verb = sorted.length > 1 ? "are" : isAre(names);
+      out.push({ phrase, text: `You mentioned ${phrase}. ${names} ${verb} among your stronger areas on this scan, so it isn't where we'd begin.` });
       continue;
     }
     const line = plan.recommended.lines.find((l) => l.covers.includes(lowest.key));
     // "You mentioned redness. It's close behind", not "Redness is close behind".
-    const name = label(lowest.key).toLowerCase() === phrase ? "It" : label(lowest.key);
-    const is = name === "It" ? "'s" : " is";
+    const subject = label(lowest.key).toLowerCase() === phrase ? "It's" : `${label(lowest.key)} ${isAre(label(lowest.key))}`;
     out.push({
       phrase,
       text: line
-        ? `You mentioned ${phrase}. ${name}${is} close behind your top three, and ${line.treatment.name} in your plan works on it too.`
-        : `You mentioned ${phrase}. ${name}${is} close behind your top three. We'll look at it together at your consultation.`,
+        ? `You mentioned ${phrase}. ${subject} close behind your top three, and ${line.treatment.name} in your plan works on it too.`
+        : `You mentioned ${phrase}. ${subject} close behind your top three. We'll look at it together at your consultation.`,
     });
   }
   return out;

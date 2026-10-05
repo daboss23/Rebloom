@@ -2,13 +2,16 @@
 // Pure and rules-based (brief 8.2 to 8.3, DECISIONS D-045). Every price and total is computed here, never
 // written by a model. The Claude-written report (Week 2) adds wording on top, never different numbers.
 
-import type { BudgetBand, Clinic, Intake, Product, ScanResult, Treatment } from "@/lib/domain";
+import type { BudgetBand, Clinic, ConcernScore, Intake, Product, ScanResult, Treatment } from "@/lib/domain";
 import { CONCERN_OPTIONS } from "@/lib/flow/intake-options";
 import { CONCERNS, INTAKE_TO_CONCERNS, type ConcernKey } from "@/lib/skin/concerns";
-import { priorities } from "@/lib/skin/normalize";
 
-/** A concern the client asked about gets this many extra points of need, on a 0 to 100 scale. */
+/** A concern the client ticked gets this many extra points of need, on a 0 to 100 scale. */
 export const STATED_BOOST = 12;
+/** A concern named in their own words counts for more: it's what they came in for. */
+export const OWN_WORDS_BOOST = 20;
+/** Asking about a concern only adds weight where the scan shows room to improve. */
+const ROOM_BELOW = 92;
 /** Concerns below this much need are left alone: the skin already looks good there. */
 const MIN_NEED = 10;
 /** Besides the three priorities, at most this many concerns the client asked about steer the plan. */
@@ -34,15 +37,20 @@ export const BUDGET_CAP_CENTS: Record<BudgetBand, number | null> = {
   "2000_plus": null,
 };
 
-/** Words in the client's own goal that point at a concern we measure, and how to say them back. */
-const GOAL_WORDS: [RegExp, ConcernKey, string][] = [
+/**
+ * Words in the client's own goal that point at a concern we measure, and how to say them back.
+ * A function phrase repeats what they actually wrote ("sun spots", "age spots").
+ */
+const GOAL_WORDS: [RegExp, ConcernKey, string | ((match: string) => string)][] = [
   [/dark\s*circle|under[\s-]?eye\s+dark|darkness\s+under/i, "dark_circle_v2", "dark circles"],
   [/eye\s*bags?|puff/i, "eye_bag", "puffiness under the eyes"],
   [/hollow|tear\s*trough/i, "tear_trough", "under-eye hollows"],
-  [/wrinkle|fine\s+lines?|crow'?s\s+feet|\blines\b/i, "wrinkle", "lines"],
+  [/wrinkle|fine\s+lines?|crow'?s\s+feet|\blines\b/i, "wrinkle", (m) => (/wrinkle/i.test(m) ? "wrinkles" : /crow/i.test(m) ? "crow's feet" : "fine lines")],
   [/\bpores?\b/i, "pore", "pores"],
   [/texture|smooth|rough|bump/i, "texture", "texture"],
-  [/uneven|\btone\b|pigment|sun\s*spots?|dark\s+(spots?|patches)|melasma|age\s*spots?/i, "age_spot", "uneven tone"],
+  [/(sun|age|dark|brown)\s*(spots?|patches)/i, "age_spot", (m) => m.toLowerCase().replace(/\s+/, " ").replace(/spot$/, "spots").replace(/patch$/, "patches")],
+  [/pigment|melasma/i, "age_spot", "pigmentation"],
+  [/uneven|\btone\b/i, "age_spot", "uneven tone"],
   [/redness|\bred\b|flush/i, "redness", "redness"],
   [/acne|breakout|blemish|pimple/i, "acne", "breakouts"],
   [/\bdry|dehydrat|hydrat|moistur/i, "moisture", "dryness"],
@@ -52,47 +60,74 @@ const GOAL_WORDS: [RegExp, ConcernKey, string][] = [
   [/eyelid|hooded/i, "droopy_upper_eyelid", "your eyelids"],
 ];
 
+export interface Stated {
+  /** How the client put it, to say back to them: "sun spots", "uneven tone". */
+  phrase: string;
+  /** True when they wrote it themselves, not just ticked a box. */
+  ownWords: boolean;
+}
+
 /**
- * Concerns the client asked about, ticked in the intake or named in their own words, each with
- * the words they used, so the report can say them back.
+ * Concerns the client asked about, in their own words or ticked in the intake. Their own words win:
+ * "sun spots" says more than the "uneven tone" box ticked beside it.
  */
-export function statedConcerns(intake: Intake | null): Map<ConcernKey, string> {
-  const stated = new Map<ConcernKey, string>();
+export function statedConcerns(intake: Intake | null): Map<ConcernKey, Stated> {
+  const stated = new Map<ConcernKey, Stated>();
   if (!intake) return stated;
+  const words = [intake.goalText, intake.concernsOther].filter(Boolean).join(" ");
+  for (const [re, key, phrase] of GOAL_WORDS) {
+    const m = words.match(re);
+    if (m && !stated.has(key)) stated.set(key, { phrase: typeof phrase === "string" ? phrase : phrase(m[0]), ownWords: true });
+  }
   for (const c of intake.concerns) {
     const phrase = (CONCERN_OPTIONS.find(([v]) => v === c)?.[1] ?? c).toLowerCase();
-    for (const k of INTAKE_TO_CONCERNS[c]) if (!stated.has(k)) stated.set(k, phrase);
+    for (const k of INTAKE_TO_CONCERNS[c]) if (!stated.has(k)) stated.set(k, { phrase, ownWords: false });
   }
-  const words = [intake.goalText, intake.concernsOther].filter(Boolean).join(" ");
-  for (const [re, key, phrase] of GOAL_WORDS) if (re.test(words) && !stated.has(key)) stated.set(key, phrase);
   return stated;
+}
+
+/** How much a concern calls for attention: the gap to 100, plus weight for asking about it where there's room. */
+export function needOf(c: Pick<ConcernScore, "key" | "ui">, stated: Map<ConcernKey, Stated>): number {
+  const s = stated.get(c.key);
+  const boost = s && c.ui < ROOM_BELOW ? (s.ownWords ? OWN_WORDS_BOOST : STATED_BOOST) : 0;
+  return 100 - c.ui + boost;
+}
+
+/** Lowest first. YouCam's display scores bunch together, so ties fall to the finer raw measurement. */
+const byScore = (a: ConcernScore, b: ConcernScore) => a.ui - b.ui || a.raw - b.raw;
+
+/**
+ * The report's three priorities. First, the lowest score: where the scan says to begin. Then the two that
+ * matter most once the client's own goals are weighed in, so the report answers what they came in for.
+ */
+export function rankPriorities(result: ScanResult, stated: Map<ConcernKey, Stated>, count = 3): ConcernScore[] {
+  const [lowest, ...rest] = [...result.concerns].sort(byScore);
+  if (!lowest) return [];
+  const next = rest.sort((a, b) => needOf(b, stated) - needOf(a, stated) || byScore(a, b));
+  return [lowest, ...next.slice(0, count - 1)];
 }
 
 export interface FocusConcern {
   key: ConcernKey;
   ui: number;
-  /** 100 minus the score, plus STATED_BOOST if the client asked about it. */
+  /** 100 minus the score, plus weight if the client asked about it (see needOf). */
   need: number;
   stated: boolean;
 }
 
 /**
- * The concerns the plan works on: the three priorities (lowest scores), plus the one the client asked
- * about that needs it most. Asking about a concern adds weight, so the plan leans toward their goal.
+ * The concerns the plan works on: the three priorities, plus the one the client asked about that
+ * needs it most. Asking about a concern adds weight, so the plan leans toward their goal.
  */
-export function focusConcerns(result: ScanResult, stated: Map<ConcernKey, string>): FocusConcern[] {
-  const all = result.concerns.map((c) => ({
-    key: c.key,
-    ui: c.ui,
-    stated: stated.has(c.key),
-    need: 100 - c.ui + (stated.has(c.key) ? STATED_BOOST : 0),
-  }));
-  const top = new Set(priorities(result, 3).map((c) => c.key));
-  const extra = all
-    .filter((c) => c.stated && !top.has(c.key) && c.need >= MIN_NEED)
+export function focusConcerns(result: ScanResult, stated: Map<ConcernKey, Stated>): FocusConcern[] {
+  const toFocus = (c: ConcernScore): FocusConcern => ({ key: c.key, ui: c.ui, stated: stated.has(c.key), need: needOf(c, stated) });
+  const top = rankPriorities(result, stated).map(toFocus);
+  const extra = result.concerns
+    .map(toFocus)
+    .filter((c) => c.stated && !top.some((t) => t.key === c.key) && c.ui < ROOM_BELOW)
     .sort((a, b) => b.need - a.need)
     .slice(0, EXTRA_STATED);
-  return [...all.filter((c) => top.has(c.key) && c.need >= MIN_NEED), ...extra].sort((a, b) => b.need - a.need || a.ui - b.ui);
+  return [...top.filter((c) => 100 - c.ui >= MIN_NEED || c.stated), ...extra].sort((a, b) => b.need - a.need || a.ui - b.ui);
 }
 
 export interface PlanLine {
@@ -337,7 +372,7 @@ export function buildPlan(input: PlanInput): Plan {
   );
   const shortenedForEvent = event !== null && treatments.some((t) => (maxSessions.get(t.id) ?? 0) < courseOf(t));
 
-  const lead = priorities(input.result, 1)[0]?.key;
+  const lead = rankPriorities(input.result, stated, 1)[0]?.key;
   const timeline = buildTimeline(recommend(focus, lead, maxSessions, treatments), input, start, event);
   const recommendedLines = timeline.lines;
   const recommended = option(recommendedLines);
