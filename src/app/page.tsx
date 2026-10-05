@@ -56,17 +56,17 @@ export default function RebloomHome() {
           </p>
           <ul className="mt-8 grid sm:grid-cols-2 gap-4">
             {SEED_CLINICS.map((clinic) => (
-              <li key={clinic.id} style={clinicThemeStyle(clinic.accentHex)}>
+              <li key={clinic.id} style={clinicThemeStyle(clinic.accentHex)} className="flex">
                 <Link
                   href={`/c/${clinic.slug}`}
-                  className="group block border border-mist hover:border-ink transition-colors duration-300 p-6"
+                  className="group flex flex-col w-full border border-mist hover:border-ink transition-colors duration-300 p-6"
                 >
                   <span aria-hidden className="block h-[2px] w-12 bg-accent mb-8" />
                   <ClinicWordmark clinic={clinic} />
                   <p className="t-caption mt-4">
                     {clinic.city} · Demo clinic
                   </p>
-                  <p className="mt-8 inline-flex items-center gap-2 text-[15px] text-ink">
+                  <p className="mt-auto pt-8 inline-flex items-center gap-2 text-[15px] text-ink">
                     Start a scan <IconArrowRight width={18} height={18} className="transition-transform duration-300 group-hover:translate-x-1" />
                   </p>
                 </Link>

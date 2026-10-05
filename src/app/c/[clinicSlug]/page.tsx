@@ -16,6 +16,7 @@ export default async function ScanStartPage({ params }: PageProps<"/c/[clinicSlu
         // eslint-disable-next-line @next/next/no-img-element -- static brand lockup
         <img src={clinic.lockupUrl} alt={clinic.name} width={240} height={110} className="mx-auto mb-14 w-[220px] h-auto" />
       )}
+      <span aria-hidden className="block h-[2px] w-12 bg-accent mb-5" />
       <Label>
         {clinic.name} · {clinic.city}
       </Label>
