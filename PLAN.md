@@ -1,172 +1,170 @@
-# Maison Verre · Week 1 Plan
+# Rebloom · Week 1 Plan
 
-Written October 5, 2026, after reading `BRIEF.md` in full, the four-page mockup in `/reference` and the three logo files in `/brand`.
+First written October 5, 2026 after reading `BRIEF.md`, the mockup in `/reference` and the logos in `/brand`. Updated the same day with Joshua's decisions.
+
+**Rebloom** is the platform. **Maison Verre** (Santa Monica) is the hero demo clinic that uses it. A second, smaller demo clinic, **Tidewater Skin Studio** (Charleston), proves the white-label works. Pitch line: *Everyone sells the scan. Rebloom sells the second visit.*
 
 This document has four parts:
 
-1. **Read this first:** things in the brief or mockup I think are wrong or risky, and the six decisions I need from you.
-2. **Week 1 technical plan** (October 6 to 12).
+1. **Decisions and risks:** what we settled, and what's still risky.
+2. **Week 1 technical plan.**
 3. **Folder structure.**
-4. **Accounts and keys:** step-by-step setup for YouCam, Anthropic, Supabase, Resend, Stripe and Vercel, plus how to get keys to me safely.
+4. **Accounts and keys:** step-by-step setup for YouCam, Supabase, Anthropic, Resend, Stripe and Vercel, plus how to get keys to me safely.
 
-If you only have ten minutes: read Part 1A, then do the checklist at the very end.
+Every decision, with its reasoning, is logged in `DECISIONS.md`. Progress is logged in `PROGRESS.md`.
 
 ---
 
-## Part 1 · Read this first
+## Part 1 · Decisions and risks
 
-### 1A. Six decisions I need from you
+### 1A. Settled on October 5 (details in `DECISIONS.md`)
 
-These are expensive to reverse once code depends on them. My recommendation comes first in each.
-
-| # | Decision | My recommendation | Why it matters |
-|---|---|---|---|
-| D1 | **Whose faces power the demo?** | Use **AI-generated synthetic portraits** for all seeded demo clients (including Amelia). Use your own face for live testing only, and never commit it to the repo. | The repo has to be public (MIT) or shared with Perfect Corp. Real faces plus skin scores in a public repo is exactly the biometric data our consent screen promises to protect. Stock photos are risky too: most stock licences forbid "sensitive use", which includes implying a real model has skin concerns. Synthetic faces sidestep both problems. |
-| D2 | **What happens to judges' faces?** | Live scans from the public page are **visible only to the browser that made them**, never to other visitors in the shared "Enter demo as Dana" dashboard. Live-scan data auto-deletes 30 days after creation. | As written, judge A scans their face, then judge B clicks "Enter demo as Dana" and sees judge A's photo, name and email. That is a privacy failure in a product whose pitch is trust. |
-| D3 | **How do we prove progress is real?** | Spend about 6 scans in Week 1 measuring YouCam's noise floor (same face, small changes in light), then set the "progress moment" and "stalled" thresholds from that data, not from the brief's guesses. Rescans must also match the first scan's light, not just pass a brightness check. | A previous entry in this same hackathon ("Same Light") published measurements showing that **lighting alone moved YouCam scores by up to 11 points** on unchanged skin. Our "progress moment" fires at 5 points. Without calibration, the engine will celebrate changes in the bathroom bulb. With calibration, it becomes our strongest credibility point in the README. |
-| D4 | **Buy a domain?** (about $10 to $20 a year) | **Yes.** | Resend will only email *your own* address until a domain is verified. Without one, judges never receive their report link, and magic-link login can't reach anyone either. |
-| D5 | **Extra YouCam units?** | Plan to buy the second 1,000 units ($179) around October 26, once we see real usage. Decide then, not now. | See the budget table in Part 2. After development, testing, fixtures and the video, roughly 30 live scans remain for judges. |
-| D6 | **Is "Maison Verre" the product or the clinic?** | Keep **Maison Verre as the product**, keep the Maison Verre Santa Monica clinic as the hero demo, and add a **second demo clinic** with its own name, accent colour and wordmark, plus a small "Powered by Maison Verre" line on client pages. | The brief uses one name for both. Judges then can't see that the product is white-label, which is a core part of the business case. A second clinic makes it obvious in five seconds. |
-
-### 1B. Conflicts between the brief and the mockup (I'll resolve these unless you object)
-
-1. **The final peel on "Mon Jan 4" breaks two of our own rules.** January 4, 2027 is a Monday, and the clinic is closed Mondays (open Tue to Sat). Worse, a peel 7 days before the wedding violates the brief's guardrail of "no aggressive treatments in the 2 weeks before an event". If the AI made this recommendation, our own code would reject it. **Fix:** Dana's final recommendation becomes a Hydrating Infusion Facial on Tuesday January 5 ("one gentle facial before the big day"). Same emotional beat, and it shows the guardrail working.
-2. **Budget doesn't match the bands.** The brief says Amelia picked "$1,000 to $2,000". The practitioner brief mockup shows "$800 to $1,200", which isn't one of the four intake options. **Fix:** use the band she actually picked.
-3. **The "Full analysis" list in the mockup names concerns YouCam doesn't measure.** "Fine lines" and "Evenness" don't exist in the SD concern list, and upper/lower eyelid firmness and under-eye hollows (`tear_trough`) are missing. **Fix:** the list shows exactly what the API returned, with our friendly names. Every number stays real.
-4. **"In her words" needs a question we don't ask.** The four intake questions are all tap-to-answer, so there is no quote to show. **Fix:** add one optional free-text question: "In your own words, what would you like to see change?" Also, the label becomes "In Amelia's words", because "her" won't be right for every client.
-5. **Age is shown but never collected.** The brief shows "34". **Fix:** add an optional age-range question to intake.
-6. **Two different totals.** The client report says "Estimated total $980" (treatments only). The practitioner brief says "Plan value $1,090" (treatments plus home care). Both are fine, but the labels must make the difference obvious. **Fix:** "Treatments $980" on the client report with home care listed separately; "Plan value incl. home care $1,090" on the brief.
-7. **Displayed score changes versus measured changes.** The brief says clients see `ui_score` but all progress maths uses `raw_score`. If the progress page shows "58 → 71, +13" in ui scores while a trigger fires (or doesn't) on raw scores, the two can disagree in front of the client. **Fix:** clients see ui scores and ui arithmetic (so the numbers add up), but a concern only gets a celebration or "+13" badge when its **raw** change clears the calibrated threshold. If the two ever point in opposite directions, the copy goes neutral ("holding steady"). The practitioner brief shows both.
-8. **"Skin age" should stay practitioner-only.** Telling a 34-year-old their skin looks 41 is the opposite of our voice rules ("never shame"). It stays in the practitioner brief only.
-9. **Our banned-word list collides with our own required copy.** "Diagnosis" is banned, but the mandatory footer says "not a medical diagnosis". "Treat [a condition]" is banned, but "treatment" is everywhere. **Fix:** the copy checker uses phrase patterns plus an allowlist for fixed legal text, rather than a blunt word match.
-10. **All the demo dates will be in the past or wrong by judging time.** Amelia's scan is October 5, her progress scan is December 28, and judges look in November. **Fix:** a "virtual clock" from Day 1. Every date in the app is computed from `clock.now()`, which in demo mode can be set or moved forward. This also makes the Week 3 time-travel control almost free. Retrofitting it later would mean touching every date calculation.
-11. **The data model is missing a few things the features need.** No clinic opening hours or booking slots (needed for "next available time"). No treatment metadata for the pre-event rule (downtime, minimum days before an event). No way to express "4 to 6 weeks" intervals or "monthly, ongoing" courses. No scan status for the async pipeline. I'll add these in the first migration.
-12. **YouCam API version.** The brief describes v2.0 with `mask_urls`. Other recent projects use **v2.1**, which returns a zip with `score_info.json` and per-concern mask images, and supports webhooks. I'll build to whatever the current official docs say on Day 4 and record the choice in `DECISIONS.md`.
-
-### 1C. Technical risks and how the plan handles them
-
-| Risk | What I'll do |
+| Topic | Decision |
 |---|---|
-| **Vercel's 4.5 MB upload limit** and function time limits | The phone uploads the photo straight to private Supabase Storage via a one-time signed URL; it never passes through our server. YouCam polling is driven by the browser (one quick status check per request), so no server function ever waits minutes. |
-| **Supabase's free plan pauses a project after about a week with no activity.** Judging runs for weeks after November 2. | A daily scheduled job pings the database. Safer option: upgrade to Supabase Pro ($25) for the judging month only. I'll remind you on November 1. |
-| **Supabase's built-in email only reaches your own team's addresses** | Magic-link login sends through Resend instead (needs D4). The "Enter demo as Dana" button doesn't use email at all, so judges are never blocked. |
-| **The camera gate could frustrate real people.** Seven checks at once on an older iPhone in a dim bathroom. | Thresholds live in one config file, checks run about 5 times a second rather than every frame, and after 20 seconds of not passing we offer "Upload a photo instead". |
-| **Cameras don't work inside Instagram and Gmail's in-app browsers.** That's how many people open links. | Detect in-app browsers and show "Open in Safari" or "Open in Chrome" with a copy-link button. Upload remains available. |
-| **This cloud workspace can't reach YouCam, Supabase, Stripe, Resend or Vercel** (I tested it). It can reach npm and Anthropic. | Part 4, step 7: you allow a short list of domains in this environment's settings. Live phone testing always happens on a real Vercel deployment anyway, because cameras need HTTPS. |
-| **Originality.** Last round's losers were mostly scan apps and progress trackers, and "Same Light" already did lighting checks. | Our first ten seconds, on the landing page and in the video, show the **clinic's rebook queue and retained revenue**, not the scan. The scan is the input; the second visit is the product. |
-| **Health data.** Screening asks about pregnancy and isotretinoin, which counts as consumer health data under Washington's My Health My Data Act, on top of biometric rules. | The consent screen names screening answers explicitly, and deletion removes them. The README's known limitations section says this is a demo, not HIPAA-ready (the Supabase free plan doesn't offer the agreement that would require). |
-| **The YouCam "Agent Skills" package** is in a repo literally named `youcam-skills-test`. | I'll read its contents and use it as reference only. No blind install of third-party code. |
+| Naming | Platform is **Rebloom** (text wordmark until a logo arrives). Client-facing scan and report pages show only the clinic's brand, with "Powered by Rebloom" in the footer. Landing page, dashboard, README and Devpost use Rebloom. |
+| Lighting and progress | Measure the noise floor first: 6 calibration scans on 4 concerns (texture, age_spot, pore, redness) at 9 units each. Rescans **guide** the client toward scan 01's light but never block. Out-of-tolerance light still scans, the comparison is marked **lower confidence**, and a low-confidence comparison **never** fires a progress moment. |
+| Privacy | Every browser gets a private **sandbox**. A judge's live scan, and the Dana dashboard they see, live in that sandbox. They appear as a new lead next to the demo clients; nobody else sees them. Sandboxes auto-delete after 30 days. |
+| Demo clients | **5**, all with AI-generated portraits and full scans: a new lead who hasn't booked, a booked first consult, a mid-course client with a progress moment, a stalled at-risk client, and Amelia with her course complete. Historical monthly numbers are seeded so the Insights charts have shape. |
+| Mockup fixes | All accepted. Amelia's final step is a gentle facial on **Tuesday January 5**. Budget band $1,000 to $2,000. "Fine lines" and "Evenness" replaced with real YouCam concerns. Intake gains an optional free-text goal question and an optional age range. |
+| Email | No domain until Week 4. Email works to Joshua's own address for now. The report link is always shown on screen right after a scan, so nothing depends on email. |
+| Second clinic | Small: name, colour, wordmark, city. Same menu. Switchable from the landing page. |
+| Uploads | Photos are resized in the browser and uploaded straight to storage, never through our server. |
+| Keep-alive | A daily scheduled job keeps Supabase from pausing during judging. |
+| Units | Joshua will probably top up before judging, so limits exist as a safety valve, not a ration. |
+| Time | A virtual clock from day one. |
+
+### 1B. Brief and mockup fixes we're applying
+
+1. Amelia's final peel on Monday January 4 becomes a Hydrating Infusion Facial on **Tuesday January 5** (the clinic is closed Mondays, and a peel 7 days before the wedding would break the two-week rule).
+2. Amelia's budget shows **$1,000 to $2,000**, one of the real intake bands.
+3. "Full analysis" shows exactly the concerns YouCam returned. No "Fine lines" or "Evenness".
+4. Intake adds two optional questions: "In your own words, what would you like to change?" and an age range. The practitioner brief shows the quote and the age.
+5. Client report says "Treatments $980" with home care listed separately; the practitioner brief says "Plan value incl. home care $1,090".
+6. Clients see `ui_score` numbers. A concern only gets a celebration or a change badge when its **raw** change clears the calibrated threshold **and** the comparison is high-confidence. If ui and raw disagree in direction, the copy goes neutral.
+7. Skin age is practitioner-only.
+8. The copy checker uses phrase patterns plus an allowlist, so the required "not a medical diagnosis" footer and the word "treatment" don't trip it.
+9. The data model adds clinic hours and booking slots, treatment downtime and minimum days before an event, interval ranges, ongoing courses, scan status, and sandbox ownership.
+
+### 1C. Risks still open
+
+| Risk | How we handle it |
+|---|---|
+| **YouCam API version and exact response shape.** The brief describes v2.0 with `mask_urls`; recent projects use v2.1, which returns a zip with `score_info.json` and mask images. I can't read the docs from my workspace until the network is opened. | The fixture provider and the normalised score format are designed so either version slots in behind the same interface. The live client gets written against the official docs once I can read them. |
+| **Vercel limits** (4.5 MB uploads, function time limits) | Browser resize plus direct upload. Browser-driven polling, one quick check per request. |
+| **Supabase pausing** | Daily keep-alive job, plus a reminder on November 1 to consider Pro ($25) for the judging month. |
+| **Supabase's built-in email** only reaches your own team | Magic links send through Resend once the domain exists. "Enter demo as Dana" never needs email. |
+| **Camera gate frustration** | Thresholds in one config file. Checks about 5 times a second. "Upload a photo instead" appears after 20 seconds. |
+| **In-app browsers** (Instagram, Gmail) block cameras | Detected, with an "Open in Safari / Chrome" prompt and copy-link button. Upload still works. |
+| **My workspace can't reach** YouCam, Supabase, Stripe, Resend, Vercel or YouCam's docs | You're opening the network now (Part 4, Step 7). Until then I build everything that runs with no keys. |
+| **Originality** | Landing page and video lead with the clinic's rebook queue and retained revenue, not the scan. |
+| **Health data** (pregnancy, isotretinoin) | Named explicitly in consent, removed on deletion, called out in README limitations (demo, not HIPAA-ready). |
+| **Demo follow-up scans** | Scanning the same portrait twice returns identical scores, so later scans for demo clients use authored scores, clearly labelled as demo data. First scans are real API results. |
 
 ---
 
-## Part 2 · Week 1 technical plan (October 6 to 12)
+## Part 2 · Week 1 technical plan
 
-### Goal (from the brief)
+### Goal
 
-A real phone completes consent → intake → capture → live analysis, and scores plus masks are stored. Fixture mode works with no API calls.
+A real phone completes consent → intake → capture → live analysis, and scores plus masks are stored. Fixture mode works with no API calls. **New:** the whole client flow runs locally with no keys at all.
 
-### Stack (versions checked on npm today)
+### Two modes, chosen automatically
+
+| | No keys (local or preview) | Keys present (production) |
+|---|---|---|
+| Database | Local JSON file store in `.data/` | Supabase Postgres |
+| Photo storage | Local files in `.data/uploads/` behind the same signed-URL flow | Supabase Storage, private bucket |
+| Skin analysis | Fixture provider | Fixture or live YouCam, per `YOUCAM_MODE` |
+
+Both stores sit behind one `Store` interface, so pages and API routes don't know which one they're talking to. The fixture provider produces realistic scores and **masks drawn from the client's own face landmarks** (captured by MediaPipe at capture time), so overlays line up on any face. Results are labelled "Demo analysis".
+
+### Stack (versions checked on npm on October 5)
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Framework | Next.js 16.3 (App Router), React 19.3, TypeScript strict | Server Components by default. Client components only where the browser is needed (camera, intake steps). |
-| Styling | Tailwind CSS 4.3 | Brand tokens defined once in `globals.css` via `@theme`, so `bg-porcelain`, `text-ink` and so on work everywhere. No component library. |
-| Fonts | Cormorant Garamond 300 to 500, Inter 300 to 500 | Via `next/font/google`, self-hosted at build time, so no layout shift. |
-| Database, auth, storage | Supabase (`@supabase/supabase-js` 2.117, `@supabase/ssr` 0.12) | SQL migrations in the repo. Row Level Security on every table. Private `scans` bucket. |
-| Face detection | `@mediapipe/tasks-vision` 1.0 (Face Landmarker) | Model and WASM files self-hosted in `/public/mediapipe`, so we don't depend on Google's CDN. |
-| Validation | Zod 4 | Env vars, API payloads, YouCam responses, and later the Claude report schema. |
-| Skin analysis | YouCam API, server-side only | Behind a `SkinAnalysisProvider` interface with two implementations: `live` and `fixture`. |
-| Tests | Vitest 5 for logic, Playwright 1.63 for flows | Playwright runs Chromium with a **fake camera fed by a face video**, so the capture gate is tested end to end without a phone. |
+| Framework | Next.js 16.3 (App Router), React 19.3, TypeScript strict | Server Components by default. |
+| Styling | Tailwind CSS 4.3 | Brand tokens defined once in `globals.css` via `@theme`. No component library. |
+| Fonts | Cormorant Garamond, Inter | `next/font/google`, self-hosted at build time. |
+| Database, auth, storage | Supabase (`@supabase/supabase-js`, `@supabase/ssr`) | Wired in once keys are in. |
+| Face detection | `@mediapipe/tasks-vision` 1.0 (Face Landmarker) | Model and WASM self-hosted in `/public/mediapipe`. |
+| Validation | Zod 4 | Env, API payloads, YouCam responses, report schema. |
+| Image processing (server) | sharp | Fixture masks, logo and favicon exports. |
+| Tests | Vitest for logic, Playwright for flows | |
 | Package manager | pnpm | |
 
-Week 2+ (installed when needed): `@anthropic-ai/sdk` with model `claude-sonnet-5-5` and native structured outputs (JSON schema enforced by the API, then re-validated with Zod), `resend`, `stripe`, `recharts`.
+Week 2+: `@anthropic-ai/sdk` with `claude-sonnet-5-5` and native structured outputs, `resend`, `stripe`, `recharts`.
 
-### How a scan flows through the system
+### How a scan flows
 
 ```
 Phone (browser)                     Our server (Vercel)                 Outside services
 ─────────────────                   ───────────────────                 ────────────────
 1. Quality gate passes, capture
-   (portrait crop, JPEG, short
-   side ≥ 1080 px)
+   (portrait crop, JPEG, resized
+   in the browser, ~1080 px short side)
 2. POST /api/scans  ───────────────► create scan row (status: uploading)
                     ◄─────────────── signed upload URL
-3. PUT photo ───────────────────────────────────────────────────────────► Supabase Storage (private)
-4. POST /api/scans/:id/analyze ────► rate limit + unit budget check
-                                     fixture mode: copy a fixture, done
-                                     live mode: create file ─────────────► YouCam: file + pre-signed URL
-                                                upload bytes ────────────► YouCam storage
-                                                start task ──────────────► YouCam: task_id
+3. PUT photo ───────────────────────────────────────────────────────────► Storage (private)
+4. POST /api/scans/:id/analyze ────► limits check (safety valve, not a ration)
+                                     fixture: generate results, done
+                                     live: create file, upload, start task ► YouCam
                                      log units in api_usage
-5. Every 2 to 5 s (backing off):
-   GET /api/scans/:id/status ──────► one YouCam status check ────────────► YouCam
-                                     on success: download scores + masks
-                                     into our storage immediately
-                                     (YouCam deletes them after 24 h),
-                                     normalise, status: complete
-                    ◄─────────────── status + friendly progress stage
-6. Redirect to processing → (Week 2) report
+5. Every 2 to 5 s, backing off:
+   GET /api/scans/:id/status ──────► one status check ───────────────────► YouCam
+                                     on success: copy scores + masks into
+                                     our storage at once (YouCam deletes
+                                     after 24 h), normalise, complete
+                    ◄─────────────── status + honest progress stage
+6. Report link shown on screen, and emailed when email is configured
 ```
 
-Key properties:
-
-- **No secrets in the browser.** Server-only modules are marked `server-only`, so a build fails if one is ever imported into client code. Env vars are validated at startup, and the app refuses to boot with a live Stripe key.
-- **Idempotent and race-safe.** If two status polls arrive at once, a conditional database update ensures results are only processed once.
-- **Honest progress.** The processing screen shows real stages from the server ("Reading texture", "Mapping tone"), never a fake percentage.
-- **Friendly errors.** Each YouCam error code (`error_src_face_too_small`, `error_lighting_dark` and so on) maps to one calm retry instruction.
-- **Budget protection.** Live scans are limited to 3 per IP per day (IPs stored hashed, never raw) plus a **global daily cap**. When either is hit, or remaining units drop below a reserve, the app switches that scan to fixture mode and labels the result "Demo analysis".
-- **Mask alignment.** We store the exact image bytes sent to YouCam and its dimensions, so mask overlays line up perfectly in Week 2.
+Properties: no secrets in the browser (`server-only` modules, validated env, refuses `sk_live_` keys); race-safe finalisation; honest progress stages; one calm retry instruction per YouCam error code; IPs stored hashed; masks stored with the exact image and dimensions sent.
 
 ### The capture quality gate
 
-All checks are pure functions in `src/lib/capture/`, unit-tested with recorded landmark data:
+Pure functions in `src/lib/capture/`, unit-tested:
 
 | Check | Method | Starting threshold |
 |---|---|---|
 | Exactly one face | Face Landmarker result count | 1 |
-| Face size | Landmark bounding box ÷ frame width | ≥ 62% |
-| Centred | Face centre offset from frame centre | within 8% |
-| Frontal | Yaw and pitch from the facial transformation matrix | within ±10° |
-| Light | Mean luminance of the face region, plus clipped-highlight share | in range; < 2% clipped |
+| Face size | Landmark box width ÷ frame width | ≥ 62% |
+| Centred | Face centre offset | within 8% of frame |
+| Frontal | Yaw and pitch from the transformation matrix | within ±10° |
+| Light | Face-region mean luminance and clipped share | in range, < 2% clipped |
 | Even light | Left versus right cheek luminance | difference < 15% |
-| Sharp | Variance of Laplacian on the face region (downscaled) | above a calibrated value |
-| Eyes open | `eyeBlinkLeft` / `eyeBlinkRight` blendshapes | < 0.4 |
-| **Rescan only:** same light as scan 01 | Face-region brightness and colour temperature versus the stored baseline | within a calibrated tolerance |
+| Sharp | Variance of Laplacian, face region | above a calibrated value |
+| Eyes open | Blink blendshapes | < 0.4 |
+| **Rescan:** same light as scan 01 | Face brightness and warmth versus the stored baseline | **Guides only, never blocks.** Outside tolerance → comparison marked lower confidence. |
 
-One instruction at a time, in priority order ("Move a little closer", "Face the light", "Hold still"). When everything passes, a one-second hold auto-captures. Every metric is saved with the scan. Uploaded photos go through the same checks on a still image before they're accepted.
+One instruction at a time. One-second hold auto-captures. Every metric is saved with the scan. Uploaded photos go through the same checks on the still image.
 
-### Day by day
+### Order of work
 
-| Day | Work | You'll be able to see |
-|---|---|---|
-| **Tue Oct 6** | Scaffold the app. Brand tokens, fonts, favicons generated from the monogram, base components (buttons, chips, labels, score bar, hairline sections, wordmark header). A private `/dev/components` page showing every component. `DECISIONS.md`, `PROGRESS.md`, `.env.example`, README skeleton, MIT licence. First Vercel deploy. | A live URL with the component gallery. Check fonts and colours on your phone. |
-| **Wed Oct 7** | Database: first migration (all tables from brief section 5 plus the gaps in 1B.11), RLS policies, private storage bucket, virtual clock, seed script for the clinic, staff and menu. | Clinic and menu data in the Supabase dashboard. |
-| **Thu Oct 8** | Client flow screens: `/c/maison-verre` start page, consent (stores a versioned consent record), intake one question per screen (progress saved server-side, so a refresh doesn't lose answers). | Walk through start → consent → intake on your phone. |
-| **Fri Oct 9** | Capture: camera, face guide, the full quality gate, instruction copy, auto-capture, upload fallback, in-app browser detection. Playwright fake-camera test. Read the current YouCam docs end to end. | The gate working live on your phone (no analysis yet). |
-| **Sat Oct 10** | YouCam integration: provider interface, live client, fixture provider, the start and status routes, mask download, normalisation, `api_usage` logging, error mapping, rate limit and global cap. Processing screen. Provisional fixtures built from the documented response shape until real ones exist. | Full flow in fixture mode with zero API calls. |
-| **Sun Oct 11** | **First live scans with you, on your phone.** Run the noise-floor calibration (D3). Capture the first real fixtures from synthetic portraits (D1). | Real scores and masks stored in the database. |
-| **Mon Oct 12** | Fix whatever the phone test found. Tests green. `PROGRESS.md` written. Week 2 starts from a clean base. | Week 1 "done when" met. |
+**Now, no keys needed (this session):**
+1. Scaffold, brand tokens, fonts, logo exports, favicons, base components, component gallery.
+2. Virtual clock, sandbox cookie, `Store` interface with the local file store, seed data module (both clinics, menu, products).
+3. Scan start page, consent (versioned consent record), intake (one question per screen, saved as you go).
+4. Capture: camera, face guide, full quality gate, auto-capture, upload fallback, in-app browser detection, browser resize.
+5. Scan pipeline: API routes, fixture provider with landmark-drawn masks, processing screen, an interim results page at `/r/[token]` with the link shown on screen.
+6. Tests, `PROGRESS.md`, pull request.
 
-**Critical path:** the YouCam key and units. If they aren't live by Saturday October 10, everything still gets built and tested in fixture mode, and live testing moves to the first day they are.
+**After "keys are in":**
+7. Supabase migrations, RLS, private bucket, seed, keep-alive job.
+8. Live YouCam client against the official docs, `api_usage` logging, limits.
+9. Live scans with Joshua on his phone, noise-floor calibration, demo-client portraits scanned.
 
-### YouCam unit budget (1,000 units, about 16 per full SD scan)
+### YouCam unit budget (1,000 units)
 
 | Use | Scans | Units |
 |---|---|---|
-| Integration testing | 5 | ~80 |
-| Noise-floor calibration (D3) | 6 | ~96 |
-| Fixtures for seeded clients (about 8 distinct synthetic faces) | 8 | ~128 |
-| Your real-phone testing, Weeks 1 to 4 | 10 | ~160 |
-| Demo video takes | 4 | ~64 |
-| **Left for judges** | **~29** | **~470** |
+| Integration testing | 5 × 16 | ~80 |
+| Noise-floor calibration (4 concerns) | 6 × 9 | 54 |
+| Demo clients' first scans | 5 × 16 | 80 |
+| Joshua's phone testing, Weeks 1 to 4 | 10 × 16 | ~160 |
+| Demo video takes | 4 × 16 | ~64 |
+| **Left for judges before any top-up** | **~35** | **~560** |
 
-Failed tasks don't consume units. The dashboard (demo mode) shows units remaining. One cheaper option if we need it: requesting 12 concerns instead of 15 or 16 drops a scan to 14 units. I'd rather keep the full analysis and buy units if needed (D5).
-
-### What you do in Week 1
-
-- Before Tuesday: everything in Part 4 marked "Week 1".
-- Thursday, Friday and Sunday: about 15 minutes each on your phone, following a test script I'll put in `PROGRESS.md`.
-- Sunday: about 30 minutes for the live scan and calibration session (good window light, no makeup ideally).
+Safety valves (all configurable): 5 live scans per browser per day, a generous global daily cap, and a reserve floor. Hitting any of them runs the scan in fixture mode, labelled "Demo analysis", so nobody hits a dead end.
 
 ---
 
@@ -175,66 +173,54 @@ Failed tasks don't consume units. The dashboard (demo mode) shows units remainin
 ```
 maison-verre/
 ├── BRIEF.md · PLAN.md · DECISIONS.md · PROGRESS.md · README.md · LICENSE
-├── .env.example                 every variable, with a one-line explanation each
+├── .env.example                 every variable, explained
 ├── brand/                       original logo files (never edited)
 ├── reference/                   mockup PDF
-├── fixtures/
-│   └── youcam/<fixture-id>/     score JSON, mask PNGs, image, meta.json (synthetic faces only)
-├── supabase/
-│   ├── migrations/              numbered SQL files: tables, RLS, storage policies
-│   └── seed/                    demo clinic, staff, menu (Week 3: 16 demo clients)
-├── scripts/                     seed, apply-migrations, capture-fixture, make-favicons, check-copy
+├── fixtures/                    saved YouCam responses (synthetic faces only)
+├── supabase/migrations/         numbered SQL: tables, RLS, storage policies (after keys)
+├── scripts/                     make-brand-assets, seed, capture-fixture, check-copy
 ├── public/
 │   ├── brand/                   web-optimised logo exports
 │   └── mediapipe/               face_landmarker.task + WASM, self-hosted
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx                         /   product landing (Week 4)
-│   │   ├── c/[clinicSlug]/                  client flow
-│   │   │   ├── page.tsx                     scan start
-│   │   │   ├── consent/ intake/ capture/ processing/
-│   │   ├── r/[token]/                       living report (Week 2), rescan/, book/
+│   │   ├── page.tsx                         /   Rebloom landing (Week 4; placeholder now)
+│   │   ├── c/[clinicSlug]/                  client flow: start, consent, intake, capture, processing
+│   │   ├── r/[token]/                       living report (interim now, full in Week 2)
 │   │   ├── dashboard/                       clinic side (Week 3)
 │   │   ├── privacy/ terms/
-│   │   ├── api/
-│   │   │   ├── scans/route.ts               create scan + signed upload URL
-│   │   │   ├── scans/[id]/analyze/route.ts  start analysis (live or fixture)
-│   │   │   ├── scans/[id]/status/route.ts   one poll step, finalise on success
-│   │   │   └── cron/                        keep-alive (Week 1), rebook engine (Week 3)
-│   │   ├── dev/components/                  component gallery (hidden in production)
-│   │   ├── layout.tsx · globals.css (brand tokens) · icon.png
+│   │   ├── api/scans/…                      create, analyze, status, upload (local mode), image
+│   │   ├── api/cron/                        keep-alive, rebook engine
+│   │   └── dev/components/                  component gallery (hidden in production)
 │   ├── components/
-│   │   ├── ui/                  Button, Chip, Label, ScoreBar, Hairline, Section, Wordmark, Field
-│   │   ├── flow/                StepShell, StepProgress, consent and intake steps
-│   │   └── capture/             CameraView, FaceGuide, GateInstruction, UploadFallback
-│   ├── lib/
-│   │   ├── env.ts               validated env vars, split into server and public
-│   │   ├── clock.ts             virtual clock (demo time travel)
-│   │   ├── supabase/            browser, server and admin clients
-│   │   ├── youcam/              types, live client, fixture provider, errors, unit costs
-│   │   ├── skin/                concern registry (API key → friendly name, menu tags), normalise
-│   │   ├── capture/             gate checks: size, pose, luminance, sharpness, eyes, light match
-│   │   ├── limits/              per-IP rate limit, global daily cap, unit reserve
-│   │   ├── copy/                banned-word and em-dash checker
-│   │   └── report/ email/ stripe/ engine/   (Weeks 2 and 3)
-│   └── types/database.ts        generated from the Supabase schema
-└── tests/
-    ├── unit/                    gate maths, normalisation, unit costs, limits, copy checker
-    └── e2e/                     Playwright with fake camera, fixture mode
+│   │   ├── ui/                  Button, Chip, Label, ScoreBar, Hairline, Section, Field, wordmarks
+│   │   ├── flow/                step shell, consent, intake
+│   │   └── capture/             camera, face guide, instruction, upload fallback
+│   ├── data/                    seed data: clinics, menu, products, demo clients
+│   └── lib/
+│       ├── env.ts · clock.ts · sandbox.ts · ids.ts
+│       ├── store/               Store interface, local file store, Supabase store
+│       ├── youcam/              types, unit costs, live client, fixture provider
+│       ├── skin/                concern registry, normalise, fixture masks
+│       ├── capture/             gate checks and thresholds
+│       ├── limits/              per-browser limit, daily cap, reserve
+│       ├── copy/                banned-word and em-dash checker
+│       └── brand.ts             clinic theming (accent and its readable text colour)
+└── tests/unit/ · tests/e2e/
 ```
 
-Working rules: I build on a feature branch and Vercel gives every push its own preview URL. `main` is production. I'll write a short note in `PROGRESS.md` at each merge.
+Working rules: I build on `claude/lucid-fermat-nsxpry`; every push gets a preview on the `skin-hackathon` Vercel project. `main` is production. Each working chunk becomes a pull request with a plain-English summary.
 
 ---
 
 ## Part 4 · Accounts and keys, step by step
 
-### Ground rules for keys
+### Ground rules
 
-- **Never paste a key into this chat.** Keys go in exactly two places: Vercel's settings (for the live app) and this Claude environment's settings (only the few I need to build). Step 7 explains both.
-- Save every key in a password manager (1Password, Bitwarden or Apple Passwords) as you create it. Several services only show a key once.
-- "Secret" keys are like the master password to that service. "Public" or "publishable" keys are designed to be visible in a browser and are fine.
-- Screens get redesigned. If a button is named slightly differently from what I describe, look for the closest match. If you're stuck, tell me what you see.
+- **Never paste a key into this chat.** Keys go in Vercel's settings (for the live app) and this Claude environment's settings (only what I need to build). Step 7 explains both.
+- Save every key in a password manager as you create it. Several services only show a key once.
+- "Secret" keys are master passwords. "Public" or "publishable" keys are meant to be visible in a browser.
+- If a button is named slightly differently from what I describe, pick the closest match, or tell me what you see.
 
 ### What you need, and when
 
@@ -248,120 +234,92 @@ Working rules: I build on a feature branch and Vercel gives every push its own p
 | `YOUCAM_API_KEY` | YouCam | **Yes** | Vercel only | Week 1 |
 | `YOUCAM_MODE` | You choose | No | Vercel | Week 1 |
 | `APP_URL`, `DEMO_MODE` | You choose | No | Vercel | Week 1 |
-| `CRON_SECRET`, `IP_HASH_SALT` | I'll generate | **Yes** | Vercel | Week 1 |
+| `CRON_SECRET`, `IP_HASH_SALT` | Generated | **Yes** | Vercel | Week 1 |
 | `ANTHROPIC_API_KEY` | Anthropic | **Yes** | Vercel + Claude env | Week 2 |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Resend | **Yes** / No | Vercel | Week 2 |
 | `STRIPE_SECRET_KEY` (sk_test_…) | Stripe | **Yes** | Vercel | Week 2 |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (pk_test_…) | Stripe | No | Vercel | Week 2 |
 | `STRIPE_WEBHOOK_SECRET` (whsec_…) | Stripe | **Yes** | Vercel | Week 2, after first deploy |
+| `DEMO_TODAY` (optional) | You choose | No | Vercel | Week 4 (video) |
 
-`EMAIL_FROM`, `CRON_SECRET`, `IP_HASH_SALT`, `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` are additions to the brief's list. I'll document them in `.env.example`.
+The YouCam key stays out of my build environment on purpose: every live call comes from the deployed app, where limits and unit logging live.
 
-The YouCam key deliberately stays out of my build environment. Every live call should come from the deployed app, where the rate limits and unit logging live, so nothing I do while building can quietly spend units.
+### Step 1 · YouCam (Perfect Corp) · Week 1, first
 
----
+1. Confirm you're registered for the hackathon on Devpost.
+2. Follow the hackathon page's instructions for claiming the **1,000 free units**, using the same email as your YouCam account.
+3. Sign up for the YouCam API console (linked from the hackathon page; docs at `yce.perfectcorp.com`).
+4. Check the console shows 1,000 units.
+5. Create an **API key** named `maison-verre` and save it.
+6. If the console shows a **Client ID and Client Secret** instead of a single key, tell me. That's the older login method.
 
-### Step 1 · YouCam (Perfect Corp) · Week 1, do this first
+### Step 2 · Supabase · Week 1
 
-1. Make sure you've registered for the hackathon on Devpost (the "Join hackathon" button on the hackathon page).
-2. Follow the hackathon page's instructions for claiming the **1,000 free units**. Use the same email you'll use for the YouCam account.
-3. Sign up for the YouCam API console (linked from the hackathon page and the docs at `yce.perfectcorp.com`).
-4. In the console, check your unit balance shows 1,000.
-5. Find the **API Key** section and create a new key. Name it `maison-verre`. Copy it into your password manager.
-6. Note what the console shows: if you see a single **API key**, that's the current (v2) login method and all is well. If you see a **Client ID and Client Secret** instead, tell me. That's an older method and I'll adjust.
-7. Don't put the key anywhere yet. It goes into Vercel in Step 6.
+1. **supabase.com** → **Start your project** → sign in with GitHub (daboss23).
+2. **New project**: your personal organisation on the **Free** plan; name `maison-verre`; **Generate a password** and save it; region **East US (North Virginia)** (next to Vercel's servers).
+3. Wait about two minutes.
+4. **Project Settings → API Keys** (or **Data API**). Save:
+   - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`. The `abcd1234` part of `https://abcd1234.supabase.co` → `SUPABASE_PROJECT_REF`.
+   - **Publishable** (or **anon public**) key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+   - **Secret** (or **service_role**) key → `SUPABASE_SERVICE_ROLE_KEY`.
+5. Avatar → **Account preferences → Access Tokens → Generate new token**, named `claude-migrations` → `SUPABASE_ACCESS_TOKEN`. Claude environment only; revoke after the hackathon.
+6. Don't create tables or buckets yourself. Migrations do that.
 
-### Step 2 · Supabase (database, login, photo storage) · Week 1
+### Step 3 · Anthropic · Week 2, fine to do now
 
-1. Go to **supabase.com** → **Start your project** → sign in with your GitHub account (daboss23).
-2. Click **New project**.
-   - Organisation: your personal one, on the **Free** plan.
-   - Name: `maison-verre`.
-   - Database password: click **Generate a password**, then save it in your password manager.
-   - Region: **East US (North Virginia)**. This puts the database next to Vercel's servers, which makes every page faster. Your clients being in California doesn't matter here.
-3. Click **Create new project** and wait about two minutes.
-4. Open **Project Settings** (gear icon) → **API Keys** (it may be called **Data API**). Copy three things:
-   - **Project URL** (looks like `https://abcd1234.supabase.co`) → this is `NEXT_PUBLIC_SUPABASE_URL`. The `abcd1234` part is your **project ref** → `SUPABASE_PROJECT_REF`.
-   - The **publishable** key (or **anon public** key, if that's what you see) → `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-   - The **secret** key (or **service_role** key) → `SUPABASE_SERVICE_ROLE_KEY`. Treat this like a master password.
-5. Click your avatar (top right) → **Account preferences** → **Access Tokens** → **Generate new token**. Name it `claude-migrations`. Copy it → `SUPABASE_ACCESS_TOKEN`. This lets me create tables from my workspace. It's powerful, so it goes in the Claude environment only, never in Vercel, and you can revoke it after the hackathon.
-6. **Don't create any tables or storage buckets yourself.** My migration scripts do that, so the setup is repeatable and lives in the code.
+1. **console.anthropic.com** → sign up.
+2. **Settings → Billing**: add **$20** (a report costs roughly 5 to 10 cents).
+3. **Settings → Limits**: monthly limit **$50**.
+4. **API Keys → Create Key** named `maison-verre` → `ANTHROPIC_API_KEY`.
 
-### Step 3 · Anthropic (writes the reports) · Week 2, fine to do now
+### Step 4 · Resend · Week 2 (domain in Week 4)
 
-1. Go to **console.anthropic.com** and sign up.
-2. **Settings → Billing**: add **$20** of credit. One report costs roughly 5 to 10 cents, so $20 covers development, testing and judging with room to spare.
-3. **Settings → Limits**: set a monthly spend limit of **$50**, so a bug can never run up a bill.
-4. **API Keys → Create Key**. Name it `maison-verre`. Copy it → `ANTHROPIC_API_KEY`.
+1. **resend.com** → sign up **with the email address you want test emails to arrive at**. Until a domain is verified, Resend only delivers to that address.
+2. **API Keys → Create API Key**, permission **Sending access** → `RESEND_API_KEY`.
+3. Until the domain exists, `EMAIL_FROM` is `Rebloom <onboarding@resend.dev>`.
+4. **Week 4:** buy the domain (Vercel → Domains), add it in Resend → **Domains**, copy the DNS records into Vercel, verify, then switch `EMAIL_FROM`.
 
-### Step 4 · Resend (emails) · Week 2, but buy the domain now (D4)
+### Step 5 · Stripe · Week 2, fine to do now
 
-1. **Buy a domain** if you agree with D4. The simplest route is **Vercel → Domains → Buy** (after Step 6), because Vercel then manages its settings for you. Pick something short and brand-safe, for example a `.app` or `.com` with "maisonverre" in it.
-2. Go to **resend.com** and sign up.
-3. **Domains → Add Domain**. Enter your domain (Resend suggests a subdomain like `mail.yourdomain.com`; accept that). Resend shows a handful of DNS records.
-4. Add those records in Vercel: **Domains → your domain → DNS Records → Add**, copying each one exactly. Back in Resend, click **Verify**. It can take a few minutes to a few hours.
-5. **API Keys → Create API Key**. Name it `maison-verre`, permission **Sending access**, restricted to your domain. Copy it → `RESEND_API_KEY`.
-6. `EMAIL_FROM` will be something like `Maison Verre <hello@mail.yourdomain.com>`.
+1. **stripe.com** → sign up. No activation or bank details needed for test mode.
+2. Make sure you're in **test mode** (toggle or **Sandbox** at the top).
+3. **Developers → API keys**: **Publishable key** (`pk_test_`) → `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`; **Secret key** (`sk_test_`) → `STRIPE_SECRET_KEY`.
+4. The webhook secret comes in Week 2. I'll walk you through it.
 
-Without a domain, Resend only delivers to your own email address. The app still works because the report link is always shown on screen, but judges won't get emails.
+The app refuses to start with a key starting `sk_live_`.
 
-### Step 5 · Stripe (test-mode deposits) · Week 2, fine to do now
+### Step 6 · Vercel · Week 1
 
-1. Go to **stripe.com** and sign up. You do **not** need to activate the account or add bank details. Test mode works immediately.
-2. Make sure you're in **test mode** (a "Test mode" toggle, or a **Sandbox**, at the top of the dashboard). Everything below must say "test".
-3. **Developers → API keys**. Copy:
-   - **Publishable key** (starts `pk_test_`) → `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
-   - **Secret key** (starts `sk_test_`; click "Reveal") → `STRIPE_SECRET_KEY`.
-4. The webhook secret comes in Week 2, once the booking page is deployed. I'll walk you through it then (it's a 2-minute job: add an endpoint URL, tick a few events, copy the `whsec_` value).
+The `skin-hackathon` project (https://skin-hackathon-topaz-rho.vercel.app) already exists. Please check:
 
-The app will refuse to start if it ever sees a key starting `sk_live_`. No real money can move.
-
-### Step 6 · Vercel (hosting) · Week 1
-
-1. Go to **vercel.com** → **Sign Up** → **Hobby** plan → **Continue with GitHub**.
-2. When GitHub asks which repositories Vercel can access, choose **Only select repositories** → `maison-verre`.
-3. **Wait for my message on Tuesday** that the first version of the app is pushed. Then: **Add New → Project** → import `maison-verre` → leave every setting as detected (Next.js) → **Deploy**.
-4. **Project → Settings → Environment Variables**. Add each variable from the table above. For each, tick **Production** and **Preview**, with these exceptions:
-   - `YOUCAM_MODE`: `live` for **Production** only; `fixture` for **Preview**. That way only the main site can spend units.
+1. **Project → Settings → Git**: connected repository is **daboss23/maison-verre**, and the production branch is **main**. Every push to my branch then gets its own preview link automatically.
+2. **Settings → Environment Variables**: add each Week 1 variable from the table. Tick **Production** and **Preview**, except:
+   - `YOUCAM_MODE`: `live` for **Production** only, `fixture` for **Preview**.
    - `DEMO_MODE`: `true` for both.
-   - `APP_URL`: your production address (e.g. `https://maison-verre.vercel.app`, or your domain later).
-   - `CRON_SECRET` and `IP_HASH_SALT`: I'll give you a command to generate random values, or you can use your password manager's generator (40+ characters).
-5. **Settings → Git**: confirm the production branch is `main`.
-6. **Settings → Deployment Protection**: leave the default. Preview links will ask you to log in to Vercel, which is fine for you; judges only see production.
-7. After adding or changing variables, go to **Deployments**, click the three dots on the latest one, and choose **Redeploy**. Variables only take effect on a new deploy.
+   - `APP_URL`: `https://skin-hackathon-topaz-rho.vercel.app` (or the domain later).
+   - `CRON_SECRET`, `IP_HASH_SALT`: generate with your password manager (40+ characters).
+3. **Settings → Deployment Protection**: leave the default. Preview links ask you to log in to Vercel; judges only see production.
+4. After changing variables: **Deployments** → three dots on the latest → **Redeploy**.
 
 ### Step 7 · Let me reach the services from this workspace · Week 1
 
-My cloud workspace currently blocks the services we need. In this session's title bar, open the **cloud environment menu → Edit**:
+In this session's title bar: **cloud environment menu → Edit**.
 
-1. **Network access**: choose **Custom**, keep the default package-manager list, and add these allowed domains:
-   - `*.supabase.co`
-   - `api.supabase.com`
-   - `docs.perfectcorp.com`
-   - `docs.makeupar.com`
-   - `yce.perfectcorp.com`
-2. **Environment variables**: add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF`. In Week 2, add `ANTHROPIC_API_KEY` so I can test report prompts.
-3. Start a new session afterwards. Settings are picked up by new sessions, not this one.
+1. **Network access → Custom**. Keep the default package-manager list and add:
+   `*.supabase.co`, `api.supabase.com`, `docs.perfectcorp.com`, `docs.makeupar.com`, `yce.perfectcorp.com`, `*.vercel.app`
+2. **Environment variables**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`. In Week 2, add `ANTHROPIC_API_KEY`.
+3. New sessions pick these up.
 
 Instructions: https://code.claude.com/docs/en/cloud-environments#network-access
 
-With this in place, I apply database migrations and seed data over HTTPS through Supabase's API. If that route is blocked for any reason, the fallback is a GitHub Action that runs migrations on every merge to `main`.
+I apply migrations over HTTPS through Supabase's API. Fallback: a GitHub Action that runs migrations on every merge to `main`.
 
 ---
 
-## Checklist · reply "keys are in" when these are done
+## Checklist · reply "keys are in" when done
 
-**Decisions** (a one-line reply each is enough)
-- [ ] D1 synthetic faces · D2 private judge scans · D3 calibration · D4 domain · D5 decide units on Oct 26 · D6 product versus clinic name
-- [ ] Any objection to the fixes in 1B
-
-**Accounts for Week 1**
-- [ ] Devpost registration confirmed, YouCam units claimed, YouCam API key saved (Step 1)
-- [ ] Supabase project created, 5 values saved (Step 2)
-- [ ] Vercel account created and connected to GitHub (Step 6, items 1 and 2; the import happens Tuesday)
+- [ ] YouCam: registered, units claimed, API key saved (Step 1)
+- [ ] Supabase: project created, 5 values saved (Step 2)
+- [ ] Vercel: Git connection and variables checked (Step 6)
 - [ ] Claude environment: domains allowed, Supabase variables added (Step 7)
-
-**Fine to do now, needed in Week 2**
-- [ ] Anthropic: $20 credit, $50 limit, key saved (Step 3)
-- [ ] Domain bought, Resend domain verified, key saved (Step 4)
-- [ ] Stripe test keys saved (Step 5)
+- [ ] Fine to do now, needed in Week 2: Anthropic (Step 3), Resend (Step 4), Stripe (Step 5)
