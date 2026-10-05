@@ -1,4 +1,5 @@
 import type { ConcernKey } from "@/lib/skin/concerns";
+import type { SkinEngine } from "./units";
 
 /**
  * Our raw result: YouCam's numbers, unmodified, keyed by concern. Stored in scans.youcam_raw.
@@ -11,9 +12,13 @@ export interface RawConcernScore {
   raw_score: number;
   /** Live only, in memory only: signed mask links, valid about 2 hours. Never stored. */
   mask_urls?: string[];
+  /** HD only: scores by facial area for wrinkles (forehead, crow's feet, ...) and pores (nose, cheeks, ...). */
+  areas?: Record<string, { ui_score: number; raw_score: number }>;
 }
 
 export interface RawSkinResult {
+  /** Which YouCam model read the photo. Scores from different engines aren't compared (DECISIONS D-046). */
+  engine?: SkinEngine;
   /** YouCam's overall score: one number, on the ui scale. */
   all?: number;
   skin_age?: number;
@@ -37,7 +42,7 @@ export interface StartInput {
 
 export interface SkinAnalysisProvider {
   readonly mode: "live" | "fixture";
-  start(input: StartInput): Promise<{ taskId: string; units: number }>;
+  start(input: StartInput): Promise<{ taskId: string; units: number; engine?: SkinEngine }>;
   poll(task: { taskId: string; scanId: string; startedAt: Date }): Promise<PollOutcome>;
   /** Deletes the photo and results from the provider once we hold our own copy. */
   release?(taskId: string): Promise<void>;

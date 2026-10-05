@@ -1,6 +1,7 @@
 // A local stand-in for YouCam's API, for browser tests of live mode. It follows the wire format
 // recorded from the real v2.1 API (DECISIONS D-041) and is strict where YouCam is strict:
-// exact presigned-upload headers, no API key on the upload, SD-only actions, JSON format.
+// exact presigned-upload headers, no API key on the upload, all-SD or all-HD actions (never mixed), JSON format.
+// HD results carry "hd_" types and wrinkle scores by area (DECISIONS D-046).
 //
 // Scenarios are chosen by the uploaded photo's average colour:
 //   very dark            -> the task fails with error_lighting_dark
@@ -19,6 +20,8 @@ const SD_ACTIONS = new Set([
   "wrinkle", "droopy_upper_eyelid", "droopy_lower_eyelid", "firmness", "acne", "moisture", "eye_bag", "dark_circle_v2",
   "age_spot", "radiance", "redness", "oiliness", "pore", "texture", "tear_trough", "skin_type",
 ]);
+const hdName = (a) => (a === "dark_circle_v2" ? "hd_dark_circle" : `hd_${a}`);
+const HD_ACTIONS = new Set([...SD_ACTIONS].map(hdName));
 // Distinct scores, so the report's priorities are unambiguous: eye bags, lower eyelid, moisture.
 const SCORES = {
   tear_trough: [70, 56.07], eye_bag: [58, 27.28], firmness: [84, 86.63], redness: [97, 98.3], droopy_lower_eyelid: [63, 39.8],
@@ -45,11 +48,18 @@ const readBody = (req) =>
 const authed = (req) => req.headers.authorization === `Bearer ${KEY}`;
 const unauthorized = (res) => send(res, 401, { status: 401, error: "Unauthorized", error_code: "InvalidAccessToken" });
 
-function outputFor(taskId) {
+function outputFor(taskId, engine) {
   const mask = (name) => [`${BASE}/masks/${taskId}/${name}.png?X-Amz-Expires=7200&X-Amz-Signature=mock`];
+  const name = (type) => (engine === "hd" ? hdName(type) : type);
   return [
-    ...Object.entries(SCORES).map(([type, [ui, raw]]) => ({ type, ui_score: ui, raw_score: raw, mask_urls: mask(type), url: null })),
-    ...["whole", "t_zone", "u_zone"].map((region) => ({ type: "skin_type", region, skin_type: region === "u_zone" ? "Normal" : "Oily", mask_urls: mask(`skin_type_${region}`) })),
+    ...Object.entries(SCORES).map(([type, [ui, raw]]) => ({ type: name(type), ui_score: ui, raw_score: raw, mask_urls: mask(type), url: null })),
+    ...(engine === "hd"
+      ? [
+          { type: "hd_wrinkle", area: "forehead", ui_score: 88, raw_score: 84.2, mask_urls: mask("wrinkle_forehead") },
+          { type: "hd_wrinkle", area: "crowfeet", ui_score: 62, raw_score: 51.7, mask_urls: mask("wrinkle_crowfeet") },
+        ]
+      : []),
+    ...["whole", "t_zone", "u_zone"].map((region) => ({ type: name("skin_type"), region, skin_type: region === "u_zone" ? "Normal" : "Oily", mask_urls: mask(`skin_type_${region}`) })),
     { type: "all", score: 74.6 },
     { type: "skin_age", score: 34 },
     { type: "resize_image", mask_urls: mask("resize_image") },
@@ -133,14 +143,15 @@ const server = http.createServer(async (req, res) => {
       const bad = (error) => send(res, 400, { status: 400, error, error_code: "InvalidParameters" });
       if (!file?.uploaded) return bad("src_file_id was never uploaded");
       if (!Array.isArray(actions) || actions.length === 0 || actions.length > 16) return bad("dst_actions must list 1 to 16 actions");
-      if (!actions.every((a) => SD_ACTIONS.has(a))) return bad("cannot mix HD and SD dst_actions, or unknown action");
+      const engine = actions.every((a) => SD_ACTIONS.has(a)) ? "sd" : actions.every((a) => HD_ACTIONS.has(a)) ? "hd" : null;
+      if (!engine) return bad("cannot mix HD and SD dst_actions, or unknown action");
       if (body.format !== "json") return bad("this stand-in only serves format json");
       if (body.miniserver_args?.enable_mask_overlay !== false) return bad("expected raw masks (enable_mask_overlay false)");
       const [r, g, b] = file.mean;
       if (r > 200 && g < 60 && b > 200) return send(res, 400, { status: 400, error: "Not enough credit", error_code: "CreditInsufficiency" });
       const taskId = `task_${++seq}`;
       const outcome = (r + g + b) / 3 < 40 ? "error_lighting_dark" : "success";
-      tasks.set(taskId, { taskId, fileId: file.fileId, actions, outcome, polls: 0, deleted: false });
+      tasks.set(taskId, { taskId, fileId: file.fileId, actions, engine, outcome, polls: 0, deleted: false });
       return send(res, 200, { status: 200, data: { task_id: taskId } });
     }
 
@@ -155,10 +166,11 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, { status: 200, data: { task_status: "error", results: null, error: task.outcome, error_message: "Lighting too dark" } });
       }
       if (!task.charged) {
-        units -= task.actions.length <= 4 ? 9 : task.actions.length <= 8 ? 12 : task.actions.length <= 12 ? 14 : 16;
+        const n = task.actions.length;
+        units -= task.engine === "hd" ? (n <= 4 ? 12 : n <= 8 ? 16 : n <= 12 ? 20 : 22) : n <= 4 ? 9 : n <= 8 ? 12 : n <= 12 ? 14 : 16;
         task.charged = true;
       }
-      return send(res, 200, { status: 200, data: { task_status: "success", error: null, results: { output: outputFor(task.taskId) } } });
+      return send(res, 200, { status: 200, data: { task_status: "success", error: null, results: { output: outputFor(task.taskId, task.engine) } } });
     }
 
     if (req.method === "GET" && url.pathname.startsWith("/masks/")) {

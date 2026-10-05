@@ -1,19 +1,49 @@
 import "server-only";
-// Live YouCam skin analysis (SD): upload, start a task, poll it, delete it once copied.
+// Live YouCam skin analysis: upload, start a task, poll it, delete it once copied.
+// HD whenever the photo is big enough, SD otherwise (DECISIONS D-046).
 
+import sharp from "sharp";
+import { env } from "@/lib/env";
+import { hdAction } from "@/lib/skin/concerns";
 import { createSkinAnalysisTask, deleteTask, getSkinAnalysisTask, uploadImage, YouCamError, type SkinTask } from "./client";
 import { parseSkinOutput } from "./parse";
 import type { SkinAnalysisProvider } from "./types";
-import { sdUnitCost } from "./units";
+import { unitCost, type SkinEngine } from "./units";
+
+/** YouCam's HD model needs at least this many pixels on the photo's short side. Smaller photos are never upscaled. */
+export const HD_MIN_SHORT_SIDE = 1080;
+
+/** HD for photos with enough detail, unless HD is switched off. */
+export function chooseEngine(width: number, height: number, setting: SkinEngine = env.YOUCAM_ENGINE): SkinEngine {
+  return setting === "hd" && Math.min(width, height) >= HD_MIN_SHORT_SIDE ? "hd" : "sd";
+}
+
+export function skinActions(engine: SkinEngine, concerns: readonly string[]): string[] {
+  const sd = [...concerns, "skin_type"];
+  return engine === "hd" ? sd.map((k) => hdAction(k as Parameters<typeof hdAction>[0])) : sd;
+}
 
 export const liveProvider: SkinAnalysisProvider = {
   mode: "live",
 
   async start({ scanId, image, concerns }) {
-    const actions = [...concerns, "skin_type"];
+    // An unreadable size means SD: HD is only for photos known to have the detail.
+    const { width = 0, height = 0 } = await sharp(image.bytes).metadata().catch(() => ({ width: 0, height: 0 }));
+    let engine = chooseEngine(width, height);
     const fileId = await uploadImage(image.bytes, image.contentType, `${scanId}.jpg`);
-    const taskId = await createSkinAnalysisTask(fileId, actions);
-    return { taskId, units: sdUnitCost(actions.length) };
+    let actions = skinActions(engine, concerns);
+    let taskId: string;
+    try {
+      taskId = await createSkinAnalysisTask(fileId, actions);
+    } catch (error) {
+      // YouCam refused the HD request itself (a parameter or photo it won't take in HD). SD still gives a real reading.
+      if (!(engine === "hd" && error instanceof YouCamError && error.kind === "bad_request")) throw error;
+      console.warn(`[youcam] scan ${scanId}: HD refused, running SD instead (${error.message})`);
+      engine = "sd";
+      actions = skinActions(engine, concerns);
+      taskId = await createSkinAnalysisTask(fileId, actions);
+    }
+    return { taskId, units: unitCost(engine, actions.length), engine };
   },
 
   async poll({ taskId, scanId }) {

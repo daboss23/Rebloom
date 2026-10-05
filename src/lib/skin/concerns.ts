@@ -27,6 +27,21 @@ export type ConcernKey = (typeof SCORED_CONCERNS)[number];
 /** Requested with every full scan. */
 export const FULL_SCAN_CONCERNS: readonly (ConcernKey | "skin_type")[] = [...SCORED_CONCERNS, "skin_type"];
 
+/**
+ * YouCam's HD action for each concern: the SD name with "hd_" in front, except dark circles,
+ * whose SD action carries a version suffix (DECISIONS D-046). HD and SD can't be mixed in one task.
+ */
+export function hdAction(key: ConcernKey | "skin_type"): string {
+  return key === "dark_circle_v2" ? "hd_dark_circle" : `hd_${key}`;
+}
+
+/** The reverse of hdAction, for reading results: "hd_dark_circle" back to "dark_circle_v2". */
+export function fromHdAction(type: string): string {
+  if (!type.startsWith("hd_")) return type;
+  const base = type.slice(3);
+  return base === "dark_circle" ? "dark_circle_v2" : base;
+}
+
 /** The 4-concern set for lighting calibration (DECISIONS D-011). */
 export const CALIBRATION_CONCERNS: readonly ConcernKey[] = ["texture", "age_spot", "pore", "redness"];
 

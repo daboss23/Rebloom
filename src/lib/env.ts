@@ -50,6 +50,8 @@ export const envSchema = z.object({
 
   YOUCAM_API_KEY: optional,
   YOUCAM_MODE: z.preprocess(lower, z.enum(["live", "fixture"]).default("fixture")),
+  /** "hd" (default): HD analysis whenever the photo is big enough, SD otherwise. "sd": always SD. */
+  YOUCAM_ENGINE: z.preprocess(lower, z.enum(["hd", "sd"]).default("hd")),
   /** Only changed for tests against a local stand-in for YouCam. */
   YOUCAM_API_BASE: z.preprocess(
     (v) => (v === "" ? undefined : v),

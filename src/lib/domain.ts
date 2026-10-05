@@ -172,6 +172,8 @@ export interface ConcernScore {
   raw: number;
   /** Storage path of the mask PNG, if any. */
   maskPath: string | null;
+  /** HD only: ui scores by facial area, e.g. { forehead: 81, crowfeet: 64 } for wrinkles. */
+  areas?: Record<string, number>;
 }
 
 export interface ScanResult {
@@ -179,6 +181,8 @@ export interface ScanResult {
   overall: { ui: number; raw: number } | null;
   skinAge: number | null;
   skinType: string | null;
+  /** Which YouCam model read the photo. Absent on older scans, which were all SD. */
+  engine?: "sd" | "hd";
 }
 
 export interface Scan {

@@ -16,7 +16,7 @@ import { friendlyError } from "@/lib/youcam/errors";
 import { getProvider } from "@/lib/youcam";
 import { withoutMaskUrls } from "@/lib/youcam/parse";
 import type { RawSkinResult } from "@/lib/youcam/types";
-import { sdUnitCost } from "@/lib/youcam/units";
+import { unitCost } from "@/lib/youcam/units";
 
 /** A live analysis that hasn't finished by now is abandoned. YouCam usually takes 5 to 20 seconds. */
 export const ANALYSIS_TIMEOUT_MS = 3 * 60_000;
@@ -60,14 +60,14 @@ export async function startAnalysis(
 
   const input = { scanId: scan.id, image, concerns: scan.concernsRequested };
   try {
-    const { taskId, units } = await provider.start(input);
+    const { taskId, units, engine = "sd" } = await provider.start(input);
     await store.updateScan(scan.id, { providerTaskId: taskId });
     if (provider.mode === "live") {
       // Logged now so limits count the attempt. Released if the task fails: YouCam only charges for success.
       await store.logUsage({
         provider: "youcam",
-        feature: "skin_analysis_sd",
-        units: units || sdUnitCost(scan.concernsRequested.length + 1),
+        feature: `skin_analysis_${engine}`,
+        units: units || unitCost(engine, scan.concernsRequested.length + 1),
         taskId,
         sandboxId: ctx.sandboxId,
         ipHash: ctx.ipHash,
@@ -184,7 +184,8 @@ async function finalize(scan: Scan, raw: RawSkinResult): Promise<Scan> {
     // that concern its overlay, never the scan: the scores are already safe.
     await Promise.all(
       result.concerns.map(async (c) => {
-        const urls = raw.concerns[c.key]?.mask_urls ?? [];
+        // HD can send a whole-face mask and one per area; the same link may appear twice.
+        const urls = [...new Set(raw.concerns[c.key]?.mask_urls ?? [])];
         if (urls.length === 0) return;
         try {
           const png = await copyLiveMask(urls, scan.imageWidth, scan.imageHeight);
