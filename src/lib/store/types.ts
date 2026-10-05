@@ -56,6 +56,12 @@ export interface Store {
   getOrCreateReport(clientId: string, now: Date): Promise<Report>;
   getReportByToken(token: string): Promise<Report | null>;
 
+  /**
+   * Deletes a client's personal data and returns the storage paths to remove.
+   * Keeps only an anonymous event so counts stay right (brief section 5).
+   */
+  deleteClientData(clientId: string, now: Date): Promise<{ storagePaths: string[] }>;
+
   logUsage(usage: Omit<ApiUsage, "id">): Promise<void>;
   sumUsage(filter: {
     provider: ApiUsage["provider"];

@@ -22,11 +22,13 @@ interface Db {
   scans: Scan[];
   reports: Report[];
   usage: ApiUsage[];
+  events: { id: string; clinicId: string; type: string; createdAt: string }[];
 }
 
-const emptyDb = (): Db => ({ sandboxes: [], clients: [], consents: [], intakes: [], scans: [], reports: [], usage: [] });
+const emptyDb = (): Db => ({ sandboxes: [], clients: [], consents: [], intakes: [], scans: [], reports: [], usage: [], events: [] });
 
-export const LOCAL_DIR = process.env.VERCEL ? path.join(os.tmpdir(), "rebloom") : path.join(process.cwd(), ".data");
+export const LOCAL_DIR =
+  process.env.REBLOOM_DATA_DIR ?? (process.env.VERCEL ? path.join(os.tmpdir(), "rebloom") : path.join(process.cwd(), ".data"));
 const DB_FILE = path.join(LOCAL_DIR, "db.json");
 const UPLOADS = path.join(LOCAL_DIR, "uploads");
 
@@ -210,6 +212,24 @@ export const localStore: Store = {
       return report;
     }, true),
   getReportByToken: (token) => tx((db) => db.reports.find((r) => r.token === token) ?? null),
+
+  deleteClientData: (clientId, now) =>
+    tx((db) => {
+      const client = db.clients.find((c) => c.id === clientId);
+      if (!client) return { storagePaths: [] };
+      const scans = db.scans.filter((s) => s.clientId === clientId);
+      const storagePaths = scans.flatMap((s) => [
+        s.imagePath,
+        ...(s.result?.concerns.flatMap((c) => (c.maskPath ? [c.maskPath] : [])) ?? []),
+      ]);
+      db.scans = db.scans.filter((s) => s.clientId !== clientId);
+      db.intakes = db.intakes.filter((i) => i.clientId !== clientId);
+      db.consents = db.consents.filter((c) => c.clientId !== clientId);
+      db.reports = db.reports.filter((r) => r.clientId !== clientId);
+      db.clients = db.clients.filter((c) => c.id !== clientId);
+      db.events.push({ id: newId(), clinicId: client.clinicId, type: "client_deleted", createdAt: now.toISOString() });
+      return { storagePaths };
+    }, true),
 
   logUsage: (usage) =>
     tx((db) => {
