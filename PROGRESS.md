@@ -32,26 +32,24 @@ Results say **Demo analysis**: they're sample scores until YouCam is connected. 
 
 ### What's done
 
-**Supabase is wired in, but the database isn't set up yet.** Once the migration below has run, the app stores everything in Supabase.
+**Supabase is live.** The database was set up on October 5 (Joshua ran the setup SQL in Supabase's SQL editor). Any deploy with the Supabase keys now stores everything there.
 
 - **Schema** (`supabase/migrations`): clinics, treatments, products, sandboxes, clients, consents, intakes, scans, reports, unit usage and events. Row level security is on everywhere with no policies, so the public key reads nothing. There's a **private** `scans` bucket for photos and masks (JPEG and PNG only, 8 MB limit). Tested on a local Postgres 16.
 - **Supabase store**: same interface as the local store, so no page changed. It covers race-safe scan finalisation, one report per client, intake steps that can't overwrite each other, unit totals summed in the database, and ids from cookies or URLs that can't crash a query.
 - **Direct photo upload** to Supabase with one-time signed URLs. Before analysis, the server checks that the file really is a JPEG.
 - **Daily keep-alive** (`/api/cron/keep-alive`, 09:17 UTC via `vercel.json`): keeps the free plan awake and deletes sandboxes older than 30 days, photos first.
 - **Database commands**: `pnpm db:migrate`, `db:seed`, `db:status` (see README).
-- **Tests**: 40 unit tests and 6 browser tests pass, and so does the production build. The browser tests always use the local store, so they never touch the real database. `pnpm test:supabase` runs 14 checks against the real project, including one that the public key sees no rows and no photos. It hasn't run yet (see below).
+- **Tests**: 40 unit tests and 6 browser tests pass, and so does the production build. The browser tests always use the local store, so they never touch the real database. `pnpm test:supabase` runs 14 checks against the real project, including one that the public key sees no rows and no photos. It hasn't run yet: this workspace can't reach Supabase (see below).
 
 ### Blocked on network access
 
-This workspace still can't reach `api.supabase.com` or YouCam's docs. Network changes only apply to **new** sessions, so adding the host mid-session didn't unblock this one. So:
-- The migration and seed haven't run, and the Supabase integration tests haven't run.
+This workspace still can't reach Supabase or YouCam's docs. Network changes only apply to **new** sessions, so adding a host mid-session didn't unblock this one. So:
+- The Supabase integration tests haven't run.
 - The live YouCam client isn't written. The brief says to write it from the official docs, never from guesses.
-
-**If Vercel already has the Supabase variables, clinic pages on the preview will show an error until the migration runs.** The landing page still works.
 
 ### What's next
 
-1. In a session that can reach `api.supabase.com`, run `pnpm db:migrate`, `pnpm db:seed` and `pnpm test:supabase`.
+1. In a session that can reach Supabase, run `pnpm db:status` and `pnpm test:supabase`.
 2. Live YouCam: read the official docs, write the live client, copy masks into our storage, log unit usage.
 3. A live phone session together: first real scans, the lighting calibration (6 scans on 4 concerns), first real fixtures.
 
@@ -59,8 +57,8 @@ Then Week 2: the Claude-written report with guardrails, the plan and investment 
 
 ### What Joshua needs to do
 
-1. **Network access for this workspace:** allowed domains need `api.supabase.com`, `*.supabase.co`, `docs.perfectcorp.com`, `yce.perfectcorp.com` and `docs.makeupar.com`. Then start a new session from this branch and say "run the migration".
-   - Or, without waiting: open Supabase → **SQL Editor**, paste in the setup SQL (`pnpm db:migrate --print`, then `pnpm db:seed --print`; Claude can hand you both as one file) and press **Run**.
+1. **Network access for this workspace:** allowed domains need `api.supabase.com`, `*.supabase.co`, `docs.perfectcorp.com`, `yce.perfectcorp.com` and `docs.makeupar.com`. Then start a new session from this branch.
+   - Future migrations can also go through Supabase → **SQL Editor**: `pnpm db:migrate --print` gives the SQL.
 2. **Vercel variables:** besides the Supabase ones, set `CRON_SECRET` (the keep-alive job won't run without it) and `IP_HASH_SALT`.
 3. **Check the Vercel project** `skin-hackathon` is connected to `daboss23/maison-verre`, so this branch gets a preview link.
 4. **Demo portraits (DECISIONS D-030):** five AI-generated, front-facing portraits for the demo clients (Amelia plus four others with varied ages and skin tones). Even light, neutral expression, mouth closed, no glasses, about 1080 × 1440. Image generation isn't available in my workspace.
