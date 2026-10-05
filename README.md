@@ -21,8 +21,10 @@ Cosmetic skin clinics sell treatment as a series: peels, microneedling, IPL, las
 
 ## How we use the YouCam API
 
-- **AI Skin Analysis (SD), 15 scored concerns plus skin type**, server-side only. Concern names are mapped to client-friendly names and never shown raw.
-- **Detection masks** are copied into our private storage immediately (YouCam keeps results for 24 hours) and drawn over the client's own photo as tappable overlays.
+- **AI Skin Analysis (SD, v2.1), 15 scored concerns plus skin type**, server-side only: upload to a pre-signed URL, start the task, poll it from the browser one short request at a time. Concern names are mapped to client-friendly names and never shown raw.
+- **Detection masks** are copied into our private storage on the poll that sees success (YouCam's mask links expire after about 2 hours), redrawn at the photo's exact size, and shown over the client's own photo as tappable overlays.
+- **Then we delete the task at YouCam.** Once the scores and masks are ours, YouCam no longer holds the client's photo.
+- **Every YouCam photo error has its own calm instruction** ("Face a window or a bright, even light"), and a network blip never fails a scan. If YouCam can't start a task at all, the scan finishes as a clearly labelled demo rather than a dead end.
 - **A browser quality gate** (MediaPipe Face Landmarker) checks face size, centering, head pose, light, evenness, sharpness, eyes and mouth before a photo is taken, so YouCam receives photos that give reliable results.
 
 ### ui_score versus raw_score
@@ -44,7 +46,11 @@ pnpm dev
 
 Open http://localhost:3000. With no environment variables, Rebloom uses a local file store in `.data/` and **fixture mode**: realistic sample skin results with zero API calls, clearly labelled "Demo analysis". The camera needs `localhost` or HTTPS.
 
-To use real services, copy `.env.example` to `.env.local` and fill in what you have. `YOUCAM_MODE=live` plus a `YOUCAM_API_KEY` switches to live analysis.
+To use real services, copy `.env.example` to `.env.local` and fill in what you have. `YOUCAM_MODE=live` plus a `YOUCAM_API_KEY` switches to live analysis. To check the key without spending units:
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/youcam/check
+```
 
 ## Checks
 
@@ -53,6 +59,7 @@ pnpm typecheck     # TypeScript
 pnpm lint          # ESLint
 pnpm test          # unit tests (gate maths, clock, fixtures, theming, copy rules, store)
 pnpm test:e2e      # browser tests of the client flow, in fixture mode
+pnpm test:e2e:live # the same flow in live mode, against a local stand-in for YouCam's API (no units spent)
 pnpm check:copy    # no em dashes anywhere in the source
 ```
 

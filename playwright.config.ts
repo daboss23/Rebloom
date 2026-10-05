@@ -6,6 +6,8 @@ const port = Number(process.env.E2E_PORT ?? 3200);
 
 export default defineConfig({
   testDir: "tests/e2e",
+  // Live mode has its own server setup: playwright.live.config.ts.
+  testIgnore: /live\.spec\.ts$/,
   timeout: 60_000,
   fullyParallel: false,
   use: {

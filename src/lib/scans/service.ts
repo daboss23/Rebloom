@@ -8,12 +8,20 @@ import { chooseAnalysisMode, type ModeReason } from "@/lib/limits";
 import { sandboxNow } from "@/lib/sandbox";
 
 import { renderFixtureMask } from "@/lib/skin/fixture-masks";
+import { copyLiveMask } from "@/lib/skin/live-masks";
 import { normalizeResult } from "@/lib/skin/normalize";
 import { getStorage, getStore } from "@/lib/store";
+import { YouCamError } from "@/lib/youcam/client";
 import { friendlyError } from "@/lib/youcam/errors";
 import { getProvider } from "@/lib/youcam";
+import { withoutMaskUrls } from "@/lib/youcam/parse";
 import type { RawSkinResult } from "@/lib/youcam/types";
 import { sdUnitCost } from "@/lib/youcam/units";
+
+/** A live analysis that hasn't finished by now is abandoned. YouCam usually takes 5 to 20 seconds. */
+export const ANALYSIS_TIMEOUT_MS = 3 * 60_000;
+/** A finalisation still running after this was cut off mid-way (the server stopped). */
+const FINALIZE_STALE_MS = ANALYSIS_TIMEOUT_MS + 2 * 60_000;
 
 export function scanImagePath(clientId: string, fileId: string): string {
   return `clients/${clientId}/scans/${fileId}.jpg`;
@@ -22,6 +30,8 @@ export function scanImagePath(clientId: string, fileId: string): string {
 function maskPath(scan: Scan, concern: string): string {
   return scan.imagePath.replace(/\.jpg$/, `/masks/${concern}.png`);
 }
+
+const describe = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 export async function startAnalysis(
   scan: Scan,
@@ -41,10 +51,12 @@ export async function startAnalysis(
   });
   if (!claimed) return { ok: true, reason };
 
+  const input = { scanId: scan.id, image, concerns: scan.concernsRequested };
   try {
-    const { taskId, units } = await provider.start({ scanId: scan.id, imagePath: scan.imagePath, concerns: scan.concernsRequested });
+    const { taskId, units } = await provider.start(input);
     await store.updateScan(scan.id, { providerTaskId: taskId });
     if (provider.mode === "live") {
+      // Logged now so limits count the attempt. Released if the task fails: YouCam only charges for success.
       await store.logUsage({
         provider: "youcam",
         feature: "skin_analysis_sd",
@@ -56,30 +68,84 @@ export async function startAnalysis(
       });
     }
     return { ok: true, reason };
-  } catch {
+  } catch (error) {
+    if (provider.mode === "live") {
+      // YouCam is unreachable, out of units or refusing the key. Rather than a dead end, the scan runs
+      // as a clearly labelled demo (DECISIONS D-022, D-033). The reason stays on the scan for the team.
+      const kind = error instanceof YouCamError ? error.kind : "unexpected";
+      console.error(`[youcam] scan ${scan.id}: couldn't start live analysis, using demo analysis instead (${describe(error)})`);
+      try {
+        const fallback = getProvider("fixture");
+        const { taskId } = await fallback.start(input);
+        await store.updateScan(scan.id, {
+          source: fallback.mode,
+          providerTaskId: taskId,
+          analysisStartedAt: new Date().toISOString(),
+          errorCode: `live_start_${kind}`,
+        });
+        return { ok: true, reason: "live_unavailable" };
+      } catch {
+        // Fall through to the failure below.
+      }
+    }
     await store.updateScan(scan.id, { status: "failed", errorCode: "start_failed" });
     return { ok: false, error: "We couldn't start the analysis. Please try again." };
   }
 }
 
+/** Deletes the task at YouCam once we hold our own copy, or once it can't be used. Never blocks a scan. */
+async function releaseTask(scan: Scan): Promise<void> {
+  const provider = getProvider(scan.source);
+  if (!provider.release || !scan.providerTaskId) return;
+  try {
+    await provider.release(scan.providerTaskId);
+  } catch (error) {
+    console.warn(`[youcam] scan ${scan.id}: couldn't delete the task at YouCam (${describe(error)})`);
+  }
+}
+
 /** Moves an analyzing scan forward by at most one provider check. */
 export async function advanceScan(scan: Scan): Promise<Scan> {
-  if (scan.status !== "analyzing" || !scan.providerTaskId || !scan.analysisStartedAt) return scan;
   const store = getStore();
+  const age = scan.analysisStartedAt ? Date.now() - new Date(scan.analysisStartedAt).getTime() : 0;
+
+  if (scan.status === "finalizing") {
+    if (age < FINALIZE_STALE_MS) return scan;
+    return (await store.transitionScan(scan.id, ["finalizing"], { status: "failed", errorCode: "finalize_failed" })) ?? scan;
+  }
+  if (scan.status !== "analyzing" || !scan.providerTaskId || !scan.analysisStartedAt) return scan;
+
   const provider = getProvider(scan.source);
-  const outcome = await provider.poll({ taskId: scan.providerTaskId, scanId: scan.id, startedAt: new Date(scan.analysisStartedAt) });
+  // Live mode was switched off mid-scan. Never let demo results pass for a live reading.
+  if (provider.mode !== scan.source) {
+    return (await store.transitionScan(scan.id, ["analyzing"], { status: "failed", errorCode: "provider_unavailable" })) ?? scan;
+  }
+  const outcome =
+    age > ANALYSIS_TIMEOUT_MS
+      ? ({ status: "error", code: "analysis_timeout" } as const)
+      : await provider.poll({ taskId: scan.providerTaskId, scanId: scan.id, startedAt: new Date(scan.analysisStartedAt) });
 
   if (outcome.status === "running") return scan;
   if (outcome.status === "error") {
-    return (await store.transitionScan(scan.id, ["analyzing"], { status: "failed", errorCode: outcome.code })) ?? scan;
+    const failed = await store.transitionScan(scan.id, ["analyzing"], { status: "failed", errorCode: outcome.code });
+    if (!failed) return (await store.getScan(scan.id)) ?? scan;
+    if (scan.source === "live") {
+      // YouCam charges nothing for a failed task. A timed-out one may still finish, so its units stay counted.
+      if (outcome.code !== "analysis_timeout") {
+        await store.settleUsage({ provider: "youcam", taskId: scan.providerTaskId }, 0);
+      }
+      await releaseTask(scan);
+    }
+    return failed;
   }
 
   // Only the request that wins this transition finalises.
-  const claimed = await store.transitionScan(scan.id, ["analyzing"], { status: "finalizing", youcamRaw: outcome.raw });
+  const claimed = await store.transitionScan(scan.id, ["analyzing"], { status: "finalizing", youcamRaw: withoutMaskUrls(outcome.raw) });
   if (!claimed) return (await store.getScan(scan.id)) ?? scan;
   try {
     return await finalize(claimed, outcome.raw);
-  } catch {
+  } catch (error) {
+    console.error(`[scan] ${scan.id}: finalising failed (${describe(error)})`);
     return store.updateScan(scan.id, { status: "failed", errorCode: "finalize_failed" });
   }
 }
@@ -106,12 +172,30 @@ async function finalize(scan: Scan, raw: RawSkinResult): Promise<Scan> {
         c.maskPath = path;
       }),
     );
+  } else if (scan.source === "live") {
+    // Copy YouCam's masks now: their links expire in about 2 hours. A mask that won't copy costs
+    // that concern its overlay, never the scan: the scores are already safe.
+    await Promise.all(
+      result.concerns.map(async (c) => {
+        const urls = raw.concerns[c.key]?.mask_urls ?? [];
+        if (urls.length === 0) return;
+        try {
+          const png = await copyLiveMask(urls, scan.imageWidth, scan.imageHeight);
+          const path = maskPath(scan, c.key);
+          await storage.put(path, png, "image/png");
+          c.maskPath = path;
+        } catch (error) {
+          console.warn(`[youcam] scan ${scan.id}: ${c.key} mask not copied (${describe(error)})`);
+        }
+      }),
+    );
   }
-  // Live: download YouCam's masks into our storage here (they expire after 24 hours).
 
   const now = await sandboxNow();
   const done = await store.updateScan(scan.id, { status: "complete", result, completedAt: now.toISOString() });
   await store.getOrCreateReport(scan.clientId, now);
+  // We hold the scores and masks now, so YouCam no longer needs this person's photo.
+  if (scan.source === "live") await releaseTask(scan);
   // The client becomes a lead at the report gate, once they leave contact details (see unlockReport).
   return done;
 }
@@ -150,4 +234,3 @@ export async function viewScan(scan: Scan): Promise<ScanView> {
   const stageIndex = Math.min(2, Math.floor((elapsed / span) * 3));
   return { status: scan.status, stage: STAGES[stageIndex], stageIndex, demo };
 }
-

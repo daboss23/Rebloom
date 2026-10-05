@@ -12,6 +12,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:e2e:live": "playwright test --config playwright.live.config.ts",
     "check:copy": "node scripts/check-copy.mjs",
     "assets:brand": "node scripts/make-brand-assets.mjs"
   },

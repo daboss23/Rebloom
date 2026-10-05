@@ -137,3 +137,34 @@ No image-generation tool is available in the build workspace, so the five AI-gen
 
 ## D-031 · Report gate: contact details after the scan, not during intake
 Brief 3.1 step 6. Name, email, phone and the reminders opt-in moved from intake and consent to a gate shown when analysis finishes. The client sees their report blurred behind the form. Security: the status API returns no report link until the client has an email, `/r/[token]` and its photo and mask routes 404 for clients without one, and the blurred layer uses a server-blurred photo (`/api/scans/[id]/preview`) plus placeholder score bars, never real scores. A completed scan with no contact details stays `started` (an abandoned scan); the client becomes a `lead` at the gate. The panel overlays the report at every width, since the client pages are a single 560px column.
+
+## D-032 · YouCam's wire format, confirmed (C, Oct 5). Supersedes D-021
+Perfect Corp's documentation hosts are still blocked from the build workspace, so the live client is written against live-recorded v2.1 responses published by other hackathon entrants, cross-checked across three independent implementations. The flow:
+1. `POST /s2s/v2.0/file` with `{ files: [{ content_type, file_name, file_size }] }` returns `data.files[0].file_id` and a pre-signed `PUT` with exact headers. The upload sends those headers and no API key.
+2. `POST /s2s/v2.1/task/skin-analysis` with `src_file_id`, 16 SD `dst_actions` (15 concerns plus `skin_type`), `miniserver_args: { enable_mask_overlay: false }` and `format: "json"` (the default is a zip) returns `data.task_id`.
+3. `GET /s2s/v2.1/task/skin-analysis/{task_id}` returns `task_status` (`running`, `success`, `error`). On success, `results.output` is a list keyed by `type`; on error, `error` holds the code.
+4. `POST /s2s/v2.0/task/delete` with `{ task_id }` removes the photo and results at YouCam.
+
+Where reality differs from the brief's description:
+- The overall `all` score is **one number on the ui scale**, with no raw counterpart. Our raw overall is the mean of the concern raw scores, so it only moves when the measurements do.
+- `raw_score` is a float. We keep one decimal (thresholds are a few points wide); ui scores stay whole.
+- `skin_type` arrives as three zones (whole, T-zone, U-zone). Clients see none of it; the zones are kept for the practitioner brief.
+- **Mask links expire after about 2 hours** (results are kept 24), so masks are copied on the poll that sees success.
+- Masks are PNGs with alpha at the uploaded photo's size. We redraw each as white-on-transparent at the stored photo's exact size (from alpha, or from brightness if a mask is opaque), so the report tints live and demo masks the same way.
+- Units are charged only when a task succeeds.
+
+The first real scan is the final confirmation. If anything differs, `src/lib/youcam/parse.ts` is the one file to change, and its tests use the recorded shape in `tests/fixtures/youcam/`.
+
+## D-033 · How live analysis fails, and what it costs (C, Oct 5)
+- **YouCam won't start a task** (wrong key, out of units, unreachable): the scan runs as a clearly labelled demo instead of a dead end (extends D-022). The reason is kept on the scan (`errorCode` such as `live_start_credits`) and in the server log.
+- **Blips while polling** (rate limit, 5xx, network) never fail a scan; the next poll asks again. A live analysis still unfinished after 3 minutes is abandoned with a calm retry message, and a finalisation cut off mid-way is recovered rather than spinning forever.
+- **Photo errors** from YouCam (too dark, face too small, head turned, no face, and others) each get one plain instruction and a "Take a new photo" button.
+- **A mask that won't copy** costs that concern its overlay, never the scan.
+- **Units** are logged when a task starts, so limits count every attempt, and released when YouCam reports the task failed. A timed-out task keeps its units counted, since it may still finish.
+- **Privacy:** the task is deleted at YouCam as soon as scores and masks are in our storage, and after a failure. Signed mask links are never stored.
+
+## D-034 · The photo upload route follows the store in use (C, Oct 5)
+Bug fix. The local upload route switched itself off whenever Supabase keys were present, but the Supabase store isn't wired in yet, so with those keys set every photo upload returned 404 and no scan could finish. It now stays open exactly when the local store is the one in use. If the Supabase variables are already in Vercel, this also fixes scans on the deployed site.
+
+## D-035 · A zero-unit YouCam connection check (C, Oct 5)
+`GET /api/youcam/check` with `Authorization: Bearer <CRON_SECRET>` reads the YouCam account balance, which costs nothing, and reports whether the key works, the mode, and our own unit ledger. It answers 404 to anyone without the secret.

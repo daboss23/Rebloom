@@ -1,5 +1,42 @@
 # Progress
 
+## Session 2 · Monday October 5, 2026 · YouCam connected
+
+### What's done
+
+**Live YouCam skin analysis is built, tested and ready to switch on.** With a key and `YOUCAM_MODE=live`, every scan now goes to YouCam for real:
+
+- **The photo goes to YouCam** through the upload link YouCam provides, then a 16-action skin analysis starts (15 concerns plus skin type, 16 units).
+- **Results come back into the report:** YouCam's real scores, and its detection masks copied into our private storage and drawn over the client's photo. Demo labels disappear for live scans.
+- **YouCam then deletes the photo.** As soon as the scores and masks are ours, the task is deleted at YouCam.
+- **Problems are handled calmly:** each photo problem YouCam reports (too dark, too far, head turned, no face) shows its own one-line instruction. A network blip never fails a scan. If YouCam can't start at all (wrong key, no units left), the scan still finishes, labelled "Demo analysis", instead of an error.
+- **Units are counted honestly:** YouCam only charges for successful scans, and our ledger now matches.
+- **A free connection check** tells you whether the key works and how many units are left, without spending any.
+- **Bug fixed:** photo uploads were refused whenever the Supabase keys were set (DECISIONS D-034). If those keys are already in Vercel, scans on the live site were failing at the upload step. They work again.
+
+**Tests:** 51 unit tests (18 new, including YouCam's real response shape), 6 browser tests in demo mode, and 4 new browser tests that run the whole flow in live mode against a local stand-in for YouCam. All pass, and the production build passes.
+
+YouCam's documentation sites are still blocked from my workspace, so I built against real responses recorded from YouCam's live API by other hackathon teams, checked across three of them (DECISIONS D-032). The first real scan on your phone is the final confirmation.
+
+### How to switch it on (about 5 minutes)
+
+1. In **Vercel → skin-hackathon → Settings → Environment Variables**, check these are set, then **Redeploy**:
+   - `YOUCAM_API_KEY`: your YouCam key. Tick **Production** (and **Preview** too if you want live scans on preview links).
+   - `YOUCAM_MODE`: `live` for **Production**, `fixture` for **Preview**.
+   - `CRON_SECRET`: a long random password (40+ characters) from your password manager.
+2. Check the connection. This costs no units. In a terminal, with your secret in place of `YOUR_CRON_SECRET`:
+   ```
+   curl -H "Authorization: Bearer YOUR_CRON_SECRET" https://skin-hackathon-topaz-rho.vercel.app/api/youcam/check
+   ```
+   You want to see `"connected": true` and your unit balance. If it says the key was rejected, re-copy the key into Vercel and redeploy.
+3. Do one real scan on your phone. The report should show no "Demo analysis" label.
+
+### One thing to know before relying on live scans
+
+Until Supabase is wired in, the deployed site keeps scans in temporary server memory (the banner says data may reset). Vercel can run a scan's steps on different servers, so occasionally a scan can be lost partway and the client is asked to start again. YouCam only charges for completed scans, so a lost scan usually costs nothing. **Wiring in Supabase is the next step**, and its keys are already in my workspace.
+
+---
+
 ## Session 1 · Monday October 5, 2026
 
 ### What's done
@@ -32,7 +69,7 @@ Results say **Demo analysis**: they're sample scores until YouCam is connected. 
 
 When you reply "keys are in":
 1. Supabase: database tables, row-level security, private photo bucket, seed data, daily keep-alive.
-2. Live YouCam: read the official docs, wire up the real analysis, copy masks into our storage, log unit usage.
+2. ~~Live YouCam: wire up the real analysis, copy masks into our storage, log unit usage.~~ Done in Session 2.
 3. A live phone session together: first real scans, the lighting calibration (6 scans on 4 concerns), first real fixtures.
 
 Then Week 2: the Claude-written report with guardrails, the plan and investment sections, booking with a test deposit, and emails to your own address.

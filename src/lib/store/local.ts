@@ -235,6 +235,10 @@ export const localStore: Store = {
     tx((db) => {
       db.usage.push({ id: newId(), ...usage });
     }, true),
+  settleUsage: ({ provider, taskId }, units) =>
+    tx((db) => {
+      for (const u of db.usage) if (u.provider === provider && u.taskId === taskId) u.units = units;
+    }, true),
   sumUsage: ({ provider, since, sandboxId, ipHash }) =>
     tx((db) => {
       const rows = db.usage.filter(

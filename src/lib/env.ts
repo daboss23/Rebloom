@@ -23,6 +23,11 @@ const schema = z.object({
 
   YOUCAM_API_KEY: optional,
   YOUCAM_MODE: z.preprocess((v) => (v === "" ? undefined : v), z.enum(["live", "fixture"]).default("fixture")),
+  /** Only changed for tests against a local stand-in for YouCam. */
+  YOUCAM_API_BASE: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.url({ protocol: /^https?$/ }).default("https://yce-api-01.makeupar.com"),
+  ),
   /** Total YouCam units bought so far. Raise this after a top-up. */
   YOUCAM_UNIT_BUDGET: z.coerce.number().int().min(0).default(1000),
   /** Milliseconds a fixture analysis "takes", so the processing screen can be seen. */
@@ -51,6 +56,10 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
+
+if (env.VERCEL_ENV === "production" && !env.YOUCAM_API_BASE.startsWith("https://")) {
+  throw new Error("YOUCAM_API_BASE must use HTTPS in production. Leave it unset to use YouCam's own address.");
+}
 
 export const features = {
   supabase: Boolean(env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY && env.SUPABASE_SERVICE_ROLE_KEY),

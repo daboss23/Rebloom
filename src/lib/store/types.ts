@@ -63,6 +63,8 @@ export interface Store {
   deleteClientData(clientId: string, now: Date): Promise<{ storagePaths: string[] }>;
 
   logUsage(usage: Omit<ApiUsage, "id">): Promise<void>;
+  /** Corrects the units on a logged call once the provider's real charge is known. */
+  settleUsage(filter: { provider: ApiUsage["provider"]; taskId: string }, units: number): Promise<void>;
   sumUsage(filter: {
     provider: ApiUsage["provider"];
     since: Date;

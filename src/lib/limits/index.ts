@@ -14,7 +14,8 @@ export const LIMITS = {
   reserveUnits: 64,
 } as const;
 
-export type ModeReason = "fixture_mode" | "browser_limit" | "daily_cap" | "reserve" | null;
+/** Why a scan ran in fixture mode. `live_unavailable`: YouCam refused or failed to start the task. */
+export type ModeReason = "fixture_mode" | "browser_limit" | "daily_cap" | "reserve" | "live_unavailable" | null;
 
 const DAY_MS = 86_400_000;
 
