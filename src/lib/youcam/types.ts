@@ -2,7 +2,7 @@ import type { ConcernKey } from "@/lib/skin/concerns";
 
 /**
  * Our raw result: YouCam's numbers, unmodified, keyed by concern. Stored in scans.youcam_raw.
- * Shape confirmed against live-recorded v2.1 responses (DECISIONS D-032).
+ * Shape confirmed against live-recorded v2.1 responses (DECISIONS D-041).
  */
 export interface RawConcernScore {
   /** Integer 1 to 100, adjusted upward by YouCam for display. */

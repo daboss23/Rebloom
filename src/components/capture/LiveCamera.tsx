@@ -12,7 +12,8 @@ import { measure, packLandmarks, renderShot, type Measurement } from "./measure"
 /** The face guide oval, in a 300 x 400 viewBox. Its width is 70% of the frame, matching the gate. */
 const OVAL = { cx: 150, cy: 188, rx: 105, ry: 140 };
 
-type Status = "starting" | "live" | "capturing";
+/** starting: waiting for the camera. loading: camera on, face guide still loading. */
+type Status = "starting" | "loading" | "live" | "capturing";
 
 export function LiveCamera({
   onCapture,
@@ -81,6 +82,8 @@ export function LiveCamera({
       const video = videoRef.current!;
       video.srcObject = stream;
       await video.play().catch(() => undefined);
+      // Show the camera straight away, even if the face guide is still on its way.
+      setStatus("loading");
 
       let landmarker;
       try {
@@ -131,7 +134,14 @@ export function LiveCamera({
   }, [onCapture, onUnavailable]);
 
   const ready = fails.length === 0;
-  const instruction = status === "starting" ? "Starting the camera" : status === "capturing" ? "Got it" : instructionFor(fails);
+  const instruction =
+    status === "starting"
+      ? "Starting the camera"
+      : status === "loading"
+        ? "Loading the face guide"
+        : status === "capturing"
+          ? "Got it"
+          : instructionFor(fails);
 
   return (
     <div className="fade">

@@ -12,6 +12,7 @@ import { SEED_PRODUCTS, SEED_TREATMENTS } from "@/data/menu";
 import type { ApiUsage, Client, Consent, Intake, Report, Sandbox, Scan } from "@/lib/domain";
 import { localSecret } from "@/lib/env";
 import { newId, newToken } from "@/lib/ids";
+import { scanStoragePaths } from "./scan-paths";
 import type { ObjectStorage, Store, UploadTarget } from "./types";
 
 interface Db {
@@ -22,7 +23,7 @@ interface Db {
   scans: Scan[];
   reports: Report[];
   usage: ApiUsage[];
-  events: { id: string; clinicId: string; type: string; createdAt: string }[];
+  events: { id: string; clinicId: string; sandboxId: string | null; type: string; createdAt: string }[];
 }
 
 const emptyDb = (): Db => ({ sandboxes: [], clients: [], consents: [], intakes: [], scans: [], reports: [], usage: [], events: [] });
@@ -96,6 +97,27 @@ export const localStore: Store = {
       const sandbox: Sandbox = { id, createdAt: now.toISOString(), clockOffsetDays: 0 };
       db.sandboxes.push(sandbox);
       return sandbox;
+    }, true),
+  expiredSandboxes: (before, limit) =>
+    tx((db) => {
+      const ids = db.sandboxes
+        .filter((s) => new Date(s.createdAt) < before)
+        .slice(0, limit)
+        .map((s) => s.id);
+      return { ids, storagePaths: scanStoragePaths(db.scans.filter((s) => s.sandboxId && ids.includes(s.sandboxId))) };
+    }),
+  deleteSandboxes: (ids) =>
+    tx((db) => {
+      const gone = new Set(ids);
+      const clients = new Set(db.clients.filter((c) => c.sandboxId && gone.has(c.sandboxId)).map((c) => c.id));
+      db.sandboxes = db.sandboxes.filter((s) => !gone.has(s.id));
+      db.clients = db.clients.filter((c) => !clients.has(c.id));
+      db.consents = db.consents.filter((c) => !clients.has(c.clientId));
+      db.intakes = db.intakes.filter((i) => !clients.has(i.clientId));
+      db.scans = db.scans.filter((s) => !clients.has(s.clientId));
+      db.reports = db.reports.filter((r) => !clients.has(r.clientId));
+      db.events = db.events.filter((e) => !(e.sandboxId && gone.has(e.sandboxId)));
+      // Usage stays, so spent units keep counting against the budget.
     }, true),
 
   createClient: ({ clinicId, sandboxId, now }) =>
@@ -217,17 +239,19 @@ export const localStore: Store = {
     tx((db) => {
       const client = db.clients.find((c) => c.id === clientId);
       if (!client) return { storagePaths: [] };
-      const scans = db.scans.filter((s) => s.clientId === clientId);
-      const storagePaths = scans.flatMap((s) => [
-        s.imagePath,
-        ...(s.result?.concerns.flatMap((c) => (c.maskPath ? [c.maskPath] : [])) ?? []),
-      ]);
+      const storagePaths = scanStoragePaths(db.scans.filter((s) => s.clientId === clientId));
       db.scans = db.scans.filter((s) => s.clientId !== clientId);
       db.intakes = db.intakes.filter((i) => i.clientId !== clientId);
       db.consents = db.consents.filter((c) => c.clientId !== clientId);
       db.reports = db.reports.filter((r) => r.clientId !== clientId);
       db.clients = db.clients.filter((c) => c.id !== clientId);
-      db.events.push({ id: newId(), clinicId: client.clinicId, type: "client_deleted", createdAt: now.toISOString() });
+      db.events.push({
+        id: newId(),
+        clinicId: client.clinicId,
+        sandboxId: client.sandboxId,
+        type: "client_deleted",
+        createdAt: now.toISOString(),
+      });
       return { storagePaths };
     }, true),
 

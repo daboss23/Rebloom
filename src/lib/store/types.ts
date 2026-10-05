@@ -32,6 +32,13 @@ export interface Store {
 
   getSandbox(id: string): Promise<Sandbox | null>;
   createSandbox(id: string, now: Date): Promise<Sandbox>;
+  /**
+   * Sandboxes created before `before`, with every storage path their scans own, so the photos
+   * can be removed before the rows (DECISIONS D-013: sandboxes auto-delete after 30 days).
+   */
+  expiredSandboxes(before: Date, limit: number): Promise<{ ids: string[]; storagePaths: string[] }>;
+  /** Deletes sandboxes and everything in them, keeping api_usage so spent units stay counted. */
+  deleteSandboxes(ids: string[]): Promise<void>;
 
   createClient(input: { clinicId: string; sandboxId: string | null; now: Date }): Promise<Client>;
   getClient(id: string): Promise<Client | null>;

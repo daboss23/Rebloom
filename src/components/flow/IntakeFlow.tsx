@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { saveIntakeStep } from "@/app/c/[clinicSlug]/actions";
+import { prefetchFaceGuide } from "@/components/capture/landmarker";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { FieldLabel, TextArea, TextInput } from "@/components/ui/Field";
@@ -101,6 +102,12 @@ export function IntakeFlow({ clinicSlug, initial, today }: { clinicSlug: string;
     setError(null);
     setAnswers((a) => ({ ...a, ...patch }));
   };
+
+  // Download the camera's face guide while they answer, so the camera opens straight away afterwards.
+  useEffect(() => {
+    const timer = window.setTimeout(prefetchFaceGuide, 1500);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (firstRender.current) {

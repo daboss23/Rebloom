@@ -11,6 +11,16 @@ test("a client moves from the scan page through consent and intake to the camera
   await expect(page.getByRole("button", { name: "Take photo" })).toBeDisabled();
 });
 
+test("the camera's face guide downloads during the questions, not after", async ({ page }) => {
+  const model = page.waitForRequest((r) => r.url().endsWith("/mediapipe/face_landmarker.task"), { timeout: 15_000 });
+  await page.goto("/c/maison-verre/consent");
+  await page.locator("label[for=biometric]").click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByText("1 of 7")).toBeVisible();
+  await model;
+  await expect(page).toHaveURL(/\/intake$/);
+});
+
 test("the intake can't be skipped", async ({ page }) => {
   await page.goto("/c/maison-verre/capture");
   await expect(page).toHaveURL(/\/consent$/);
@@ -48,14 +58,25 @@ test("a scan runs end to end in fixture mode, and Delete my data removes it", as
   expect((await page.request.post(`/api/scans/${scanId}/analyze`)).ok()).toBe(true);
 
   await page.goto(`/c/maison-verre/processing?scan=${scanId}`);
-  // The report gate: blurred report behind an opt-in. No report link or real score reaches the page yet.
-  await expect(page.getByRole("heading", { name: "Your report is ready." })).toBeVisible({ timeout: 30_000 });
+  // Once the analysis is in, the report is put together on screen before the gate opens.
+  await expect(page.getByRole("heading", { name: "Putting your report together." })).toBeVisible({ timeout: 30_000 });
+
+  // The report gate: a panel over the blurred report. No report link or real score reaches the page yet.
+  const gate = page.getByRole("dialog", { name: "Your skin report is ready." });
+  await expect(gate).toBeVisible({ timeout: 20_000 });
   expect(await page.content()).not.toContain("/r/");
   const preview = await page.request.get(`/api/scans/${scanId}/preview`);
   expect(preview.headers()["content-type"]).toBe("image/jpeg");
-  await page.getByLabel("First name").fill("Amelia");
-  await page.getByLabel("Email", { exact: true }).fill("amelia@example.com");
-  await page.getByRole("button", { name: "See my report" }).click();
+  await gate.getByLabel("First name").fill("Amelia");
+  await gate.getByLabel("Email", { exact: true }).fill("amelia@example.com");
+  await gate.getByRole("button", { name: "Send my results" }).click();
+
+  // Confirmation, in place. Email isn't live yet, so it must not claim anything was sent.
+  await expect(page.getByRole("heading", { name: "Amelia, your report is ready." })).toBeVisible();
+  await expect(page.getByText("Thank you for completing your skin consultation with Maison Verre.")).toBeVisible();
+  await expect(page.getByText("Demo: email isn't connected yet, so nothing was sent to amelia@example.com.")).toBeVisible();
+  await expect(page.getByText("on their way")).toHaveCount(0);
+  await page.getByRole("link", { name: "Open my report" }).click();
 
   await expect(page.getByRole("heading", { name: "Amelia, your skin is telling a clear story." })).toBeVisible();
   await expect(page.getByText("Demo analysis.")).toBeVisible();

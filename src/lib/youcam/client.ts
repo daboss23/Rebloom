@@ -1,6 +1,6 @@
 import "server-only";
 // The YouCam (Perfect Corp) HTTP client: upload, start, poll, delete, credit.
-// Wire format confirmed against live-recorded v2.1 responses (DECISIONS D-032).
+// Wire format confirmed against live-recorded v2.1 responses (DECISIONS D-041).
 // Every call is server-side. The API key never leaves this module.
 
 import { z } from "zod";

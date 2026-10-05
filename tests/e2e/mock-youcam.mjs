@@ -1,5 +1,5 @@
 // A local stand-in for YouCam's API, for browser tests of live mode. It follows the wire format
-// recorded from the real v2.1 API (DECISIONS D-032) and is strict where YouCam is strict:
+// recorded from the real v2.1 API (DECISIONS D-041) and is strict where YouCam is strict:
 // exact presigned-upload headers, no API key on the upload, SD-only actions, JSON format.
 //
 // Scenarios are chosen by the uploaded photo's average colour:

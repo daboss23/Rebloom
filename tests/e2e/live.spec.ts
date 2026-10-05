@@ -33,10 +33,12 @@ async function scanPhoto(page: Page, colour: string): Promise<string> {
 }
 
 async function unlockReport(page: Page) {
-  await expect(page.getByRole("heading", { name: "Your report is ready." })).toBeVisible({ timeout: 45_000 });
-  await page.getByLabel("First name").fill("Amelia");
-  await page.getByLabel("Email", { exact: true }).fill("amelia@example.com");
-  await page.getByRole("button", { name: "See my report" }).click();
+  const gate = page.getByRole("dialog", { name: "Your skin report is ready." });
+  await expect(gate).toBeVisible({ timeout: 45_000 });
+  await gate.getByLabel("First name").fill("Amelia");
+  await gate.getByLabel("Email", { exact: true }).fill("amelia@example.com");
+  await gate.getByRole("button", { name: "Send my results" }).click();
+  await page.getByRole("link", { name: "Open my report" }).click();
   await expect(page.getByRole("heading", { name: "Amelia, your skin is telling a clear story." })).toBeVisible();
 }
 

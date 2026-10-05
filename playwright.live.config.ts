@@ -25,6 +25,8 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 120_000,
       env: {
+        // Never the real database, even when Supabase keys are set.
+        REBLOOM_STORE: "local",
         REBLOOM_DATA_DIR: ".data/e2e-live",
         YOUCAM_MODE: "live",
         YOUCAM_API_KEY: "e2e-key",

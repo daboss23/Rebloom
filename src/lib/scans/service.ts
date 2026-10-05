@@ -23,6 +23,11 @@ export const ANALYSIS_TIMEOUT_MS = 3 * 60_000;
 /** A finalisation still running after this was cut off mid-way (the server stopped). */
 const FINALIZE_STALE_MS = ANALYSIS_TIMEOUT_MS + 2 * 60_000;
 
+/** JPEG files start with FF D8 FF. */
+export function isJpeg(bytes: Uint8Array): boolean {
+  return bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+}
+
 export function scanImagePath(clientId: string, fileId: string): string {
   return `clients/${clientId}/scans/${fileId}.jpg`;
 }
@@ -40,6 +45,8 @@ export async function startAnalysis(
   const store = getStore();
   const image = await getStorage().get(scan.imagePath);
   if (!image) return { ok: false, error: "We didn't receive your photo. Please try again." };
+  // A signed storage URL accepts any bytes labelled image/jpeg, so check what actually arrived.
+  if (!isJpeg(image.bytes)) return { ok: false, error: "We couldn't read that photo. Please try again." };
 
   const { mode, reason } = await chooseAnalysisMode(ctx);
   const provider = getProvider(mode);
@@ -71,7 +78,7 @@ export async function startAnalysis(
   } catch (error) {
     if (provider.mode === "live") {
       // YouCam is unreachable, out of units or refusing the key. Rather than a dead end, the scan runs
-      // as a clearly labelled demo (DECISIONS D-022, D-033). The reason stays on the scan for the team.
+      // as a clearly labelled demo (DECISIONS D-022, D-042). The reason stays on the scan for the team.
       const kind = error instanceof YouCamError ? error.kind : "unexpected";
       console.error(`[youcam] scan ${scan.id}: couldn't start live analysis, using demo analysis instead (${describe(error)})`);
       try {

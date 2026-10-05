@@ -1,5 +1,6 @@
 import "server-only";
 import { notFound, redirect } from "next/navigation";
+import { cache } from "react";
 import type { Client, Clinic, Consent, Intake } from "@/lib/domain";
 import { readSandboxId, readVisitClientId } from "@/lib/sandbox";
 import { getStore } from "@/lib/store";
@@ -11,11 +12,12 @@ export interface FlowState {
   intake: Intake | null;
 }
 
-export async function loadClinic(slug: string): Promise<Clinic> {
+/** One lookup per request, however many layouts and pages ask (it's a database query with Supabase). */
+export const loadClinic = cache(async (slug: string): Promise<Clinic> => {
   const clinic = await getStore().getClinicBySlug(slug);
   if (!clinic) notFound();
   return clinic;
-}
+});
 
 /** Loads where this browser is in the scan flow for one clinic. */
 export async function loadFlow(slug: string): Promise<FlowState> {
