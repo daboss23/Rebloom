@@ -152,3 +152,6 @@ Supabase's Data API returns at most 1,000 rows per request, so adding up `api_us
 
 ## D-036 · The browser tests always use the local store (C, Oct 5)
 `REBLOOM_STORE=local` forces the file store even when Supabase keys are present. Playwright sets it, so browser tests never write to the real project. `pnpm test:supabase` is the separate, opt-in check against the real database.
+
+## D-037 · Node 22 everywhere; config values are trimmed (C, Oct 5)
+supabase-js sets up its realtime client as soon as it starts, and that needs the WebSocket class built into Node 22. On Node 20 every database call throws "native WebSocket not found", so `package.json` pins `engines.node` to `22.x`, which Vercel uses over the project setting. Separately, values pasted into a dashboard often carry a stray space or line break, so every variable is trimmed before checking, and choices like `YOUCAM_MODE` ignore case. Values that are actually wrong, such as a live Stripe key, still stop the app.
