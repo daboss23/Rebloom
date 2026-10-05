@@ -38,6 +38,16 @@ test("a client moves from the scan page through consent and intake to the camera
   await expect(page.getByRole("button", { name: "Take photo" })).toBeDisabled();
 });
 
+test("the camera's face guide downloads during the questions, not after", async ({ page }) => {
+  const model = page.waitForRequest((r) => r.url().endsWith("/mediapipe/face_landmarker.task"), { timeout: 15_000 });
+  await page.goto("/c/maison-verre/consent");
+  await page.locator("label[for=biometric]").click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByText("1 of 7")).toBeVisible();
+  await model;
+  await expect(page).toHaveURL(/\/intake$/);
+});
+
 test("the intake can't be skipped", async ({ page }) => {
   await page.goto("/c/maison-verre/capture");
   await expect(page).toHaveURL(/\/consent$/);

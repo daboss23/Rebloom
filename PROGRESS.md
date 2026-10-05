@@ -45,6 +45,8 @@ Results say **Demo analysis**: they're sample scores until YouCam is connected. 
 
 - **Clinic pages errored on Vercel.** First cause: supabase-js needs Node 22, so the project now pins it. Second cause, from the Vercel log: "permission denied for table clinics". This project doesn't give new tables any Data API privileges by default, the server's role included. Migration `20261005130000_grants` grants them explicitly (DECISIONS D-038). Joshua runs it in the SQL editor.
 
+- **The camera looked stuck.** The feed stayed hidden until the 15 MB face guide had downloaded, and the download only started when the camera opened. It now downloads during the questions, and the feed shows as soon as the camera is on (D-039).
+
 ### Blocked on network access
 
 This workspace still can't reach Supabase or YouCam's docs. Network changes only apply to **new** sessions, so adding a host mid-session didn't unblock this one. So:
