@@ -1,12 +1,12 @@
 // Receives direct photo uploads in no-keys mode, mirroring Supabase's signed upload URLs.
-import { features } from "@/lib/env";
-import { getStorage } from "@/lib/store";
+import { getStorage, getStore } from "@/lib/store";
 import { verifyLocal } from "@/lib/store/local";
 
 const MAX_BYTES = 8 * 1024 * 1024;
 
 export async function PUT(request: Request) {
-  if (features.supabase) return new Response("Not found", { status: 404 });
+  // Open exactly when the local store is the one in use. Supabase keys alone don't switch stores.
+  if (getStore().kind !== "local") return new Response("Not found", { status: 404 });
   const url = new URL(request.url);
   const path = url.searchParams.get("path") ?? "";
   const exp = Number(url.searchParams.get("exp"));
