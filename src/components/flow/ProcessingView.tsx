@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ReportGate } from "@/components/flow/ReportGate";
 import { ButtonLink } from "@/components/ui/Button";
 import { IconCheckCircle, IconCopy } from "@/components/ui/Icons";
 import { Label } from "@/components/ui/Typography";
@@ -46,6 +47,10 @@ export function ProcessingView({
       window.clearTimeout(timer);
     };
   }, [scanId]);
+
+  if (view?.status === "complete" && view.locked) {
+    return <ReportGate clinicSlug={clinicSlug} scanId={scanId} demo={view.demo} />;
+  }
 
   if (view?.status === "complete" && view.reportPath) {
     return <Ready reportPath={view.reportPath} firstName={firstName} demo={view.demo} />;

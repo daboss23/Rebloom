@@ -3,7 +3,8 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { CONSENT_VERSION } from "@/lib/flow/consent";
-import { INTAKE_STEPS, stepSchemas, type IntakeStep } from "@/lib/flow/intake-schema";
+import { INTAKE_STEPS, stepSchemas, unlockSchema, type IntakeStep } from "@/lib/flow/intake-schema";
+import { getOwnScan } from "@/lib/scans/access";
 import { hasBiometricConsent, loadFlow } from "@/lib/flow/load";
 import {
   ensureSandboxId,
@@ -40,9 +41,6 @@ export async function giveConsent(slug: string, _prev: ActionResult | null, form
   if (!state.consents.some((c) => c.type === "biometric")) {
     await store.addConsent({ ...record, type: "biometric" });
   }
-  if (form.get("reminders") === "on" && !state.consents.some((c) => c.type === "reminders")) {
-    await store.addConsent({ ...record, type: "reminders" });
-  }
   redirect(`/c/${slug}/intake`);
 }
 
@@ -64,12 +62,7 @@ export async function saveIntakeStep(slug: string, input: { step: IntakeStep; da
   const now = await sandboxNow();
   if (step === "about") {
     const about = stepSchemas.about.parse(data);
-    await store.updateClient(state.client.id, {
-      firstName: about.firstName,
-      email: about.email,
-      phone: about.phone,
-      ageRange: about.ageRange,
-    });
+    await store.updateClient(state.client.id, { ageRange: about.ageRange });
     await store.saveIntake(state.client.id, { completedAt: now.toISOString() }, now);
   } else if (step === "event") {
     const event = stepSchemas.event.parse(data);
@@ -85,4 +78,49 @@ export async function saveIntakeStep(slug: string, input: { step: IntakeStep; da
     await store.saveIntake(state.client.id, parsed.data as Record<string, unknown>, now);
   }
   return { ok: true };
+}
+
+/**
+ * The report gate. Contact details unlock the report the client just scanned for (brief 3.1 step 6).
+ * Until this runs, the browser never receives the report link or the real scores.
+ */
+export async function unlockReport(
+  slug: string,
+  scanId: string,
+  _prev: ActionResult | null,
+  form: FormData,
+): Promise<ActionResult> {
+  const parsed = unlockSchema.safeParse({
+    firstName: form.get("firstName") ?? "",
+    email: form.get("email") ?? "",
+    phone: form.get("phone") ?? "",
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Please check your details." };
+
+  const state = await loadFlow(slug);
+  const scan = await getOwnScan(scanId);
+  if (!state.client || !scan || scan.clientId !== state.client.id || scan.status !== "complete") {
+    return { ok: false, error: "Your session expired. Please start again." };
+  }
+
+  const store = getStore();
+  const now = await sandboxNow();
+  const client = state.client;
+  await store.updateClient(client.id, {
+    ...parsed.data,
+    status: client.status === "started" ? "lead" : client.status,
+  });
+  if (form.get("reminders") === "on" && !state.consents.some((c) => c.type === "reminders")) {
+    const [ipHash, userAgent] = await Promise.all([requestIpHash(), requestUserAgent()]);
+    await store.addConsent({
+      clientId: client.id,
+      type: "reminders",
+      grantedAt: new Date().toISOString(),
+      textVersion: CONSENT_VERSION,
+      ipHash,
+      userAgent,
+    });
+  }
+  const report = await store.getOrCreateReport(client.id, now);
+  redirect(`/r/${report.token}`);
 }

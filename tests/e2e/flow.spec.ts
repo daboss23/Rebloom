@@ -25,8 +25,6 @@ async function completeIntake(page: Page, clinic = "maison-verre") {
   await cont.click();
   await page.getByRole("group", { name: /retinoid/ }).getByRole("button", { name: "Yes" }).click();
   await cont.click();
-  await page.getByLabel("First name").fill("Amelia");
-  await page.getByLabel("Email").fill("amelia@example.com");
   await page.getByRole("button", { name: "Continue to your photo" }).click();
   await expect(page).toHaveURL(/\/capture$/);
 }
@@ -92,9 +90,14 @@ test("a scan runs end to end in fixture mode, and Delete my data removes it", as
   expect((await page.request.post(`/api/scans/${scanId}/analyze`)).ok()).toBe(true);
 
   await page.goto(`/c/maison-verre/processing?scan=${scanId}`);
-  await expect(page.getByRole("heading", { name: "Amelia, your report is ready." })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText("Your private link", { exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "Open your report" }).click();
+  // The report gate: blurred report behind an opt-in. No report link or real score reaches the page yet.
+  await expect(page.getByRole("heading", { name: "Your report is ready." })).toBeVisible({ timeout: 30_000 });
+  expect(await page.content()).not.toContain("/r/");
+  const preview = await page.request.get(`/api/scans/${scanId}/preview`);
+  expect(preview.headers()["content-type"]).toBe("image/jpeg");
+  await page.getByLabel("First name").fill("Amelia");
+  await page.getByLabel("Email", { exact: true }).fill("amelia@example.com");
+  await page.getByRole("button", { name: "See my report" }).click();
 
   await expect(page.getByRole("heading", { name: "Amelia, your skin is telling a clear story." })).toBeVisible();
   await expect(page.getByText("Demo analysis.")).toBeVisible();

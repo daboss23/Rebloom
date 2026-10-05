@@ -25,9 +25,6 @@ export default async function IntakePage({ params }: PageProps<"/c/[clinicSlug]/
         budgetBand: intake?.budgetBand ?? null,
         screening: intake?.screening ?? {},
         sensitivitiesNote: intake?.sensitivitiesNote ?? "",
-        firstName: client.firstName ?? "",
-        email: client.email ?? "",
-        phone: client.phone ?? "",
         ageRange: client.ageRange ?? null,
       }}
     />

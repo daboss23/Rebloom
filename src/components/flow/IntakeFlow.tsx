@@ -38,9 +38,6 @@ export interface IntakeAnswers {
   budgetBand: BudgetBand | null;
   screening: Partial<Record<ScreeningKey, ScreeningAnswer>>;
   sensitivitiesNote: string;
-  firstName: string;
-  email: string;
-  phone: string;
   ageRange: AgeRange | null;
 }
 
@@ -71,7 +68,7 @@ function payload(step: IntakeStep, a: IntakeAnswers): unknown {
     case "screening":
       return { screening: a.screening, sensitivitiesNote: a.screening.sensitivities === "yes" ? a.sensitivitiesNote : "" };
     case "about":
-      return { firstName: a.firstName, email: a.email, phone: a.phone, ageRange: a.ageRange };
+      return { ageRange: a.ageRange };
   }
 }
 
@@ -85,8 +82,6 @@ function canContinue(step: IntakeStep, a: IntakeAnswers): boolean {
       return a.pastTreatments.length > 0;
     case "budget":
       return a.budgetBand !== null;
-    case "about":
-      return a.firstName.trim() !== "" && /.+@.+\..+/.test(a.email.trim());
     default:
       return true;
   }
@@ -387,24 +382,10 @@ function Step({
         <>
           <Question
             headingRef={headingRef}
-            title="Where should we send your report?"
-            hint="Your report is private. We'll show you the link on screen too."
+            title="Last one. Your age range?"
+            hint="Optional. It helps your practitioner read your scan in context."
           />
           <div className="mt-8 space-y-6">
-            <div>
-              <FieldLabel htmlFor="firstName">First name</FieldLabel>
-              <TextInput id="firstName" autoComplete="given-name" value={a.firstName} maxLength={60} onChange={(e) => set({ firstName: e.target.value })} />
-            </div>
-            <div>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
-              <TextInput id="email" type="email" inputMode="email" autoComplete="email" value={a.email} onChange={(e) => set({ email: e.target.value })} />
-            </div>
-            <div>
-              <FieldLabel htmlFor="phone" optional>
-                Phone
-              </FieldLabel>
-              <TextInput id="phone" type="tel" autoComplete="tel" value={a.phone} maxLength={30} onChange={(e) => set({ phone: e.target.value })} />
-            </div>
             <div>
               <p className="t-label mb-3 flex justify-between">
                 <span>Age range</span>

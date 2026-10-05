@@ -46,9 +46,13 @@ export const stepSchemas = {
     sensitivitiesNote: shortText(200),
   }),
   about: z.object({
-    firstName: z.string().trim().min(1, "Please add your first name.").max(60),
-    email: z.string().trim().toLowerCase().email("Please check your email address."),
-    phone: shortText(30),
     ageRange: z.enum(["under_25", "25_34", "35_44", "45_54", "55_64", "65_plus"]).nullable(),
   }),
 } satisfies Record<IntakeStep, z.ZodType>;
+
+/** The report gate: contact details are asked for only after the scan (brief 3.1 step 6). */
+export const unlockSchema = z.object({
+  firstName: z.string().trim().min(1, "Please add your first name.").max(60),
+  email: z.string().trim().toLowerCase().email("Please check your email address."),
+  phone: shortText(30),
+});

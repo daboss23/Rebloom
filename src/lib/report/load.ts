@@ -19,7 +19,8 @@ export const loadReport = cache(async (token: string): Promise<ReportData> => {
   const report = token.length >= 20 ? await store.getReportByToken(token) : null;
   if (!report) notFound();
   const client = await store.getClient(report.clientId);
-  if (!client) notFound();
+  // A report only exists for clients who opted in at the gate.
+  if (!client?.email) notFound();
   const [clinic, intake, allScans] = await Promise.all([
     store.getClinic(client.clinicId),
     store.getIntake(client.id),
@@ -35,5 +36,6 @@ export async function scanForReport(token: string, scanId: string): Promise<Scan
   const store = getStore();
   const report = await store.getReportByToken(token);
   const scan = report ? await store.getScan(scanId) : null;
-  return scan && report && scan.clientId === report.clientId ? scan : null;
+  const client = report ? await store.getClient(report.clientId) : null;
+  return scan && report && client?.email && scan.clientId === report.clientId ? scan : null;
 }

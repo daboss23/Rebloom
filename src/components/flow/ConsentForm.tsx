@@ -16,9 +16,6 @@ export function ConsentForm({ clinicSlug, clinicName }: { clinicSlug: string; cl
         I agree to {clinicName} analyzing a photo of my face as described above. I understand this involves processing
         biometric data from my face image.
       </Checkbox>
-      <Checkbox id="reminders" name="reminders">
-        Email me when it&apos;s time for a progress scan. <span className="text-text-3">Optional.</span>
-      </Checkbox>
 
       {state?.error && (
         <p role="alert" className="text-[14px] text-ink border-l border-bronze pl-3">

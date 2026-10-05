@@ -112,8 +112,7 @@ async function finalize(scan: Scan, raw: RawSkinResult): Promise<Scan> {
   const now = await sandboxNow();
   const done = await store.updateScan(scan.id, { status: "complete", result, completedAt: now.toISOString() });
   await store.getOrCreateReport(scan.clientId, now);
-  const client = await store.getClient(scan.clientId);
-  if (client?.status === "started") await store.updateClient(client.id, { status: "lead" });
+  // The client becomes a lead at the report gate, once they leave contact details (see unlockReport).
   return done;
 }
 
@@ -122,6 +121,8 @@ export interface ScanView {
   stage: string;
   stageIndex: number;
   reportPath?: string;
+  /** True when the scan is done but the client hasn't opted in yet, so the report stays behind the gate. */
+  locked?: boolean;
   error?: { title: string; instruction: string };
   demo: boolean;
 }
@@ -131,7 +132,11 @@ export const STAGES = ["Reading texture", "Mapping tone", "Measuring pores and l
 export async function viewScan(scan: Scan): Promise<ScanView> {
   const demo = scan.source === "fixture";
   if (scan.status === "complete") {
-    const report = await getStore().getOrCreateReport(scan.clientId, await sandboxNow());
+    const store = getStore();
+    const client = await store.getClient(scan.clientId);
+    // No report link leaves the server until the client has opted in at the gate.
+    if (!client?.email) return { status: scan.status, stage: "Ready", stageIndex: STAGES.length, locked: true, demo };
+    const report = await store.getOrCreateReport(scan.clientId, await sandboxNow());
     return { status: scan.status, stage: "Ready", stageIndex: STAGES.length, reportPath: `/r/${report.token}`, demo };
   }
   if (scan.status === "failed") {
