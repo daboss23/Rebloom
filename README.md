@@ -51,10 +51,23 @@ To use real services, copy `.env.example` to `.env.local` and fill in what you h
 ```bash
 pnpm typecheck     # TypeScript
 pnpm lint          # ESLint
-pnpm test          # unit tests (gate maths, clock, fixtures, theming, copy rules, store)
-pnpm test:e2e      # browser tests of the client flow, in fixture mode
+pnpm test          # unit tests (gate maths, clock, fixtures, theming, copy rules, store, row mapping)
+pnpm test:e2e      # browser tests of the client flow, in fixture mode with the local store
+pnpm test:supabase # the Supabase store against the real project (needs keys; cleans up after itself)
 pnpm check:copy    # no em dashes anywhere in the source
 ```
+
+## Database
+
+Schema lives in `supabase/migrations` (tables, row level security, the private `scans` photo bucket).
+
+```bash
+pnpm db:migrate    # apply new migrations through Supabase's Management API
+pnpm db:seed       # upsert the demo clinics, treatments and products from src/data
+pnpm db:status     # what's applied, row counts, and whether the photo bucket is private
+```
+
+These need `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF`. Add `--print` to `db:migrate` or `db:seed` to print the SQL instead, for pasting into Supabase's SQL editor.
 
 ## Stack
 

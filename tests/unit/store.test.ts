@@ -40,6 +40,29 @@ describe("local store", () => {
     expect(await store.getReportByToken(report.token)).toBeNull();
   });
 
+  it("expires old sandboxes with their photos, and keeps unit usage", async () => {
+    const clinic = (await store.getClinicBySlug("maison-verre"))!;
+    const old = await store.createSandbox("old-sandbox", new Date("2026-08-01T00:00:00Z"));
+    await store.createSandbox("new-sandbox", now);
+    const client = await store.createClient({ clinicId: clinic.id, sandboxId: old.id, now });
+    await store.createScan(
+      { clientId: client.id, sandboxId: old.id, imagePath: "old.jpg", imageWidth: 810, imageHeight: 1080, captureQuality: null, landmarks: null, concernsRequested: [] },
+      now,
+    );
+    await store.logUsage({ provider: "youcam", feature: "skin_analysis_sd", units: 16, taskId: "t", sandboxId: old.id, ipHash: null, createdAt: now.toISOString() });
+
+    const expired = await store.expiredSandboxes(new Date("2026-09-05T00:00:00Z"), 50);
+    expect(expired.ids).toEqual(["old-sandbox"]);
+    expect(expired.storagePaths).toEqual(["old.jpg"]);
+
+    await store.deleteSandboxes(expired.ids);
+    expect(await store.getSandbox("old-sandbox")).toBeNull();
+    expect(await store.getSandbox("new-sandbox")).not.toBeNull();
+    expect(await store.getClient(client.id)).toBeNull();
+    expect(await store.listScans(client.id)).toEqual([]);
+    expect((await store.sumUsage({ provider: "youcam", since: new Date(0), sandboxId: old.id })).units).toBe(16);
+  });
+
   it("issues unguessable report tokens", async () => {
     const clinic = (await store.getClinicBySlug("maison-verre"))!;
     const client = await store.createClient({ clinicId: clinic.id, sandboxId: "sb3", now });

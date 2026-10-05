@@ -20,6 +20,10 @@ const schema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: optional,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: optional,
   SUPABASE_SERVICE_ROLE_KEY: optional,
+  /** Supabase's newer name for the same secret (sb_secret_…). Either one works. */
+  SUPABASE_SECRET_KEY: optional,
+  /** "local" forces the file store even when Supabase keys are present (browser tests use this). */
+  REBLOOM_STORE: z.preprocess((v) => (v === "" ? undefined : v), z.enum(["local", "supabase"]).optional()),
 
   YOUCAM_API_KEY: optional,
   YOUCAM_MODE: z.preprocess((v) => (v === "" ? undefined : v), z.enum(["live", "fixture"]).default("fixture")),
@@ -52,8 +56,14 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 
+/** The server-only Supabase key. Never sent to the browser. */
+export function supabaseSecretKey(): string | undefined {
+  return env.SUPABASE_SERVICE_ROLE_KEY ?? env.SUPABASE_SECRET_KEY;
+}
+
 export const features = {
-  supabase: Boolean(env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY && env.SUPABASE_SERVICE_ROLE_KEY),
+  // The server needs only the URL and the secret key. The public key is for browser login (Week 3).
+  supabase: env.REBLOOM_STORE !== "local" && Boolean(env.NEXT_PUBLIC_SUPABASE_URL && supabaseSecretKey()),
   youcamLive: env.YOUCAM_MODE === "live" && Boolean(env.YOUCAM_API_KEY),
   email: Boolean(env.RESEND_API_KEY),
   isProductionDeploy: env.VERCEL_ENV === "production",

@@ -15,6 +15,11 @@ import { getProvider } from "@/lib/youcam";
 import type { RawSkinResult } from "@/lib/youcam/types";
 import { sdUnitCost } from "@/lib/youcam/units";
 
+/** JPEG files start with FF D8 FF. */
+export function isJpeg(bytes: Uint8Array): boolean {
+  return bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+}
+
 export function scanImagePath(clientId: string, fileId: string): string {
   return `clients/${clientId}/scans/${fileId}.jpg`;
 }
@@ -30,6 +35,8 @@ export async function startAnalysis(
   const store = getStore();
   const image = await getStorage().get(scan.imagePath);
   if (!image) return { ok: false, error: "We didn't receive your photo. Please try again." };
+  // A signed storage URL accepts any bytes labelled image/jpeg, so check what actually arrived.
+  if (!isJpeg(image.bytes)) return { ok: false, error: "We couldn't read that photo. Please try again." };
 
   const { mode, reason } = await chooseAnalysisMode(ctx);
   const provider = getProvider(mode);

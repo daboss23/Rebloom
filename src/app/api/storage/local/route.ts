@@ -1,5 +1,6 @@
 // Receives direct photo uploads in no-keys mode, mirroring Supabase's signed upload URLs.
 import { features } from "@/lib/env";
+import { isJpeg } from "@/lib/scans/service";
 import { getStorage } from "@/lib/store";
 import { verifyLocal } from "@/lib/store/local";
 
@@ -15,8 +16,7 @@ export async function PUT(request: Request) {
   if (request.headers.get("content-type") !== "image/jpeg") return new Response("JPEG only", { status: 415 });
   const bytes = Buffer.from(await request.arrayBuffer());
   if (bytes.length === 0 || bytes.length > MAX_BYTES) return new Response("Bad size", { status: 413 });
-  // JPEG files start with FF D8 FF.
-  if (bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) return new Response("Not a JPEG", { status: 415 });
+  if (!isJpeg(bytes)) return new Response("Not a JPEG", { status: 415 });
   await getStorage().put(path, bytes, "image/jpeg");
   return new Response(null, { status: 204 });
 }

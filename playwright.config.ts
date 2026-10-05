@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Runs the client flow against a local server in no-keys mode.
+// Runs the client flow against a local server in no-keys mode, even when Supabase keys are set.
 // In the Claude cloud workspace, set PW_CHROMIUM_PATH=/opt/pw-browsers/chromium.
 const port = Number(process.env.E2E_PORT ?? 3200);
 
@@ -22,6 +22,6 @@ export default defineConfig({
     url: `http://localhost:${port}/c/maison-verre`,
     reuseExistingServer: true,
     timeout: 120_000,
-    env: { REBLOOM_DATA_DIR: ".data/e2e", FIXTURE_DELAY_MS: "1500" },
+    env: { REBLOOM_STORE: "local", YOUCAM_MODE: "fixture", REBLOOM_DATA_DIR: ".data/e2e", FIXTURE_DELAY_MS: "1500" },
   },
 });
