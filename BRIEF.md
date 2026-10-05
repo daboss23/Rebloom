@@ -67,20 +67,20 @@ Market: **United States**. US English, US dates (October 5, 2026), US dollars.
 
 ### 3.1 Client journey
 1. **Landing on the clinic's scan page** (`/c/maison-verre`). Calm, luxurious, one clear promise: "See your skin clearly." One button to start.
-2. **Consent.** Plain-English explanation before the camera opens: what we analyse, what's stored, for how long, who sees it, how to delete. Explicit checkbox consent for face image processing (biometric consent). Separate optional checkbox for progress reminders by email. Cannot continue without the first one.
+2. **Consent.** Plain-English explanation before the camera opens: what we analyse, what's stored, for how long, who sees it, how to delete. Explicit checkbox consent for face image processing (biometric consent). Cannot continue without it. (The optional email reminders opt-in moves to the report gate in step 6.)
 3. **Intake (4 short questions, one per screen, tappable answers):**
    - What bothers you most when you look in the mirror? (multi-select: uneven tone, texture, pores, fine lines, redness, breakouts, dullness, firmness, other)
    - Any event coming up? (none / yes, with date picker and event type: wedding, holiday, reunion, other)
    - Treatments before? (none / facials / peels / microneedling / laser or IPL / injectables / other)
    - Roughly what would you like to invest? (under $500 / $500 to $1,000 / $1,000 to $2,000 / $2,000+)
    - Plus standard pre-treatment screening questions clinics already ask (current retinoid use, recent sun exposure or tan in last 2 weeks, pregnant or breastfeeding, recent isotretinoin use, active cold sores, skin sensitivities). These are **never used to block or decide anything**. They only create flags for the practitioner to review.
-   - First name and email (to send the report link). Phone optional.
 4. **Capture with quality gate** (see section 6.2). Live camera with a face guide. The capture button only activates when the photo will produce a reliable result. Option to upload a photo instead.
 5. **Processing screen.** Elegant, slow, honest progress states ("Reading texture", "Mapping tone", "Writing your report"). Analysis can take a while; never fake a percentage.
-6. **The living report** (`/r/[token]`). See section 3.3. Private link, emailed to the client.
-7. **Booking.** Pick a time, pay a refundable deposit (Stripe test mode), get a confirmation email.
-8. **Between sessions:** emailed nudges at planned progress-scan points. A rescan takes 2 minutes from home using the same capture flow and the same instructions.
-9. **Progress view.** The same report link now shows progress: side-by-side scans, score changes, practitioner note, and the next recommended step.
+6. **The report gate (lead capture).** When analysis finishes, the client's real report renders behind a heavy blur (their photo, overlays and scores visibly there but unreadable), with an opt-in panel over it (beside it on desktop): "Your report is ready." First name and email (required), phone (optional), optional checkbox for progress reminders by email. Submitting unblurs the report in place and emails the private link. Rule: the unblurred data must **not** be sent to the browser before opt-in (render the blurred layer from a server-generated, pre-blurred image or placeholder values, so it can't be read via dev tools). A client who leaves at the gate is stored as an "abandoned scan" (no contact details) and counted in insights.
+7. **The living report** (`/r/[token]`). See section 3.3. Private link, emailed to the client.
+8. **Booking.** Pick a time, pay a refundable deposit (Stripe test mode), get a confirmation email.
+9. **Between sessions:** emailed nudges at planned progress-scan points. A rescan takes 2 minutes from home using the same capture flow and the same instructions.
+10. **Progress view.** The same report link now shows progress: side-by-side scans, score changes, practitioner note, and the next recommended step.
 
 ### 3.2 Clinic journey
 1. **Dashboard login** (Supabase Auth, email magic link) plus a **"Enter demo as Dana"** button for judges.
