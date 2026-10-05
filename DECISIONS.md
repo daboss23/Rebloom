@@ -115,3 +115,22 @@ The Face Landmarker model (`face_landmarker.task`, Apache 2.0) and its WASM file
 
 ### D-025 · Fonts via next/font/google (brief §7.4)
 Cormorant Garamond (300, 400, 500) and Inter (300, 400, 500) load through `next/font/google`, which downloads them at build time and serves them from our own domain.
+
+---
+
+## Build notes (October 5)
+
+### D-026 · Sharpness threshold rescaled (C, Oct 5)
+The first sharpness threshold (12) was on the wrong scale. A sharp test photo measures about 1,470 on our variance-of-Laplacian measure, so the starting threshold is now 120. Still provisional until real phones are tested.
+
+### D-027 · Demo masks are porcelain with a hairline ink edge (C, Oct 5)
+Bronze marks almost disappeared on deeper skin tones. Masks now render as light porcelain marks with a thin dark edge, which read on every skin tone, and mark sizes scale with the face rather than the photo.
+
+### D-028 · Selfies are stored mirrored (C, Oct 5)
+Camera photos are saved the way the person saw themselves in the preview (mirrored), so the face map matches the mirror they know. Uploaded photos are kept as they are. Skin analysis isn't affected by mirroring.
+
+### D-029 · Delete my data built in Week 1 (C, Oct 5)
+The consent screen promises a delete link, so it ships with the first version of the report rather than in Week 2. Deletion removes photos, masks, scores, answers, consent records and contact details, and keeps one anonymous "client deleted" event for counts.
+
+### D-030 · Demo portraits still needed (open, Oct 5)
+No image-generation tool is available in the build workspace, so the five AI-generated demo portraits (D-003) aren't made yet. Joshua generates them with a tool of his choice (front-facing, even light, no glasses, neutral expression, mouth closed, about 1080 × 1440), or we revisit together.
