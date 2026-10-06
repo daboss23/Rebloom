@@ -264,3 +264,35 @@ Joshua asked for Resend's starter route: one test email from `onboarding@resend.
 - **It answers only to `Authorization: Bearer <CRON_SECRET>`**, like the YouCam check (D-044), and is a 404 to anyone else. As a public route, anyone who found it could send from the account and use up its free quota.
 - **POST, not GET,** so a link preview or prefetch can never send an email.
 Resend is reached only through `src/lib/email/resend.ts`, which imports `server-only`: if a client component ever imports it, the build fails, so the key can't reach a browser. To send the test: `curl -X POST https://<site>/api/send -H "Authorization: Bearer <CRON_SECRET>"`.
+
+## D-051 · Rebloom gets its own cool, glacial look; client pages stay warm (J, Oct 6). Refines brief 7
+Joshua chose the dashboard's direction from his references (clean, cool, fresh, invigorating, luxury, minimal): "cool glass Rebloom". The dashboard is Rebloom's own surface (D-001), and Rebloom had no visual identity beyond its name, so it takes this one. Maison Verre's porcelain, ink and champagne stay on every client page.
+- **Tokens** live in `.rebloom` in `globals.css`, under the brief's names, so every existing component re-themes inside the dashboard: frost `#F3F5F6`, ice mist `#E3E8EB`, panel `#EBEFF1`, deep charcoal `#15191C`, one glacier accent `#A9C4D3` for fills only, and glacier-deep `#3E6276` for chart marks and the progress mark. Contrast on frost: body 9.2:1, captions 5.6:1, glacier-deep 6.0:1.
+- **Kept from the brief:** Cormorant Garamond and Inter, sharp corners, hairlines, no gradients, no shadows, slow fades. Numbers in Cormorant stand on the line (lining figures), because these are read, not admired.
+- **Left out of the references (C):** water splashes, bubbles, sparkle and frosted-glass cards. They suit a product poster, not a screen Dana works in all day, and frosted glass costs legibility.
+
+## D-052 · "Enter demo as Dana" signs in by cookie until clinic login exists (C, Oct 6)
+`/dashboard/enter` has one way in: the demo. It gives the browser its sandbox (D-013), a `rb_staff` cookie for Dana, and its copy of the demo clients (D-014). Every dashboard page and action checks the cookie and the sandbox, and reads only that sandbox's rows, so the demo can never reach real data. Supabase magic-link login (brief 3.2) replaces the cookie at launch. The landing page's "Clinic dashboard · coming soon" became "Enter the clinic dashboard".
+
+## D-053 · The rebook engine: one row per client, explained in one sentence (J + C, Oct 6)
+`src/lib/rebook/engine.ts` is pure: the same rows and the same today give the same queue. Every trigger in brief 3.4 is in it, with thresholds in `thresholds.ts` (new: lapsed after 90 days, progress scan 14 days after a course, a progress moment stays fresh for 21 days).
+- **One row per client,** under the most pressing trigger: progress moment, stalled, missed, session due, new lead, scan due, maintenance, lapsed. Dana sees one reason per person, not a pile of flags.
+- **Progress is measured on raw scores and shown in ui points** (D-009, D-010). A moment needs a raw rise of 5 on a priority, a high-confidence comparison, and something to book.
+- **Each row's value comes from the menu:** the sessions left on the plan, one maintenance session, or the plan the report suggests for a lead. "Ready to rebook" on Today is their sum, so it moves when the clock moves.
+- **Three kinds of action.** Email: a pre-written message Dana edits in a side sheet before anything goes out. Call: no reminders consent, so the row shows the number instead (Chloe). Review: a stalled plan opens the brief.
+- **The outbox remembers.** Sending writes the message with the row's dedupe key; "Mark as called" or "Mark as reviewed" writes a `skipped` line, which Undo can take back. Sent emails can't be undone. In demo mode every message is logged on screen, never emailed; a real email goes out only outside demo mode, for a real client, with Resend and `EMAIL_FROM` set.
+- **No pronouns in reasons** ("Report sent 4 days ago"), since intake doesn't ask for them (D-006).
+
+## D-054 · Insights is four numbers and one chart (J, Oct 6). Narrows brief 3.2
+Joshua cut the brief's six owner metrics to four. "Scans this month" and "revenue booked from reports" are out. Definitions, in `src/lib/dashboard/insights.ts`:
+- **Revenue kept through rebooking (the hero):** every treatment visit after a client's first, done or booked, at menu price, over six months. Month by month in the one bar chart; this month's bar is lighter because it includes visits booked for later in the month.
+- **Rebook rate:** of clients whose first treatment is done, the share with another done or booked.
+- **Reports that became bookings:** of clients with a report, the share who booked anything.
+- **Clients at risk:** stalled, missed or lapsed, the same clients the queue flags.
+The only other graphs are the small trend lines beside each client's scores.
+
+## D-055 · The practitioner brief confirms the report's plan, and Dana's note reaches the report (C, Oct 6)
+The brief follows the mockup's third screen: face, lowest scores with their trend, the client's own words, facts, screening flags, Dana's note, visits, and the dark plan panel. "Confirm plan with client" confirms a proposed plan, or, for a client with only a report (Marcus), saves the plan the report suggests with today's menu prices. Dana's note now shows on the client's report as "Your practitioner's note", signed by the clinic's practitioner. Skin age shows here only (D-007). Until the demo portraits arrive (D-030), the face is an ice-mist block with initials.
+
+## D-056 · Settings is one quiet page (C, Oct 6)
+Menu (read only: the AI's only source), Brand (a preview in the clinic's own colours) and Connects to (Stripe and email status, then Boulevard, Vagaro, Zenoti, Mindbody, Square Appointments, and webhooks and Zapier as "coming soon" text cards) sit on one page with anchors, instead of three routes. Editing the menu and brand comes later.

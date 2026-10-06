@@ -21,6 +21,18 @@ import type { DemoBundle } from "@/lib/demo/seed";
 /** A plan with its items, in order. */
 export type PlanWithItems = ClientPlan & { items: PlanItem[] };
 
+/** Everything the dashboard reads about one clinic's clients in one sandbox, fetched in one round. */
+export interface ClinicRecords {
+  clients: Client[];
+  consents: Consent[];
+  intakes: Intake[];
+  scans: Scan[];
+  reports: Report[];
+  plans: PlanWithItems[];
+  appointments: Appointment[];
+  messages: Message[];
+}
+
 export type NewScan = Pick<
   Scan,
   "clientId" | "sandboxId" | "imagePath" | "imageWidth" | "imageHeight" | "captureQuality" | "landmarks" | "concernsRequested"
@@ -69,6 +81,21 @@ export interface Store {
   listAppointments(clinicId: string, sandboxId: string): Promise<Appointment[]>;
   /** One clinic's outbox in one sandbox, oldest first. */
   listMessages(clinicId: string, sandboxId: string): Promise<Message[]>;
+  /**
+   * Every row the dashboard needs for one clinic in one sandbox. One round of reads instead of
+   * several per client, so the dashboard stays quick however many clients a sandbox gathers.
+   */
+  listClinicRecords(clinicId: string, sandboxId: string): Promise<ClinicRecords>;
+  /** Adds to the outbox. Null when this client already has a message with the same dedupe key. */
+  addMessage(message: Omit<Message, "id">): Promise<Message | null>;
+  /** Takes back a "marked done" line (status skipped) from the outbox. Sent messages can never be removed. */
+  removeSkippedMessage(clientId: string, dedupeKey: string): Promise<boolean>;
+  /** Saves a plan with its items. Null when the client already has a live plan (one per client). */
+  createPlan(plan: ClientPlan, items: PlanItem[]): Promise<PlanWithItems | null>;
+  /** Confirms a proposed plan. Null when it isn't proposed any more (another tab confirmed it first). */
+  confirmPlan(planId: string, staffId: string | null, now: Date): Promise<ClientPlan | null>;
+  /** The practitioner's note, shown on the client's report. Empty clears it. */
+  setPractitionerNote(clientId: string, note: string | null): Promise<Report>;
 
   addConsent(consent: Omit<Consent, "id">): Promise<Consent>;
   listConsents(clientId: string): Promise<Consent[]>;

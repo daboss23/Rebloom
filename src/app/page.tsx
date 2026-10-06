@@ -39,12 +39,9 @@ export default function RebloomHome() {
             <ButtonLink href="#try" className="sm:flex-1">
               Try the client experience
             </ButtonLink>
-            <span
-              aria-disabled
-              className="inline-flex sm:flex-1 items-center justify-center min-h-12 px-6 border border-mist text-text-3 text-[15px]"
-            >
-              Clinic dashboard · coming soon
-            </span>
+            <ButtonLink href="/dashboard/enter" variant="secondary" className="sm:flex-1">
+              Enter the clinic dashboard
+            </ButtonLink>
           </div>
         </section>
 

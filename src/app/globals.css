@@ -22,6 +22,38 @@
   --ease-gentle: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/*
+ * Rebloom's own surface: the clinic dashboard (DECISIONS D-051). Cool and glacial where the clinic
+ * pages are warm. Same names, so every component re-themes itself inside `.rebloom`.
+ * Contrast on frost: text-2 9.2:1, text-3 5.6:1, glacier-deep 6.0:1. Glacier is a fill, never text.
+ */
+.rebloom {
+  --bg: #f3f5f6; /* Frost */
+  --ink: #15191c; /* Deep charcoal */
+  --accent: #a9c4d3; /* Glacier. Fills only. */
+  --accent-deep: #3e6276; /* Glacier, deep: marks, chart bars, small accent text. */
+  --surface: #e3e8eb; /* Ice mist */
+  --panel: #ebeff1; /* The second neutral layer: the menu and quiet panels. */
+  --detail: #8a9aa4; /* Decorative only. */
+  --text-2: #3a4349;
+  --text-3: #59646b;
+  --ink-soft: #b4c0c8; /* Secondary text on charcoal. */
+  --clinic-accent: var(--accent);
+  --clinic-on-accent: var(--ink);
+  background: var(--bg);
+  color: var(--text-2);
+  /* Cormorant's old-style figures dip below the line; numbers here are read, so they stand on it. */
+  font-variant-numeric: lining-nums;
+}
+/* Unlayered, so it holds over Tailwind's tabular-nums utility, which would reset the figure style. */
+.rebloom .font-display,
+.rebloom .font-display * {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+html:has(.rebloom) {
+  background: #f3f5f6;
+}
+
 @theme inline {
   --color-porcelain: var(--bg);
   --color-ink: var(--ink);
@@ -34,6 +66,9 @@
   --color-ink-soft: var(--ink-soft);
   --color-accent: var(--clinic-accent);
   --color-on-accent: var(--clinic-on-accent);
+  --color-glacier: var(--accent);
+  --color-glacier-deep: var(--accent-deep, var(--bronze));
+  --color-panel: var(--panel, var(--surface));
 
   --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
   --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
@@ -151,6 +186,54 @@ body {
   /* A panel arriving: rises a little and settles. Used for the report gate. */
   .rise {
     animation: rise 650ms var(--ease-gentle) both;
+  }
+}
+
+/* The review-and-send sheet: slides in from the right edge, the way it will leave. */
+.sheet[open] {
+  animation: sheet-in 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.sheet::backdrop {
+  background: rgb(21 25 28 / 0.28);
+  animation: fade 320ms var(--ease-gentle) both;
+}
+@keyframes sheet-in {
+  from {
+    transform: translateX(32px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+/* Toasts rise a little and settle. */
+.toast {
+  animation: toast-in 260ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+@keyframes toast-in {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Chart bars rise from the baseline once, on arrival. */
+.bar {
+  animation: bar-rise 700ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+@keyframes bar-rise {
+  from {
+    transform: scaleY(0.04);
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    opacity: 1;
   }
 }
 

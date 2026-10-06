@@ -9,6 +9,7 @@ import { rankPriorities, statedConcerns } from "@/lib/plan/build";
 import { loadReport, reportPlan } from "@/lib/report/load";
 import { mentions, planRationale, priorityMeaning, subhead } from "@/lib/report/personal";
 import { sandboxNow } from "@/lib/sandbox";
+import { getStore } from "@/lib/store";
 import { illustratedWeek } from "@/lib/simulation/intensity";
 import { simulationState, viewOf } from "@/lib/simulation/service";
 import { CONCERNS } from "@/lib/skin/concerns";
@@ -31,6 +32,10 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
   const engineLabel = latest.source === "live" && result.engine === "hd" ? " · HD analysis" : "";
 
   const { plan, from } = (await reportPlan(token))!;
+  // The note is written in the dashboard by the clinic's practitioner (brief 3.2).
+  const practitioner = report.practitionerNote
+    ? ((await getStore().listStaff(clinic.id)).find((s) => s.role === "practitioner") ?? null)
+    : null;
   const hasPlan = plan.recommended.lines.length > 0;
   const asked = mentions(result, stated, top, plan);
 
@@ -122,6 +127,18 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
           ))}
         </dl>
       </details>
+
+      {report.practitionerNote && (
+        <figure className="mt-16 bg-mist px-6 py-8">
+          <figcaption className="t-label">Your practitioner&apos;s note</figcaption>
+          <blockquote className="t-quote mt-4">{report.practitionerNote}</blockquote>
+          {practitioner && (
+            <p className="t-caption mt-4 !text-ink">
+              {practitioner.name}, {practitioner.title}
+            </p>
+          )}
+        </figure>
+      )}
 
       {hasPlan ? (
         <>

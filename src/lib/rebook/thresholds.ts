@@ -11,3 +11,9 @@ export const PROGRESS_MOMENT_RAW_DELTA = 5;
 export const STALLED_RAW_DELTA = 2;
 /** A session or scan this many days overdue is missed. */
 export const MISSED_AFTER_DAYS = 14;
+/** A session overdue this long means the client has drifted away: a personal note, or a call. */
+export const LAPSED_AFTER_DAYS = 90;
+/** The progress scan comes this long after a course's last session (brief 3.4, and the report's timeline). */
+export const PROGRESS_SCAN_AFTER_DAYS = 14;
+/** A progress moment is worth acting on while the rescan is fresh. */
+export const PROGRESS_MOMENT_FRESH_DAYS = 21;

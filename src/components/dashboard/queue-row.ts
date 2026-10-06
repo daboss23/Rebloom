@@ -1,0 +1,42 @@
+// What a queue row needs in the browser: plain data, no rows from the store.
+import type { QueueAction, QueueItem, TriggerKind } from "@/lib/rebook/engine";
+import { TRIGGER_LABEL } from "@/lib/rebook/engine";
+import { formatPrice } from "@/lib/plan/build";
+import type { ClientFacts } from "@/lib/rebook/engine";
+import { fullName } from "@/lib/dashboard/view";
+
+export interface QueueRow {
+  clientId: string;
+  dedupeKey: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  href: string;
+  kind: TriggerKind;
+  label: string;
+  action: QueueAction;
+  reason: string;
+  value: string | null;
+  valueNote: string | null;
+  atRisk: boolean;
+  draft: { subject: string; body: string } | null;
+}
+
+export function toQueueRow(item: QueueItem, facts: ClientFacts): QueueRow {
+  return {
+    clientId: item.clientId,
+    dedupeKey: item.dedupeKey,
+    name: fullName(facts.client),
+    email: facts.client.email,
+    phone: facts.client.phone,
+    href: `/dashboard/clients/${item.clientId}`,
+    kind: item.kind,
+    label: TRIGGER_LABEL[item.kind],
+    action: item.action,
+    reason: item.reason,
+    value: item.valueCents ? formatPrice(item.valueCents) : null,
+    valueNote: item.valueNote,
+    atRisk: item.atRisk,
+    draft: item.draft,
+  };
+}

@@ -4,6 +4,7 @@
 
 import type { BudgetBand, Clinic, ConcernScore, Intake, Product, ScanResult, Treatment } from "@/lib/domain";
 import { CONCERN_OPTIONS } from "@/lib/flow/intake-options";
+import { PROGRESS_SCAN_AFTER_DAYS } from "@/lib/rebook/thresholds";
 import { CONCERNS, INTAKE_TO_CONCERNS, type ConcernKey } from "@/lib/skin/concerns";
 
 /** A concern the client ticked gets this many extra points of need, on a 0 to 100 scale. */
@@ -26,8 +27,8 @@ const LEAD_DAYS = 3;
 const SECOND_OFFSET_DAYS = 7;
 /** Any two visits sit at least this far apart, so one session has settled before the next. */
 const MIN_GAP_DAYS = 7;
-/** The progress scan comes this long after the last session. */
-const PROGRESS_AFTER_DAYS = 14;
+/** The progress scan comes this long after the last session. The rebook engine uses the same number. */
+const PROGRESS_AFTER_DAYS = PROGRESS_SCAN_AFTER_DAYS;
 
 /** Upper end of each budget band, in cents. Null: no upper end. */
 export const BUDGET_CAP_CENTS: Record<BudgetBand, number | null> = {

@@ -1,5 +1,30 @@
 # Progress
 
+## Session 5 · Tuesday October 6, 2026 · The clinic dashboard
+
+**The dashboard is live in demo mode at `/dashboard`.** "Enter demo as Dana" opens it. It answers one question each morning: who should we contact today, and why? Rebloom now has its own cool, glacial look; client pages stay Maison Verre (DECISIONS D-051).
+
+### What's done
+- **Today:** one line ("7 people to contact · 2 visits today · $2,450 ready to rebook"), the rebook queue with the reason for each person in one sentence, and today's visits. Every number is worked out from the data.
+- **The rebook engine** (D-053): every trigger in the brief, one row per client, each priced from the menu. Email rows open a side sheet with the pre-written message to edit before sending; Chloe (no consent) gets a call; Grace (stalled) gets a plan review. Done items can be undone. In demo mode messages are logged in the outbox, never emailed.
+- **Time travel** in the top bar: +1 day, +1 week, +1 month. Isabel's follow-up appears after two days; Sofia's session turns "missed" after two months.
+- **Clients:** one table with status, last and next visit, and the lead concern with its trend line. Filters for leads, booked, in course, complete and at risk.
+- **Practitioner brief** (D-055): face, lowest scores with trends, their words, facts, flags, Dana's note (now shown on the client's report), visits, and the plan with "Confirm plan with client".
+- **Insights** (D-054): revenue kept through rebooking, rebook rate, reports that became bookings, clients at risk, and one monthly bar chart.
+- **Settings** (D-056): the menu, a brand preview, and "Connects to".
+- **Tests:** 318 unit tests (the engine checked on ten different days, both clinics, and with time travel), 14 browser tests (7 new for the dashboard), lint, typecheck, the copy check and the production build all pass.
+
+### What's next
+1. **Booking** with a Stripe test deposit, so a rebook message leads to a real booking.
+2. **The progress view** on the client's report (scan 01 against the latest), which the progress-moment emails point to.
+3. **Clinic login** by email (magic link) to replace the demo cookie (D-052).
+
+### What Joshua needs to do
+1. **Portraits** are still the biggest visual gap (D-030, list below in session 4). Until they arrive, the brief shows initials on ice mist.
+2. **Optional, for the video:** `DEMO_TODAY` pins the date but keeps the time of day in UTC, so in the Los Angeles evening the clinic's date is the day before. Pin the day after the one you want, or record before 5pm Pacific.
+
+---
+
 ## Session 4 · Tuesday October 6, 2026 · The clinic side's data, and twelve demo clients
 
 The dashboard comes before booking (DECISIONS D-049): the rebook queue is what sets Rebloom apart, and it runs on demo data with no keys. This part is its foundation. Nothing new is visible yet; the dashboard screens come next.

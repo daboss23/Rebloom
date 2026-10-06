@@ -69,3 +69,24 @@ export const IconCopy = (p: SVGProps<SVGSVGElement>) => (
     <path d="M15.5 8.5V4.5h-11v11h4" />
   </Icon>
 );
+export const IconMail = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <rect x="3.5" y="5.5" width="17" height="13" />
+    <path d="M4 6.5l8 6.2 8-6.2" />
+  </Icon>
+);
+export const IconPhone = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M6.5 4h3l1.5 4-2 1.3a10 10 0 005.7 5.7L16 13l4 1.5v3A2 2 0 0118 19.5 15.5 15.5 0 014.5 6 2 2 0 016.5 4z" />
+  </Icon>
+);
+export const IconClose = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M6 6l12 12M18 6L6 18" />
+  </Icon>
+);
+export const IconArrowUpRight = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M7 17L17 7M9 7h8v8" />
+  </Icon>
+);

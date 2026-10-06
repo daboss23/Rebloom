@@ -223,6 +223,64 @@ export const localStore: Store = {
         .filter((m) => m.clinicId === clinicId && m.sandboxId === sandboxId)
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     ),
+  listClinicRecords: (clinicId, sandboxId) =>
+    tx((db) => {
+      const clients = db.clients
+        .filter((c) => c.clinicId === clinicId && c.sandboxId === sandboxId)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const ids = new Set(clients.map((c) => c.id));
+      const mine = <T extends { clientId: string }>(rows: T[]) => rows.filter((r) => ids.has(r.clientId));
+      const byTime = <T extends { createdAt: string }>(rows: T[]) => [...rows].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      return {
+        clients,
+        consents: mine(db.consents),
+        intakes: mine(db.intakes),
+        scans: byTime(mine(db.scans)),
+        reports: mine(db.reports),
+        plans: byTime(mine(db.plans)).map((p) => ({
+          ...p,
+          items: db.planItems.filter((i) => i.planId === p.id).sort((a, b) => a.position - b.position),
+        })),
+        appointments: db.appointments
+          .filter((a) => a.clinicId === clinicId && a.sandboxId === sandboxId)
+          .sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
+        messages: byTime(db.messages.filter((m) => m.clinicId === clinicId && m.sandboxId === sandboxId)),
+      };
+    }),
+  addMessage: (input) =>
+    tx((db) => {
+      if (input.dedupeKey && db.messages.some((m) => m.clientId === input.clientId && m.dedupeKey === input.dedupeKey)) return null;
+      const message: Message = { id: newId(), ...input };
+      db.messages.push(message);
+      return message;
+    }, true),
+  removeSkippedMessage: (clientId, dedupeKey) =>
+    tx((db) => {
+      const before = db.messages.length;
+      db.messages = db.messages.filter((m) => !(m.clientId === clientId && m.dedupeKey === dedupeKey && m.status === "skipped"));
+      return db.messages.length < before;
+    }, true),
+  createPlan: (plan, items) =>
+    tx((db) => {
+      const live = db.plans.some((p) => p.clientId === plan.clientId && (p.status === "proposed" || p.status === "confirmed"));
+      if (live && (plan.status === "proposed" || plan.status === "confirmed")) return null;
+      db.plans.push(plan);
+      db.planItems.push(...items);
+      return { ...plan, items: [...items].sort((a, b) => a.position - b.position) };
+    }, true),
+  confirmPlan: (planId, staffId, now) =>
+    tx((db) => {
+      const plan = db.plans.find((p) => p.id === planId);
+      if (!plan || plan.status !== "proposed") return null;
+      Object.assign(plan, { status: "confirmed", confirmedBy: staffId, confirmedAt: now.toISOString() });
+      return plan;
+    }, true),
+  setPractitionerNote: (clientId, note) =>
+    tx((db) => {
+      const report = must(db.reports.find((r) => r.clientId === clientId), "Report");
+      report.practitionerNote = note;
+      return report;
+    }, true),
 
   addConsent: (input) =>
     tx((db) => {

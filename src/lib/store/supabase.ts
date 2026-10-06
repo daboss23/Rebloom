@@ -213,6 +213,93 @@ export const supabaseStore: Store = {
     );
   },
 
+  async listClinicRecords(clinicId, sandboxId) {
+    if (!isUuid(sandboxId)) {
+      return { clients: [], consents: [], intakes: [], scans: [], reports: [], plans: [], appointments: [], messages: [] };
+    }
+    const clients = await supabaseStore.listClients(clinicId, sandboxId);
+    const ids = clients.map((c) => c.id);
+    const forClients = (table: string, order: string) =>
+      ids.length === 0 ? Promise.resolve({ data: [], error: null }) : db().from(table).select("*").in("client_id", ids).order(order);
+    const [consents, intakes, scans, reports, plans, appointments, messages] = await Promise.all([
+      forClients("consents", "granted_at"),
+      forClients("intakes", "client_id"),
+      db().from("scans").select("*").eq("sandbox_id", sandboxId).order("created_at"),
+      forClients("reports", "client_id"),
+      ids.length === 0
+        ? Promise.resolve({ data: [], error: null })
+        : db()
+            .from("plans")
+            .select("*, plan_items(*)")
+            .in("client_id", ids)
+            .order("created_at")
+            .order("position", { referencedTable: "plan_items" }),
+      supabaseStore.listAppointments(clinicId, sandboxId),
+      supabaseStore.listMessages(clinicId, sandboxId),
+    ]);
+    const known = new Set(ids);
+    return {
+      clients,
+      consents: many<Consent>(consents, "listClinicRecords consents"),
+      intakes: many<Intake>(intakes, "listClinicRecords intakes"),
+      scans: many<Scan>(scans, "listClinicRecords scans").filter((s) => known.has(s.clientId)),
+      reports: many<Report>(reports, "listClinicRecords reports"),
+      plans: (check(plans, "listClinicRecords plans") ?? []).map(({ plan_items, ...plan }): PlanWithItems => ({
+        ...fromRow<ClientPlan>(plan),
+        items: ((plan_items as Row[] | null) ?? []).map((i) => fromRow<PlanItem>(i)),
+      })),
+      appointments,
+      messages,
+    };
+  },
+  async addMessage(input) {
+    const inserted = await db().from("messages").insert(toRow({ id: newId(), ...input })).select().single();
+    // messages_dedupe_idx: this client already has a message with this key.
+    if (inserted.error?.code === UNIQUE_VIOLATION) return null;
+    return one<Message>(inserted, "addMessage");
+  },
+  async removeSkippedMessage(clientId, dedupeKey) {
+    if (!isUuid(clientId)) return false;
+    const rows = check(
+      await db().from("messages").delete().eq("client_id", clientId).eq("dedupe_key", dedupeKey).eq("status", "skipped").select("id"),
+      "removeSkippedMessage",
+    );
+    return (rows ?? []).length > 0;
+  },
+  async createPlan(plan, items) {
+    const inserted = await db().from("plans").insert(toRow(plan)).select().single();
+    // plans_one_live_idx: this client already has a live plan.
+    if (inserted.error?.code === UNIQUE_VIOLATION) return null;
+    const saved = one<ClientPlan>(inserted, "createPlan");
+    const rows = await db().from("plan_items").insert(items.map((i) => toRow(i))).select();
+    if (rows.error) {
+      // A plan without its items would read as empty: take it back out.
+      await db().from("plans").delete().eq("id", plan.id);
+      throw new Error(`createPlan items: ${rows.error.message}`);
+    }
+    return { ...saved, items: many<PlanItem>(rows, "createPlan items").sort((a, b) => a.position - b.position) };
+  },
+  async confirmPlan(planId, staffId, now) {
+    if (!isUuid(planId)) return null;
+    // Conditional on the old status, so two tabs confirming at once can't both win.
+    return maybe<ClientPlan>(
+      await db()
+        .from("plans")
+        .update({ status: "confirmed", confirmed_by: staffId, confirmed_at: now.toISOString() })
+        .eq("id", planId)
+        .eq("status", "proposed")
+        .select()
+        .maybeSingle(),
+      "confirmPlan",
+    );
+  },
+  async setPractitionerNote(clientId, note) {
+    return one<Report>(
+      await db().from("reports").update({ practitioner_note: note }).eq("client_id", clientId).select().single(),
+      "setPractitionerNote",
+    );
+  },
+
   async addConsent(input) {
     return one<Consent>(
       await db().from("consents").insert(toRow({ id: newId(), ...input })).select().single(),
