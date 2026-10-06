@@ -25,10 +25,11 @@ export default async function EnterPage() {
       <div aria-hidden className="pointer-events-none fixed inset-0">
         <LightField variant="ice" />
       </div>
-      <div aria-hidden className="pointer-events-none fixed inset-0 bg-[linear-gradient(100deg,rgba(244,249,251,0.82)_0%,rgba(244,249,251,0.45)_45%,rgba(244,249,251,0.05)_100%)]" />
+      <div aria-hidden className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_70%_65%_at_50%_50%,rgba(244,249,251,0.8)_0%,rgba(244,249,251,0.45)_55%,rgba(244,249,251,0.08)_100%)]" />
 
-      <div className="relative flex min-h-dvh flex-col">
-        <header className="flex h-16 items-center justify-between px-6 sm:px-10">
+      {/* One centred composition: the story on the left, the way in on the right, on a shared 8px rhythm. */}
+      <div className="relative mx-auto flex min-h-dvh w-full max-w-[1200px] flex-col px-6 sm:px-10">
+        <header className="flex h-20 items-center justify-between">
           <Link href="/" className="group inline-flex items-center gap-2 text-[13px] text-text-2 hover:text-ink">
             <IconArrowLeft width={15} height={15} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
             Rebloom home
@@ -36,45 +37,34 @@ export default async function EnterPage() {
           <span className="text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">Clinic dashboard</span>
         </header>
 
-        <main className="grid flex-1 items-center gap-12 px-6 pb-16 pt-6 sm:px-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,26rem)] lg:gap-20 lg:pb-24">
-          <section className="focus-in">
+        <main className="grid flex-1 content-center items-center gap-12 pb-20 pt-4 lg:grid-cols-[minmax(0,1fr)_26rem] lg:gap-16 lg:pb-24 xl:gap-24">
+          <section className="focus-in mx-auto w-full max-w-[640px] lg:mx-0">
             <p className="flex items-center gap-2.5 text-[11px] uppercase tracking-[0.22em] text-[#9e4a5d]">
               <Bloom size={16} unfurl />
               Every client&apos;s next beginning
             </p>
-            <h1 className="mt-8">
+            <h1 className="mt-6">
               <Image
                 src="/brand/rebloom/rebloom-gold.webp"
                 alt="Rebloom"
                 width={1811}
                 height={257}
                 priority
-                sizes="(min-width: 1024px) 760px, 92vw"
-                className="h-auto w-full max-w-[760px] drop-shadow-[0_14px_30px_rgba(154,107,34,0.25)]"
+                sizes="(min-width: 1024px) 640px, 92vw"
+                className="h-auto w-full drop-shadow-[0_14px_30px_rgba(154,107,34,0.25)]"
               />
             </h1>
-            <p className="mt-10 max-w-lg font-display text-[clamp(26px,2.8vw,36px)] font-light leading-[1.2] text-ink">
+            <p className="mt-10 max-w-[34rem] font-display text-[clamp(26px,2.6vw,34px)] font-light leading-[1.2] text-ink">
               Everyone sells the scan. Rebloom sells the second visit.
             </p>
-            <p className="mt-4 max-w-md text-[16px] leading-relaxed text-text-2">
+            <p className="mt-4 max-w-[30rem] text-[16px] leading-relaxed text-text-2">
               Each morning, the clients whose skin is changing, and the ones who need a little care, each with the reason
               in one sentence.
             </p>
-            <dl className="mt-12 grid max-w-xl grid-cols-3 gap-3">
-              {[
-                ["Measured", "on raw scan data"],
-                ["Explained", "in one sentence"],
-                ["Sent", "only after you read it"],
-              ].map(([term, detail], i) => (
-                <div key={term} className="glass focus-in min-w-0 px-3 py-4 sm:px-4" style={{ animationDelay: `${300 + i * 90}ms` }}>
-                  <dt className="font-display text-[19px] font-light text-ink sm:text-[24px]">{term}</dt>
-                  <dd className="mt-1 text-[12.5px] text-text-3">{detail}</dd>
-                </div>
-              ))}
-            </dl>
+            <Pillars className="mt-12 hidden lg:grid" />
           </section>
 
-          <section className="glass focus-in p-8 sm:p-10" style={{ animationDelay: "180ms" }}>
+          <section className="glass focus-in mx-auto w-full max-w-[26rem] p-8 sm:p-10 lg:mx-0" style={{ animationDelay: "180ms" }}>
             <p className="text-[11px] uppercase tracking-[0.22em] text-text-3">Demo clinic</p>
             <div className="mt-5">
               <ClinicWordmark clinic={MAISON_VERRE} />
@@ -96,7 +86,7 @@ export default async function EnterPage() {
                 this browser.
               </p>
               <form action={enterDemo} className="mt-8">
-                <button type="submit" className="btn-gold group w-full justify-between !h-14 px-6 text-[16px]">
+                <button type="submit" className="btn-gold group w-full gap-2.5 !h-14 px-6 text-[16px]">
                   Enter demo as {DANA.name}
                   <IconArrowRight width={18} height={18} className="transition-transform duration-300 ease-out group-hover:translate-x-1" />
                 </button>
@@ -104,8 +94,29 @@ export default async function EnterPage() {
               <p className="t-caption mt-5 !text-[12px]">Clinic sign-in by email arrives at launch.</p>
             </div>
           </section>
+
+          {/* On small screens the way in comes first; the three promises follow it. */}
+          <Pillars className="grid lg:hidden" />
         </main>
       </div>
     </div>
+  );
+}
+
+/** Three short promises under the logo. */
+function Pillars({ className }: { className: string }) {
+  return (
+    <dl className={`grid-cols-3 gap-3 sm:gap-4 ${className}`}>
+      {[
+        ["Measured", "on raw scan data"],
+        ["Explained", "in one sentence"],
+        ["Sent", "only after you read it"],
+      ].map(([term, detail], i) => (
+        <div key={term} className="glass focus-in min-w-0 px-3 py-4 sm:px-5 sm:py-5" style={{ animationDelay: `${300 + i * 90}ms` }}>
+          <dt className="font-display text-[19px] font-light text-ink sm:text-[24px]">{term}</dt>
+          <dd className="mt-1.5 text-[12.5px] leading-snug text-text-3">{detail}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
