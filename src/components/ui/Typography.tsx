@@ -19,17 +19,17 @@ export function ScoreNumber({ value, size = "lg", className }: { value: number; 
   );
 }
 
-/** 2px bar: mist track, accent fill. */
+/** A slim rounded bar: a faint track, filled from ice to sea. */
 export function ScoreBar({ value, className, label }: { value: number; className?: string; label?: string }) {
   const v = Math.max(0, Math.min(100, value));
   return (
     <div
-      className={cx("h-[2px] w-full bg-mist", className)}
+      className={cx("h-1.5 w-full overflow-hidden rounded-full bg-[#0c1a22]/[0.07]", className)}
       role={label ? "img" : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
     >
-      <div className="h-full bg-accent transition-[width] duration-700 ease-gentle" style={{ width: `${v}%` }} />
+      <div className="h-full rounded-full bg-[linear-gradient(90deg,#9fc9dd_0%,#1e5a78_100%)] transition-[width] duration-700 ease-gentle" style={{ width: `${v}%` }} />
     </div>
   );
 }

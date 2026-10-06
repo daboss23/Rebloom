@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { FieldLabel, TextArea, TextInput } from "@/components/ui/Field";
 import { IconArrowLeft } from "@/components/ui/Icons";
-import { Label } from "@/components/ui/Typography";
+import { FormAlert } from "@/components/ui/FormAlert";
 import type {
   AgeRange,
   BudgetBand,
@@ -134,31 +134,37 @@ export function IntakeFlow({ clinicSlug, initial, today }: { clinicSlug: string;
 
   return (
     <div className="pt-8">
-      <div className="flex items-center justify-between h-11">
+      <div className="flex h-11 items-center justify-between">
         {index > 0 ? (
           <button
             type="button"
             onClick={() => setIndex(index - 1)}
-            className="inline-flex items-center gap-2 text-[14px] text-ink min-h-11 -ml-1 px-1"
+            className="group -ml-2 inline-flex min-h-11 items-center gap-2 rounded-full px-2 text-[14px] text-text-2 transition-colors duration-200 hover:text-ink"
           >
-            <IconArrowLeft width={18} height={18} /> Back
+            <IconArrowLeft width={18} height={18} className="transition-transform duration-200 group-hover:-translate-x-0.5" /> Back
           </button>
         ) : (
           <span />
         )}
-        <Label as="span">
+        <span className="text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">
           {index + 1} of {INTAKE_STEPS.length}
-        </Label>
+        </span>
       </div>
-      <div className="mt-2 grid gap-1" style={{ gridTemplateColumns: `repeat(${INTAKE_STEPS.length}, 1fr)` }} aria-hidden>
+      {/* One segment per question, each filling from ice to sea as it's reached. */}
+      <div className="mt-2 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${INTAKE_STEPS.length}, 1fr)` }} aria-hidden>
         {INTAKE_STEPS.map((s, i) => (
-          <span key={s} className={`h-px ${i <= index ? "bg-ink" : "bg-mist"} transition-colors duration-500`} />
+          <span key={s} className="h-1.5 overflow-hidden rounded-full bg-[#0c1a22]/[0.08]">
+            <span
+              className="block h-full origin-left rounded-full bg-[linear-gradient(90deg,#9fc9dd_0%,#1e5a78_100%)] transition-transform duration-500 ease-out"
+              style={{ transform: `scaleX(${i <= index ? 1 : 0})` }}
+            />
+          </span>
         ))}
       </div>
 
       <form
         key={step}
-        className="mt-10 fade"
+        className="focus-in mt-10"
         onSubmit={(e) => {
           e.preventDefault();
           if (canContinue(step, answers)) next();
@@ -167,18 +173,23 @@ export function IntakeFlow({ clinicSlug, initial, today }: { clinicSlug: string;
         <Step step={step} answers={answers} set={set} today={today} headingRef={headingRef} />
 
         {error && (
-          <p role="alert" className="mt-6 text-[14px] text-ink border-l border-bronze pl-3">
-            {error}
-          </p>
+          <div className="mt-6">
+            <FormAlert>{error}</FormAlert>
+          </div>
         )}
 
-        <div className="mt-10 space-y-3">
-          <Button type="submit" block disabled={!canContinue(step, answers) || pending}>
+        {/* On the one long question, the way on stays in reach on a phone. Short ones simply end with it. */}
+        <div
+          className={
+            step === "screening"
+              ? "sticky bottom-0 z-10 -mx-5 mt-10 bg-[linear-gradient(180deg,rgba(237,243,246,0)_0%,rgba(237,243,246,0.96)_30%,#edf3f6_55%)] px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8"
+              : "mt-10"
+          }
+        >
+          <Button type="submit" block disabled={!canContinue(step, answers) || pending} className="!min-h-14 text-[16px]">
             {pending ? "Saving" : step === "about" ? "Continue to your photo" : "Continue"}
           </Button>
-          {optional && (
-            <p className="t-caption text-center">This one is optional. You can continue without answering.</p>
-          )}
+          {optional && <p className="t-caption mt-3 text-center">This one is optional. You can continue without answering.</p>}
         </div>
       </form>
     </div>
@@ -188,10 +199,10 @@ export function IntakeFlow({ clinicSlug, initial, today }: { clinicSlug: string;
 function Question({ title, hint, headingRef }: { title: string; hint?: string; headingRef: React.Ref<HTMLHeadingElement> }) {
   return (
     <>
-      <h1 ref={headingRef} tabIndex={-1} className="t-h2 outline-none">
+      <h1 ref={headingRef} tabIndex={-1} className="font-display text-[clamp(32px,8.4vw,42px)] font-light leading-[1.08] tracking-[-0.015em] text-ink outline-none [text-wrap:balance]">
         {title}
       </h1>
-      {hint && <p className="t-body mt-3">{hint}</p>}
+      {hint && <p className="mt-3 text-[16px] leading-relaxed text-text-2">{hint}</p>}
     </>
   );
 }
@@ -347,17 +358,17 @@ function Step({
             title="A few routine questions."
             hint="Clinics ask everyone these before treatment. Your answers never rule anything out. They simply help your practitioner prepare."
           />
-          <div className="mt-8 border-t border-mist">
+          <div className="glass mt-8 divide-y divide-[#0c1a22]/[0.07] px-5">
             {SCREENING_QUESTIONS.map(([key, question]) => (
-              <div key={key} className="py-5 border-b border-mist">
-                <p id={`q-${key}`} className="text-[15px] text-ink">
+              <div key={key} className="py-5">
+                <p id={`q-${key}`} className="text-[15.5px] leading-snug text-ink">
                   {question}
                 </p>
-                <div role="group" aria-labelledby={`q-${key}`} className="mt-3 flex gap-2">
+                <div role="group" aria-labelledby={`q-${key}`} className="mt-3 flex flex-wrap gap-2">
                   {(["yes", "no", "unsure"] as const).map((value) => (
                     <Chip
                       key={value}
-                      className="min-w-20 text-center justify-center"
+                      className="min-w-20 justify-center text-center"
                       selected={a.screening[key] === value}
                       onClick={() => set({ screening: { ...a.screening, [key]: value } })}
                     >

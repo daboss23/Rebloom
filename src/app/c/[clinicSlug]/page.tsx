@@ -1,51 +1,54 @@
 import { ButtonLink } from "@/components/ui/Button";
-import { Hairline, Label } from "@/components/ui/Typography";
+import { IconArrowRight, IconCheckCircle, IconLock } from "@/components/ui/Icons";
 import { loadClinic } from "@/lib/flow/load";
 
 const PROMISES = [
-  ["Your three priorities", "Not fifteen numbers. The three things worth your attention, in plain words."],
-  ["A plan with real prices", "Built only from our treatment menu, mapped to dates, with every price upfront."],
-  ["Private, and yours to delete", "One private link. Delete your photo and details whenever you like."],
+  ["Your three priorities", "Not fifteen numbers. The three things worth your attention, in plain words.", <IconCheckCircle key="p" width={18} height={18} />],
+  ["A plan with real prices", "Built only from our treatment menu, mapped to dates, with every price upfront.", <span key="m" className="gold-foil font-display text-[24px] leading-none">$</span>],
+  ["Private, and yours to delete", "One private link. Delete your photo and details whenever you like.", <IconLock key="l" width={18} height={18} />],
 ] as const;
 
 export default async function ScanStartPage({ params }: PageProps<"/c/[clinicSlug]">) {
   const clinic = await loadClinic((await params).clinicSlug);
   return (
-    <div className="pt-12 pb-4 reveal">
+    <div className="pb-4 pt-10">
       {clinic.lockupUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- static brand lockup
-        <img src={clinic.lockupUrl} alt={clinic.name} width={240} height={110} className="mx-auto mb-14 w-[220px] h-auto" />
+        <img src={clinic.lockupUrl} alt={clinic.name} width={240} height={110} className="focus-in mx-auto mb-12 h-auto w-[200px]" />
       )}
-      <span aria-hidden className="block h-[2px] w-12 bg-accent mb-5" />
-      <Label>
+      <p className="focus-in flex items-center gap-3 text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]" style={{ animationDelay: "60ms" }}>
+        <span aria-hidden className="block h-[2px] w-8 rounded-full bg-accent" />
         {clinic.name} · {clinic.city}
-      </Label>
-      <h1 className="t-h1 mt-4">See your skin clearly.</h1>
-      <p className="t-body mt-5 max-w-[30rem]">
-        A short photo scan, read by AI skin analysis and reviewed by our practitioners. You&apos;ll get a private
-        report that shows what we see, and where we&apos;d begin.
+      </p>
+      <h1 className="t-h1 focus-in mt-5" style={{ animationDelay: "120ms" }}>
+        See your skin clearly.
+      </h1>
+      <p className="focus-in mt-5 max-w-[30rem] text-[16.5px] leading-relaxed text-text-2" style={{ animationDelay: "180ms" }}>
+        A short photo scan, read by AI skin analysis and reviewed by our practitioners. You&apos;ll get a private report
+        that shows what we see, and where we&apos;d begin.
       </p>
 
-      <ButtonLink href={`/c/${clinic.slug}/consent`} block className="mt-10">
-        Begin
-      </ButtonLink>
-      <p className="t-caption mt-4 text-center">About three minutes · Free · No account needed</p>
+      <div className="focus-in mt-10" style={{ animationDelay: "240ms" }}>
+        <ButtonLink href={`/c/${clinic.slug}/consent`} block className="group !min-h-14 text-[16px]">
+          Begin
+          <IconArrowRight width={18} height={18} aria-hidden className="transition-transform duration-300 ease-out group-hover:translate-x-1" />
+        </ButtonLink>
+        <p className="t-caption mt-4 text-center">About three minutes · Free · No account needed</p>
+      </div>
 
-      <ul className="mt-16">
-        {PROMISES.map(([title, body], i) => (
-          <li key={title}>
-            <Hairline />
-            <div className="py-6 grid grid-cols-[2.25rem_1fr] gap-x-3">
-              <span className="t-label pt-[3px]">{String(i + 1).padStart(2, "0")}</span>
-              <div>
-                <h2 className="t-h3">{title}</h2>
-                <p className="t-body mt-1">{body}</p>
-              </div>
+      <ul className="mt-14 space-y-3">
+        {PROMISES.map(([title, body, mark], i) => (
+          <li key={title} className="glass focus-in flex gap-4 px-5 py-5" style={{ animationDelay: `${320 + i * 90}ms` }}>
+            <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-white/80 text-[#1e5a78] ring-1 ring-inset ring-white">
+              {mark}
+            </span>
+            <div>
+              <h2 className="font-display text-[22px] font-light leading-snug text-ink">{title}</h2>
+              <p className="t-body mt-1">{body}</p>
             </div>
           </li>
         ))}
       </ul>
-      <Hairline />
     </div>
   );
 }

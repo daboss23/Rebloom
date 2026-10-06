@@ -1,0 +1,19 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import { LightField } from "@/components/dashboard/LightField";
+
+/**
+ * Morning light at the top of every client page (DECISIONS D-061). It lives in the layout, so it keeps moving
+ * from one step to the next. Off on the camera screen, where the phone's attention belongs to the camera.
+ */
+export function ShellLight() {
+  const path = usePathname();
+  if (path.endsWith("/capture")) return null;
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[600px] [mask-image:linear-gradient(180deg,#000_0%,#000_40%,transparent_100%)]">
+      <LightField variant="ice" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_95%_70%_at_30%_38%,rgba(246,251,253,0.8)_0%,rgba(246,251,253,0.35)_60%,rgba(246,251,253,0)_100%)]" />
+    </div>
+  );
+}

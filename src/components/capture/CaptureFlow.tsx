@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { IconAlert, IconCamera, IconCopy, IconSun, IconUpload } from "@/components/ui/Icons";
+import { FormAlert } from "@/components/ui/FormAlert";
+import { IconCamera, IconCheckCircle, IconCopy, IconSun, IconUpload } from "@/components/ui/Icons";
 import { Label } from "@/components/ui/Typography";
 import { failingChecks, toCaptureQuality, UPLOAD_PROBLEMS } from "@/lib/capture/gate";
 import { boundingBox, cropAroundFace } from "@/lib/capture/metrics";
@@ -149,17 +150,17 @@ export function CaptureFlow({ clinicSlug }: { clinicSlug: string }) {
       {inApp && phase.kind !== "review" && <InAppNotice />}
 
       {phase.kind === "intro" && (
-        <div className="reveal">
+        <div className="focus-in">
           <Label>Your photo</Label>
           <h1 className="t-h1 mt-4">One good photo is all it takes.</h1>
           <p className="t-body mt-5">
             We&apos;ll guide you, one small step at a time. The photo is taken when everything looks right, so your
             results are reliable.
           </p>
-          <ul className="mt-10 border-t border-mist">
+          <ul className="glass mt-8 divide-y divide-[#0c1a22]/[0.07] px-5">
             {TIPS.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex gap-4 items-start py-4 border-b border-mist">
-                <Icon className="mt-[2px] shrink-0 text-bronze" />
+              <li key={text} className="flex items-start gap-4 py-4">
+                <Icon className="mt-[2px] shrink-0 text-[#1e5a78]" />
                 <span className="t-body">{text}</span>
               </li>
             ))}
@@ -167,7 +168,7 @@ export function CaptureFlow({ clinicSlug }: { clinicSlug: string }) {
           {cameraUnavailable && <Notice>{cameraUnavailable}</Notice>}
           <div className="mt-10 space-y-3">
             {!cameraUnavailable && (
-              <Button block onClick={() => setPhase({ kind: "camera" })}>
+              <Button block onClick={() => setPhase({ kind: "camera" })} className="!min-h-14 text-[16px]">
                 Open the camera
               </Button>
             )}
@@ -191,14 +192,14 @@ export function CaptureFlow({ clinicSlug }: { clinicSlug: string }) {
       )}
 
       {phase.kind === "checking-upload" && (
-        <div className="py-24 text-center fade" role="status">
+        <div className="fade py-24 text-center" role="status">
           <p className="t-h2">Checking your photo</p>
           <p className="t-body mt-3">Making sure it will give a reliable result.</p>
         </div>
       )}
 
       {phase.kind === "upload-problem" && (
-        <div className="reveal">
+        <div className="focus-in">
           <Label>Your photo</Label>
           <h1 className="t-h2 mt-4">Let&apos;s try another photo.</h1>
           <Notice>{phase.message}</Notice>
@@ -223,16 +224,19 @@ export function CaptureFlow({ clinicSlug }: { clinicSlug: string }) {
         <div className="fade">
           <Label>Your photo</Label>
           <h1 className="t-h2 mt-4">{phase.kind === "submitting" ? "Sending your photo" : "Happy with this one?"}</h1>
-          <div className="relative mt-6 aspect-[3/4] bg-mist overflow-hidden">
+          <div className="relative mt-6 aspect-[3/4] overflow-hidden rounded-[24px] bg-mist shadow-[0_30px_60px_-32px_rgba(12,44,62,0.6)] ring-1 ring-white/70">
             {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview */}
             <img src={phase.shot.url} alt="Your photo" className="absolute inset-0 h-full w-full object-cover" />
             {phase.shot.quality.passedGate && (
-              <span className="absolute left-3 bottom-3 t-label !text-ink bg-porcelain/85 px-2 py-1">Quality checked</span>
+              <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-ink backdrop-blur-sm">
+                <IconCheckCircle aria-hidden width={14} height={14} className="text-[var(--growth)]" />
+                Quality checked
+              </span>
             )}
           </div>
           {phase.kind === "submit-failed" && <Notice>{phase.message}</Notice>}
           <div className="mt-8 space-y-3">
-            <Button block disabled={phase.kind === "submitting"} onClick={() => void submit(phase.shot)}>
+            <Button block disabled={phase.kind === "submitting"} onClick={() => void submit(phase.shot)} className="!min-h-14 text-[16px]">
               {phase.kind === "submitting" ? "Sending" : phase.kind === "submit-failed" ? "Try again" : "Use this photo"}
             </Button>
             <Button
@@ -252,17 +256,16 @@ export function CaptureFlow({ clinicSlug }: { clinicSlug: string }) {
 
 function Notice({ children }: { children: React.ReactNode }) {
   return (
-    <p role="alert" className="mt-6 flex gap-3 items-start border border-bronze/60 px-4 py-3 text-[14px] text-ink">
-      <IconAlert className="shrink-0 mt-[1px] text-bronze" width={18} height={18} />
-      <span>{children}</span>
-    </p>
+    <div className="mt-6">
+      <FormAlert>{children}</FormAlert>
+    </div>
   );
 }
 
 function InAppNotice() {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="mb-8 border border-mist bg-mist/40 px-4 py-4">
+    <div className="glass mb-8 px-5 py-4">
       <p className="text-[14px] text-ink">For the camera to work, open this page in Safari or Chrome.</p>
       <p className="t-caption mt-1">In-app browsers often block the camera. Uploading a photo still works here.</p>
       <button

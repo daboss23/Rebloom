@@ -5,6 +5,7 @@ import { Bloom } from "@/components/dashboard/Bloom";
 import { CountUp } from "@/components/dashboard/CountUp";
 import { KindChip, Monogram } from "@/components/dashboard/Kind";
 import { LightField } from "@/components/dashboard/LightField";
+import { ClientPagePreview } from "@/components/flow/ClientPagePreview";
 import { Calculator } from "@/components/landing/Calculator";
 import { EnterDemo } from "@/components/landing/EnterDemo";
 import { MiniBars } from "@/components/landing/MiniBars";
@@ -399,19 +400,24 @@ function ReportCell({ p }: { p: LandingPreview }) {
           </p>
         </div>
         {r && (
-          // The client's view, in the clinic's look: porcelain, ink and its accent, square corners (brief 7).
-          <div style={clinicThemeStyle(MAISON_VERRE.accentHex)} className="border border-[#e6e0d6] bg-[#f7f4ef] px-6 py-6 text-[#1c1c1a] shadow-[0_24px_40px_-30px_rgba(12,26,34,0.45)]">
+          // The client's view (D-061): Rebloom's light and glass under the clinic's name, logo and accent.
+          <div style={clinicThemeStyle(MAISON_VERRE.accentHex)} className="rounded-[18px] bg-[radial-gradient(90%_60%_at_100%_0%,rgba(255,210,191,0.55)_0%,rgba(255,210,191,0)_60%),linear-gradient(180deg,#f8fbfd_0%,#e1edf3_100%)] px-6 py-6 shadow-[0_24px_40px_-30px_rgba(12,26,34,0.45)] ring-1 ring-white/80">
             <ClinicWordmark clinic={MAISON_VERRE} />
-            <p className="mt-6 font-display text-[23px] font-light leading-snug">{r.firstName}, here&apos;s where we&apos;d begin.</p>
-            <ul className="mt-4 divide-y divide-[#e6e0d6] border-y border-[#e6e0d6]">
+            <p className="mt-6 font-display text-[23px] font-light leading-snug text-ink">{r.firstName}, here&apos;s where we&apos;d begin.</p>
+            <ul className="mt-4 space-y-2.5">
               {r.priorities.map((pr) => (
-                <li key={pr.label} className="flex items-baseline justify-between py-2 text-[13.5px]">
-                  <span>{pr.label}</span>
-                  <span className="font-display text-[20px] leading-none">{pr.score}</span>
+                <li key={pr.label} className="rounded-[12px] bg-white/75 px-3 py-2.5 ring-1 ring-inset ring-white">
+                  <span className="flex items-baseline justify-between text-[13.5px] text-text-2">
+                    {pr.label}
+                    <span className="font-display text-[20px] leading-none text-ink">{pr.score}</span>
+                  </span>
+                  <span aria-hidden className="mt-2 block h-1 overflow-hidden rounded-full bg-[#0c1a22]/[0.07]">
+                    <span className="block h-full rounded-full bg-[linear-gradient(90deg,#9fc9dd,#1e5a78)]" style={{ width: `${pr.score}%` }} />
+                  </span>
                 </li>
               ))}
             </ul>
-            <div className="mt-4 flex items-end justify-between gap-4 text-[12.5px] text-[#55524c]">
+            <div className="mt-4 flex items-end justify-between gap-4 text-[12.5px] text-text-3">
               <span>
                 {r.treatments.map((t) => (
                   <span key={t.name} className="block">
@@ -419,9 +425,8 @@ function ReportCell({ p }: { p: LandingPreview }) {
                   </span>
                 ))}
               </span>
-              <span className="font-display text-[22px] leading-none text-[#1c1c1a]">{formatPrice(r.totalCents)}</span>
+              <span className="gold-foil font-display text-[24px] leading-none">{formatPrice(r.totalCents)}</span>
             </div>
-            <span aria-hidden className="mt-5 block h-[2px] w-10 bg-accent" />
           </div>
         )}
       </div>
@@ -632,13 +637,7 @@ function Try() {
           {SEED_CLINICS.map((clinic) => (
             <li key={clinic.id} style={clinicThemeStyle(clinic.accentHex)} className="flex">
               <Link href={`/c/${clinic.slug}`} className="glass lift sheen group flex w-full flex-col p-2.5">
-                <span className="block flex-1 border border-[#e6e0d6] bg-[#f7f4ef] px-6 pb-7 pt-6 text-[#1c1c1a]">
-                  <span className="flex h-8 items-center">
-                    <ClinicWordmark clinic={clinic} />
-                  </span>
-                  <span className="mt-12 block font-display text-[30px] font-light leading-tight">See your skin clearly.</span>
-                  <span aria-hidden className="mt-5 block h-[2px] w-12 bg-accent transition-[width] duration-500 ease-out group-hover:w-20" />
-                </span>
+                <ClientPagePreview clinic={clinic} className="flex-1" />
                 <span className="flex items-center justify-between gap-4 px-3.5 pb-2 pt-4">
                   <span className="text-[13px] text-text-3">{clinic.city}</span>
                   <span className="inline-flex items-center gap-2 whitespace-nowrap text-[14.5px] text-ink">

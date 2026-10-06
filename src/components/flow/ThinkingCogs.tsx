@@ -49,8 +49,8 @@ export function ThinkingCogs({ className }: { className?: string }) {
 
   return (
     <svg viewBox="8 6 92 78" className={className} aria-hidden>
-      {gear(BIG, 1, "text-ink")}
-      {gear(SMALL, -1, "text-bronze")}
+      {gear(BIG, 1, "text-[#1e5a78]")}
+      {gear(SMALL, -1, "text-[#c99645]")}
     </svg>
   );
 }

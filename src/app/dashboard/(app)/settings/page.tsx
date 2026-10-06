@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader, pill } from "@/components/dashboard/PageHeader";
-import { ClinicWordmark } from "@/components/ui/Wordmarks";
+import { ClientPagePreview } from "@/components/flow/ClientPagePreview";
 import { loadBook } from "@/lib/dashboard/load";
 import { env, features } from "@/lib/env";
 import { formatPrice } from "@/lib/plan/build";
@@ -114,15 +114,12 @@ export default async function SettingsPage() {
         <h2 id="brand-title" className="font-display text-[34px] font-light text-ink">
           Brand
         </h2>
-        <p className="t-caption mt-1 !text-[12.5px]">What clients see on their scan and report. Rebloom stays out of the way.</p>
+        <p className="t-caption mt-1 !text-[12.5px]">
+          What clients see on their scan and report: your name, logo and accent. Rebloom is one small line at the foot of
+          the page.
+        </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-          <div className="rounded-[16px] bg-[#f7f4ef] p-8 shadow-[inset_0_0_0_1px_rgba(28,28,26,0.06)]">
-            <ClinicWordmark clinic={clinic} />
-            <p className="mt-10 font-display text-[30px] font-light leading-tight text-[#1c1c1a]">See your skin clearly.</p>
-            <p className="mt-2 text-[13px] text-[#5e655f]">
-              {clinic.city} · Client pages use the clinic&apos;s own colors
-            </p>
-          </div>
+          <ClientPagePreview clinic={clinic} className="!px-8 !pb-8 !pt-7" />
           <dl className="rounded-[16px] bg-white/70 p-6 ring-1 ring-inset ring-white">
             {[
               ["Name", clinic.name],

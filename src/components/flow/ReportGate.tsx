@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { unlockReport, type SentResults, type UnlockResult } from "@/app/c/[clinicSlug]/actions";
+import { Bloom } from "@/components/dashboard/Bloom";
+import { LightField } from "@/components/dashboard/LightField";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Checkbox, FieldLabel, TextInput } from "@/components/ui/Field";
-import { IconCheckCircle, IconLock } from "@/components/ui/Icons";
+import { FormAlert } from "@/components/ui/FormAlert";
+import { IconLock } from "@/components/ui/Icons";
 import { Label, ScoreBar, ScoreNumber } from "@/components/ui/Typography";
 
 // Placeholder content for the blurred report: the shape of a real report, with made-up words and
@@ -80,31 +83,38 @@ export function ReportGate({
       <BlurredReport scanId={scanId} />
 
       {open && (
-        <div ref={overlay} className="fixed inset-0 z-40 overflow-y-auto bg-ink/40 fade">
+        <div ref={overlay} className="fade fixed inset-0 z-40 overflow-y-auto bg-[#0c1a22]/35">
           {/* A sheet from the bottom on phones, so the blurred report still shows above it. */}
-          <div className="min-h-full flex items-end sm:items-center justify-center px-3 pt-8 pb-3 sm:p-6">
+          <div className="flex min-h-full items-end justify-center px-3 pb-3 pt-8 sm:items-center sm:p-6">
             <div
               ref={dialog}
               role="dialog"
               aria-modal="true"
               aria-labelledby="gate-title"
               tabIndex={-1}
-              className="rise w-full max-w-[440px] bg-porcelain shadow-[0_30px_80px_-20px_rgba(0,0,0,0.55)] outline-none"
+              className="rise w-full max-w-[440px] overflow-hidden rounded-[28px] bg-[#f4f8fa] shadow-[0_40px_90px_-30px_rgba(12,26,34,0.7)] outline-none ring-1 ring-white/80"
             >
-              <div className="h-[3px] bg-accent" />
-              <div className="px-6 pt-6 pb-6">
-                {sent ? (
+              {sent ? (
+                <div className="px-6 pb-7 pt-7">
                   <Confirmation sent={sent} clinicName={clinicName} demo={demo} />
-                ) : (
-                  <form action={action} className="space-y-4">
-                    <div className="flex items-center gap-2 text-text-2">
-                      <IconLock width={16} height={16} />
-                      <Label>Analysis complete</Label>
+                </div>
+              ) : (
+                <>
+                  {/* The moment the report is ready: deep sea and moving light, as when the dashboard sends. */}
+                  <header className="sea on-dark relative overflow-hidden px-6 pb-7 pt-6">
+                    <LightField variant="sea" className="opacity-70" />
+                    <div className="relative">
+                      <p className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-[#e2c07a]">
+                        <IconLock width={15} height={15} aria-hidden />
+                        Analysis complete
+                      </p>
+                      <h1 id="gate-title" className="mt-3 font-display text-[36px] font-light leading-[1.04] tracking-[-0.01em] text-white">
+                        Your skin report is ready.
+                      </h1>
+                      <p className="mt-2 text-[15px] leading-relaxed text-[#dbe8ef]">Tell us where to send your results.</p>
                     </div>
-                    <h1 id="gate-title" className="t-h2">
-                      Your skin report is ready.
-                    </h1>
-                    <p className="t-body !mt-2">Tell us where to send your results.</p>
+                  </header>
+                  <form action={action} className="space-y-4 px-6 pb-6 pt-6">
                     <div>
                       <FieldLabel htmlFor="firstName">First name</FieldLabel>
                       <TextInput id="firstName" name="firstName" autoComplete="given-name" maxLength={60} required />
@@ -123,19 +133,15 @@ export function ReportGate({
                       Remind me when it&apos;s time for a progress scan.
                     </Checkbox>
 
-                    {state?.error && (
-                      <p role="alert" className="text-[14px] text-ink border-l border-bronze pl-3">
-                        {state.error}
-                      </p>
-                    )}
+                    {state?.error && <FormAlert>{state.error}</FormAlert>}
 
-                    <Button type="submit" block disabled={pending}>
+                    <Button type="submit" block disabled={pending} className="!min-h-14 text-[16px]">
                       {pending ? "Sending your results" : "Send my results"}
                     </Button>
                     <p className="t-caption text-center">Private to you. No spam. Delete your data at any time.</p>
                   </form>
-                )}
-              </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -147,9 +153,11 @@ export function ReportGate({
 function Confirmation({ sent, clinicName, demo }: { sent: SentResults; clinicName: string; demo: boolean }) {
   return (
     <div className="fade" role="status">
-      <IconCheckCircle width={30} height={30} className="text-bronze" />
-      <div className="mt-5">
-        <Label>{sent.emailed ? "Results sent" : "All done"}</Label>
+      <span aria-hidden className="grid h-14 w-14 place-items-center rounded-full bg-[radial-gradient(circle_at_30%_30%,#fff_0%,#ffe4d8_55%,#f4b9a3_100%)] shadow-[0_14px_30px_-16px_rgba(158,74,93,0.6)] ring-1 ring-white">
+        <Bloom size={30} unfurl className="text-[#9e4a5d]" />
+      </span>
+      <div className="mt-6">
+        <Label className="!text-[#1e5a78]">{sent.emailed ? "Results sent" : "All done"}</Label>
       </div>
       <h1 id="gate-title" className="t-h2 mt-3">
         {sent.emailed ? `${sent.firstName}, your results are on their way.` : `${sent.firstName}, your report is ready.`}
@@ -170,14 +178,14 @@ function Confirmation({ sent, clinicName, demo }: { sent: SentResults; clinicNam
       {sent.emailed ? (
         <p className="t-caption mt-8">
           Nothing in your inbox after a few minutes? Check your spam folder, or{" "}
-          <Link href={sent.reportPath} className="text-ink underline underline-offset-4">
+          <Link href={sent.reportPath} className="text-ink underline decoration-[#0c1a22]/30 underline-offset-4 hover:decoration-ink">
             open your report here
           </Link>
           .
         </p>
       ) : (
         <>
-          <ButtonLink href={sent.reportPath} variant="secondary" block className="mt-8">
+          <ButtonLink href={sent.reportPath} block className="mt-8 !min-h-14 text-[16px]">
             Open my report
           </ButtonLink>
           <p className="t-caption mt-4 text-center">
@@ -193,7 +201,7 @@ function Confirmation({ sent, clinicName, demo }: { sent: SentResults; clinicNam
 /** The report, already written, sitting just out of focus behind the panel. */
 function BlurredReport({ scanId }: { scanId: string }) {
   return (
-    <div aria-hidden inert className="pointer-events-none select-none blur-[6px] reveal">
+    <div aria-hidden inert className="reveal pointer-events-none select-none blur-[6px]">
       <Label>Your skin report</Label>
       <p className="t-h1 mt-4">Your skin is telling a clear story.</p>
       <p className="t-body mt-4">
@@ -201,9 +209,9 @@ function BlurredReport({ scanId }: { scanId: string }) {
         focused plan over the coming weeks.
       </p>
       {/* eslint-disable-next-line @next/next/no-img-element -- server-blurred, private, never cached */}
-      <img src={`/api/scans/${scanId}/preview`} alt="" className="mt-8 w-full aspect-[3/4] object-cover bg-mist" />
+      <img src={`/api/scans/${scanId}/preview`} alt="" className="mt-8 aspect-[3/4] w-full rounded-[24px] bg-mist object-cover" />
 
-      <div className="mt-10 flex items-end justify-between border-y border-mist py-6">
+      <div className="glass mt-8 flex items-end justify-between px-5 py-5">
         <div>
           <Label>Overall</Label>
           <p className="t-h3 mt-2">Balanced, with room to glow</p>
@@ -212,12 +220,12 @@ function BlurredReport({ scanId }: { scanId: string }) {
       </div>
 
       <p className="t-h2 mt-12">Your three priorities</p>
-      <ol className="mt-6">
+      <ol className="mt-6 space-y-3">
         {GHOST_PRIORITIES.map((row, i) => (
-          <li key={row.label} className="border-t border-mist py-6">
+          <li key={row.label} className="glass px-5 py-5">
             <p className="t-label">{String(i + 1).padStart(2, "0")}</p>
             <div className="flex items-end justify-between gap-4">
-              <p className="t-h3 pb-2">{row.label}</p>
+              <p className="pb-2 font-display text-[26px] font-light text-ink">{row.label}</p>
               <ScoreNumber value={row.score} />
             </div>
             <ScoreBar value={row.score} className="mt-3" />
@@ -227,11 +235,11 @@ function BlurredReport({ scanId }: { scanId: string }) {
       </ol>
 
       <p className="t-h3 mt-10">Full analysis</p>
-      <dl className="mt-4 grid grid-cols-2 gap-x-6">
+      <dl className="glass mt-4 grid grid-cols-2 gap-x-6 px-5 pb-2">
         {GHOST_ANALYSIS.map(([label, score]) => (
-          <div key={label} className="flex items-baseline justify-between border-t border-mist py-3">
+          <div key={label} className="flex items-baseline justify-between border-t border-[#0c1a22]/[0.07] py-3 first:border-t-0 [&:nth-child(2)]:border-t-0">
             <dt className="text-[14px] text-text-2">{label}</dt>
-            <dd className="font-display text-[26px] font-light text-ink leading-none">{score}</dd>
+            <dd className="font-display text-[26px] font-light leading-none text-ink">{score}</dd>
           </div>
         ))}
       </dl>

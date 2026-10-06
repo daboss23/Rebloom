@@ -31,8 +31,8 @@ Rebloom is a retention engine for skin clinics. Clinics sell courses of treatmen
 - Cosmetic, never medical. No em dashes anywhere. Banned words are in BRIEF.md 7.7.
 
 ## Brand Commitments
-- **Rebloom (dashboard):** alive, fresh, renewing (Joshua, Oct 6: "rejuvenation, refresh, life, new beginnings"). Light through water with dawn warmth, frosted glass with depth, a deep-sea menu, the gold logo, gold for money, green for growth, a bloom mark for progress moments. Cormorant Garamond display, Inter UI. A restrained, lifeless result is a failure for this surface (DECISIONS D-058).
-- **Maison Verre (client pages):** porcelain, ink, champagne (BRIEF.md section 7). Unchanged.
+- **One look, every surface:** alive, fresh, renewing (Joshua, Oct 6: "rejuvenation, refresh, life, new beginnings"). Light through water with dawn warmth, frosted glass with depth, deep sea, the gold logo, gold for money and the main action, green for growth, a bloom mark for renewal. Cormorant Garamond display, Inter UI. A restrained, lifeless result is a failure (DECISIONS D-058, D-059, D-061).
+- **Client pages:** the same look under each clinic's own name, logo and accent. Rebloom appears only as one small line in the footer (D-001, D-061).
 - Voice: calm, precise, unhurried. A trusted senior practitioner, not a marketer.
 
 ## Evidence on Hand

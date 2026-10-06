@@ -435,6 +435,21 @@ body {
   }
 }
 
+/* On Rebloom's surfaces, clients' pages included, display type opens up: light and close-set (D-058, D-061). */
+@layer components {
+  .rebloom .t-h1 {
+    font-size: clamp(42px, 10.4vw, 58px);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+  }
+  .rebloom .t-h2 {
+    font-weight: 300;
+    font-size: clamp(31px, 7.6vw, 40px);
+    line-height: 1.06;
+    letter-spacing: -0.012em;
+  }
+}
+
 /* The review-and-send sheet: slides in from the right edge, the way it will leave. */
 .sheet[open] {
   animation: sheet-in 320ms cubic-bezier(0.32, 0.72, 0, 1) both;

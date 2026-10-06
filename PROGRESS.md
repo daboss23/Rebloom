@@ -18,6 +18,10 @@
 - **`/` now matches the dashboard** and opens on the product itself: the live rebook queue for the demo clinic, computed by the engine, beside "Everyone sells the scan. Rebloom sells the result."
 - Then the problem in dollars from the demo menu, how the loop works (five steps, each drawn from the demo clients), the YouCam work and the raw-score decision, a calculator for a clinic's own figures, the two demo clinics to scan as a client, plain answers to the usual questions, and a close. Every CTA leads to the demo dashboard or the client scan.
 
+### The client journey (D-061)
+- **The questionnaire, the report gate and the report now match the dashboard and the landing page,** and so does every step around them: the scan page, consent, the camera, processing, the confirmation and Delete my data. Each page still carries the clinic's own name and logo; Rebloom is one small line in the footer.
+- Built into the shared buttons, fields, chips and score bars, so the whole journey moved together. Phones get 16px fields, larger targets and a lighter load on the graphics.
+
 ### What's next
 1. **Booking** with a Stripe test deposit, so a rebook message leads to a real booking.
 2. **The progress view** on the client's report (scan 01 against the latest), which the progress-moment emails point to.

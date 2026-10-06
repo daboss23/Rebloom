@@ -54,10 +54,11 @@ export function RebloomWordmark({ className, onDark, height = 20 }: { className?
   );
 }
 
+/** The one place Rebloom appears on a clinic's pages (DECISIONS D-001): a small line with the gold logo. */
 export function PoweredByRebloom({ className }: { className?: string }) {
   return (
-    <p className={cx("t-caption", className)}>
-      Powered by <span className="font-display text-[15px] text-ink">Rebloom</span>
+    <p className={cx("t-caption inline-flex items-center gap-2", className)}>
+      Powered by <RebloomWordmark height={11} className="translate-y-px" />
     </p>
   );
 }

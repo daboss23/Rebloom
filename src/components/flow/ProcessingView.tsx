@@ -87,11 +87,11 @@ export function ProcessingView({
 
   if (view?.status === "failed" && view.error) {
     return (
-      <div className="pt-12 reveal">
+      <div className="focus-in pt-12">
         <Label>Your scan</Label>
         <h1 className="t-h2 mt-4">{view.error.title}</h1>
         <p className="t-body mt-4">{view.error.instruction}</p>
-        <ButtonLink href={`/c/${clinicSlug}/capture`} block className="mt-10">
+        <ButtonLink href={`/c/${clinicSlug}/capture`} block className="mt-10 !min-h-14 text-[16px]">
           Take a new photo
         </ButtonLink>
       </div>
@@ -101,7 +101,9 @@ export function ProcessingView({
   const current = assembling ? STAGES.length - 1 : (view?.stageIndex ?? 0);
   return (
     <div className="pt-10 pb-8" role="status" aria-live="polite">
-      <ThinkingCogs className="w-[92px] h-auto" />
+      <span className="glass grid h-[112px] w-[112px] place-items-center !rounded-[28px]">
+        <ThinkingCogs className="h-auto w-[78px]" />
+      </span>
       <div className="mt-6">
         <Label>Your scan</Label>
       </div>
@@ -111,16 +113,20 @@ export function ProcessingView({
           ? "Almost there. We're turning 15 measurements into your personal skin report."
           : "This usually takes under a minute. Please keep this page open."}
       </p>
-      <ol className="mt-10 border-t border-mist">
+      <ol className="glass mt-8 divide-y divide-[#0c1a22]/[0.07] px-5">
         {STAGES.map((stage, i) => {
           const state = i < current ? "done" : i === current ? "active" : "waiting";
           return (
-            <li key={stage} className="py-5 border-b border-mist">
+            <li key={stage} className="py-5">
               <div className="flex items-center gap-4">
                 <span
                   aria-hidden
-                  className={`block h-[9px] w-[9px] rounded-full border ${
-                    state === "done" ? "bg-accent border-accent" : state === "active" ? "border-ink" : "border-mist"
+                  className={`block h-[11px] w-[11px] shrink-0 rounded-full transition-colors duration-500 ${
+                    state === "done"
+                      ? "bg-[var(--growth)]"
+                      : state === "active"
+                        ? "border-2 border-[#1e5a78] bg-white"
+                        : "border border-[#0c1a22]/20"
                   }`}
                   style={state === "active" ? { animation: "breathe 2.4s ease-in-out infinite" } : undefined}
                 />
@@ -128,7 +134,7 @@ export function ProcessingView({
                 <span className="sr-only">{state === "done" ? "done" : state === "active" ? "in progress" : "waiting"}</span>
               </div>
               {assembling && state === "active" && (
-                <p key={assembleStep} className="fade t-caption mt-2 pl-[25px]">
+                <p key={assembleStep} className="fade t-caption mt-2 pl-[27px]">
                   {ASSEMBLE_STEPS[Math.min(assembleStep, ASSEMBLE_STEPS.length - 1)]}
                 </p>
               )}

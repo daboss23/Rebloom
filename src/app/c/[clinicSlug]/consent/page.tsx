@@ -31,22 +31,27 @@ export default async function ConsentPage({ params }: PageProps<"/c/[clinicSlug]
   ];
 
   return (
-    <div className="pt-10 reveal">
-      <Label>Before we begin</Label>
-      <h1 className="t-h1 mt-4">Your photo, your choice.</h1>
-      <p className="t-body mt-5">Here is exactly what happens to your photo, in plain words.</p>
+    <div className="pt-10">
+      <Label className="focus-in">Before we begin</Label>
+      <h1 className="t-h1 focus-in mt-4" style={{ animationDelay: "80ms" }}>
+        Your photo, your choice.
+      </h1>
+      <p className="t-body focus-in mt-5" style={{ animationDelay: "140ms" }}>
+        Here is exactly what happens to your photo, in plain words.
+      </p>
 
-      <dl className="mt-10 border-t border-mist">
+      <dl className="glass focus-in mt-8 divide-y divide-[#0c1a22]/[0.07] px-5" style={{ animationDelay: "200ms" }}>
         {sections.map(([term, detail]) => (
-          <div key={term} className="py-5 border-b border-mist">
-            <dt className="t-h3">{term}</dt>
+          <div key={term} className="py-5">
+            <dt className="font-display text-[21px] font-light leading-snug text-ink">{term}</dt>
             <dd className="t-body mt-1">{detail}</dd>
           </div>
         ))}
       </dl>
 
-      <p className="t-caption mt-6 flex items-center gap-2">
-        <IconLock width={16} height={16} /> Stored privately. Shown only through short-lived secure links.
+      <p className="t-caption mt-5 flex items-center gap-2">
+        <IconLock width={16} height={16} className="shrink-0 text-[#1e5a78]" /> Stored privately. Shown only through
+        short-lived secure links.
       </p>
 
       <ConsentForm clinicSlug={clinic.slug} clinicName={clinic.name} />

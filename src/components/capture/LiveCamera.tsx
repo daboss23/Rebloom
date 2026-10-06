@@ -145,7 +145,7 @@ export function LiveCamera({
 
   return (
     <div className="fade">
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-ink">
+      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[24px] bg-[#0b1a24] shadow-[0_30px_60px_-30px_rgba(12,26,34,0.7)] ring-1 ring-white/60">
         <video
           ref={videoRef}
           playsInline
@@ -161,8 +161,8 @@ export function LiveCamera({
               <ellipse {...OVAL} fill="black" />
             </mask>
           </defs>
-          <rect width="300" height="400" fill="rgba(28,28,26,0.45)" mask="url(#oval-cutout)" />
-          <ellipse {...OVAL} fill="none" stroke="rgba(247,244,239,0.7)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          <rect width="300" height="400" fill="rgba(12,26,34,0.5)" mask="url(#oval-cutout)" />
+          <ellipse {...OVAL} fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
           <ellipse
             {...OVAL}
             fill="none"
@@ -179,19 +179,19 @@ export function LiveCamera({
         </svg>
         {status === "starting" && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="t-label !text-porcelain/80" style={{ animation: "breathe 2.4s ease-in-out infinite" }}>
+            <span className="text-[11px] uppercase tracking-[0.18em] text-white/80" style={{ animation: "breathe 2.4s ease-in-out infinite" }}>
               Preparing the camera
             </span>
           </div>
         )}
       </div>
 
-      <p aria-live="polite" className="mt-6 min-h-[3.5rem] text-center font-display text-[24px] leading-tight text-ink">
+      <p aria-live="polite" className="mt-6 min-h-[3.5rem] text-center font-display text-[26px] font-light leading-tight text-ink">
         {instruction}
       </p>
 
       <div className="mt-4 space-y-3">
-        <Button block disabled={!ready || status !== "live"} onClick={() => void captureRef.current()}>
+        <Button block disabled={!ready || status !== "live"} onClick={() => void captureRef.current()} className="!min-h-14 text-[16px]">
           Take photo
         </Button>
         <p className="t-caption text-center">The photo is taken for you once you&apos;ve held still for a second.</p>
