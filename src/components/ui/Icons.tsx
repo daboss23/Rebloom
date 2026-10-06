@@ -90,3 +90,8 @@ export const IconArrowUpRight = (p: SVGProps<SVGSVGElement>) => (
     <path d="M7 17L17 7M9 7h8v8" />
   </Icon>
 );
+export const IconPlus = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </Icon>
+);

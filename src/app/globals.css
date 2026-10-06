@@ -64,7 +64,8 @@
 .rebloom .font-display * {
   font-variant-numeric: lining-nums tabular-nums;
 }
-html:has(.rebloom) {
+html:has(.rebloom),
+html:has(.rebloom) body {
   background: #edf3f6;
 }
 
@@ -495,6 +496,83 @@ body {
   }
   50% {
     opacity: 1;
+  }
+}
+
+/* ---------- The landing page (DECISIONS D-059) ---------- */
+
+html:has(.landing) {
+  scroll-behavior: smooth;
+}
+/* An answer settles into place as its question opens. */
+.faq[open] .faq-answer {
+  animation: focus-in 520ms var(--ease-out) both;
+}
+/* The "Send email" inside an illustration is a picture of a button, not one. */
+.landing [aria-hidden] .btn-gold {
+  pointer-events: none;
+}
+/*
+ * Three moments tied to scrolling, each telling part of the story: the course that lapses, the progress line
+ * that draws itself, the months that rise. Only where the browser can link animation to scroll and motion is
+ * welcome; everywhere else, each element simply shows its final state.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .landing .lapse-planned,
+    .landing .lapse-lost {
+      animation: lapse-in linear both;
+      animation-timeline: view();
+      animation-range: cover 30% cover 48%;
+    }
+    .landing .lapse-planned {
+      animation-name: lapse-out;
+    }
+    .landing .lapse-late {
+      animation-range: cover 38% cover 56%;
+    }
+    .landing .reveal-line {
+      animation: reveal-line linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 38%;
+    }
+    .landing .grow-bar {
+      animation: grow-bar linear both;
+      animation-timeline: view();
+      animation-range: entry 20% cover 45%;
+    }
+  }
+}
+@keyframes lapse-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes lapse-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes reveal-line {
+  from {
+    clip-path: inset(-30% 100% -30% -10%);
+  }
+  to {
+    clip-path: inset(-30% -10% -30% -10%);
+  }
+}
+@keyframes grow-bar {
+  from {
+    transform: scaleY(0.04);
+  }
+  to {
+    transform: none;
   }
 }
 

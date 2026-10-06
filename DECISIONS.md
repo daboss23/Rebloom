@@ -310,3 +310,12 @@ Joshua's verdict on the first build: "the most boring, lifeless dashboard". Rebl
 - **Renewal has its own colours.** Real improvement is fresh green (`--growth`, 4.7:1). A progress moment is dawn rose: a bloom mark that draws itself in, a monogram in rose and ice, and a card that breathes slowly so the eye finds it first. Sending a rebook unfurls a bloom in the confirmation.
 - **Motion with presence:** figures count up on arrival, cards come into focus (rise and sharpen from a soft blur) one after another, the demo clock's dial turns while it moves.
 - Every text colour still meets WCAG AA; status is never colour alone.
+
+## D-059 · The landing page wears the dashboard's look and shows its live morning (J + C, Oct 6). Extends D-058
+Joshua asked for the landing page to complement the dashboard, in the same style, with direct-response structure, all congruent. So `/` now uses D-058's world (caustic light, glass, deep sea, gold for money, green for growth, the bloom for a progress moment), and it proves before it claims:
+- **The first viewport is the product.** Beside the positioning line, the real rebook queue: the same twelve demo clients a judge gets on entering, run through the same engine (`src/lib/landing/preview.ts`). Every figure and sentence there is computed, labelled as sample clients, and rebuilt hourly so it follows the demo calendar. A client's private report link never appears on the page.
+- **The order follows a direct-response page:** proof, the problem in the clinic's own currency (the signature course's price, from the menu), the mechanism in five steps drawn from the demo (Amelia's texture over four scans, Sofia's drafted email, the at-risk rules), honesty about YouCam's display and raw scores, a calculator on the visitor's own figures, white label, objections, and a close.
+- **Honest by construction:** no customers, testimonials, benchmarks or prices are invented. The calculator says it is arithmetic, not a forecast; the owner's numbers are labelled as the demo clinic's sample data; booking-system connections are described as planned.
+- **One label per action:** "Enter the clinic dashboard" (primary, gold) and "Try the client experience" (to the clinic cards), as the brief names them.
+- **Motion:** the hero arrives as the dashboard does (focus-in, count-up, the progress moment breathing). Three moments are tied to scrolling where the browser supports it (the course that lapses, the progress line drawing itself, the months rising); with reduced motion or without support, each shows its final state.
+

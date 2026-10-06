@@ -7,7 +7,8 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/dashboard\/enter$/);
   await page.getByRole("button", { name: "Enter demo as Dana" }).click();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  // The first sign-in on a fresh dev server also compiles the dashboard and copies the demo clients.
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 30_000 });
 });
 
 test("Today says who to contact and why, and a reviewed email moves to the outbox", async ({ page }) => {
