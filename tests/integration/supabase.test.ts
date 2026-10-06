@@ -4,6 +4,8 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { SEED_STAFF } from "@/data/staff";
+import { buildDemoBundle } from "@/lib/demo/seed";
 import type { ObjectStorage, Store } from "@/lib/store/types";
 import { simulationPath } from "@/lib/store/scan-paths";
 
@@ -177,7 +179,7 @@ describe.skipIf(!url || !secret)("Supabase store (live project)", () => {
 
   it.skipIf(!anonKey)("shows nothing to the public key: no rows, no photos", async () => {
     const anon = createClient(url!, anonKey!, { auth: { persistSession: false } });
-    for (const table of ["clinics", "clients", "scans", "reports", "api_usage"]) {
+    for (const table of ["clinics", "clients", "scans", "reports", "api_usage", "staff", "plans", "plan_items", "appointments", "messages"]) {
       const { data } = await anon.from(table).select("*").limit(1);
       expect(data ?? []).toEqual([]);
     }
@@ -185,6 +187,45 @@ describe.skipIf(!url || !secret)("Supabase store (live project)", () => {
     expect(data).toBeNull();
     const { error } = await anon.rpc("usage_totals", { p_provider: "youcam", p_since: new Date(0).toISOString() });
     expect(error).not.toBeNull();
+    const seeded = await anon.rpc("seed_demo_clients", { p_clinic_id: sandboxId, p_sandbox_id: sandboxId, p_bundle: {} });
+    expect(seeded.error).not.toBeNull();
+  });
+
+  it("reads each clinic's staff", async () => {
+    const mv = (await store.getClinicBySlug("maison-verre"))!;
+    expect((await store.listStaff(mv.id)).map((s) => s.name).sort()).toEqual(["Claire", "Dana"]);
+  });
+
+  it("copies the demo clients into a sandbox once, all or nothing, even when two requests race", async () => {
+    const clinic = (await store.getClinicBySlug("maison-verre"))!;
+    const [treatments, products] = await Promise.all([store.listTreatments(clinic.id), store.listProducts(clinic.id)]);
+    const bundle = () => buildDemoBundle({ clinic, treatments, products, staff: SEED_STAFF, sandboxId, today: "2026-12-29" });
+    const first = bundle();
+    const results = await Promise.all([
+      store.seedDemoClients(clinic.id, sandboxId, first),
+      store.seedDemoClients(clinic.id, sandboxId, bundle()),
+    ]);
+    expect(results.filter(Boolean)).toHaveLength(1);
+    expect(await store.seedDemoClients(clinic.id, sandboxId, bundle())).toBe(false);
+
+    const clients = await store.listClients(clinic.id, sandboxId);
+    expect(clients.filter((c) => c.demoKey)).toHaveLength(12);
+    const amelia = clients.find((c) => c.demoKey === "amelia")!;
+    expect((await store.getIntake(amelia.id))?.eventDate).toBe("2027-01-11");
+    expect((await store.listScans(amelia.id)).map((s) => s.result?.concerns.find((c) => c.key === "texture")?.ui)).toEqual([58, 62, 67, 71]);
+    const [plan] = await store.listPlans(amelia.id);
+    expect(plan.totalCents).toBe(109_000);
+    expect(plan.items.map((i) => i.position)).toEqual([0, 1, 2, 3]);
+    const appointments = await store.listAppointments(clinic.id, sandboxId);
+    const winner = results[0] ? first : null;
+    if (winner) expect(appointments.map((a) => a.startsAt)).toEqual(winner.appointments.map((a) => a.startsAt).sort());
+    expect(appointments.filter((a) => a.status === "booked").length).toBeGreaterThan(0);
+    expect((await store.listMessages(clinic.id, sandboxId)).length).toBeGreaterThan(12);
+  });
+
+  it("moves the sandbox clock forward, never back", async () => {
+    expect((await store.setClockOffset(sandboxId, 3)).clockOffsetDays).toBe(3);
+    await expect(store.setClockOffset(sandboxId, 1)).rejects.toThrow("only moves forward");
   });
 
   it("deletes a client's data and returns every file to remove", async () => {

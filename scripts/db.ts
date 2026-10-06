@@ -2,7 +2,8 @@
 // Management API over HTTPS (PLAN.md step 7), so no database password or direct connection is needed.
 //
 //   pnpm db:migrate            apply new files in supabase/migrations, in order, each in a transaction
-//   pnpm db:seed               upsert both demo clinics, their treatments and products from src/data
+//   pnpm db:seed               upsert both demo clinics, their staff, treatments and products from src/data
+//                              (demo clients are copied per sandbox by the app, never seeded here)
 //   pnpm db:status             applied migrations and row counts
 //   add --print to migrate or seed to print the SQL instead of running it (for the SQL editor)
 //
@@ -13,6 +14,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { SEED_CLINICS } from "@/data/clinics";
 import { SEED_PRODUCTS, SEED_TREATMENTS } from "@/data/menu";
+import { SEED_STAFF } from "@/data/staff";
 import { toRow, type Row } from "@/lib/store/rows";
 
 const MIGRATIONS_DIR = path.join(process.cwd(), "supabase", "migrations");
@@ -104,9 +106,15 @@ function seedSql(): string {
   const clinics = SEED_CLINICS.map((c) => toRow({ monogramUrl: null, lockupUrl: null, ...c, createdAt: now }));
   const treatments = SEED_TREATMENTS.map((t, position) => toRow({ ...t, position }));
   const products = SEED_PRODUCTS.map((p, position) => toRow({ ...p, position }));
-  return ["begin;", upsertSql("clinics", clinics), upsertSql("treatments", treatments), upsertSql("products", products), "commit;"].join(
-    "\n\n",
-  );
+  const staff = SEED_STAFF.map((s) => toRow(s));
+  return [
+    "begin;",
+    upsertSql("clinics", clinics),
+    upsertSql("staff", staff),
+    upsertSql("treatments", treatments),
+    upsertSql("products", products),
+    "commit;",
+  ].join("\n\n");
 }
 
 async function seed() {
@@ -116,7 +124,9 @@ async function seed() {
     return;
   }
   await query(sql);
-  console.log(`Seeded ${SEED_CLINICS.length} clinics, ${SEED_TREATMENTS.length} treatments, ${SEED_PRODUCTS.length} products.`);
+  console.log(
+    `Seeded ${SEED_CLINICS.length} clinics, ${SEED_STAFF.length} staff, ${SEED_TREATMENTS.length} treatments, ${SEED_PRODUCTS.length} products.`,
+  );
 }
 
 async function status() {
@@ -128,7 +138,21 @@ async function status() {
   for (const f of files) {
     console.log(`${applied.some((a) => a.version === f.version) ? "applied" : "PENDING"}  ${f.version}_${f.name}`);
   }
-  const tables = ["clinics", "treatments", "products", "sandboxes", "clients", "scans", "reports", "api_usage", "events"];
+  const tables = [
+    "clinics",
+    "staff",
+    "treatments",
+    "products",
+    "sandboxes",
+    "clients",
+    "scans",
+    "reports",
+    "plans",
+    "appointments",
+    "messages",
+    "api_usage",
+    "events",
+  ];
   const exists = await query<{ table_name: string }>(
     "select table_name from information_schema.tables where table_schema = 'public'",
   );

@@ -1,5 +1,29 @@
 # Progress
 
+## Session 4 · Tuesday October 6, 2026 · The clinic side's data, and twelve demo clients
+
+The dashboard comes before booking (DECISIONS D-049): the rebook queue is what sets Rebloom apart, and it runs on demo data with no keys. This part is its foundation. Nothing new is visible yet; the dashboard screens come next.
+
+### What's done
+- **New tables** (migration `20261006120000_clinic_side`, already applied to the live project): staff, plans and their items, appointments, and the outbox of messages. Same rules as before: row level security on, no access for the public key, server only.
+- **Safe by construction:** two bookings can't take overlapping times, a client can't end up with two live plans, and the rebook engine can't queue the same message twice. The database enforces all three, so they hold even when requests race.
+- **Twelve demo clients** (`src/data/demo-clients.ts`), five starring and seven supporting. Every client status and every rebook trigger in the brief is on screen as soon as the dashboard opens. Each browser gets its own copy, dated around its own "today", in one all-or-nothing step.
+- **Staff:** Dana and Claire at Maison Verre, seeded in the live project.
+- **Time travel** can move a browser's clock forward, never back.
+- **Tests:** 255 unit tests (the story checked against every day of the week and both daylight saving changes), 7 browser tests in demo mode and 7 in live mode, 18 checks against the real Supabase project (including two copies racing), and the production build all pass. The new database function was also tested on a local Postgres: racing copies, overlapping bookings, a deliberately broken copy and sandbox deletion.
+
+### What's next
+1. **Dashboard core:** "Enter demo as Dana", Today, the client list, and the practitioner brief with "Confirm plan" and a note that shows on the client's report.
+2. **Rebook engine and queue,** with time travel. 3. **Insights and settings.** 4. **Booking** with a Stripe test deposit.
+
+### What Joshua needs to do
+1. **Portraits** (DECISIONS D-030). Five are needed; twelve make every practitioner brief look complete. AI-generated, front-facing, even soft light, neutral expression, mouth closed, no glasses or heavy makeup, plain background, portrait 1080 × 1440. Name each file by first name, as below. Upload them to the repo on GitHub (**Add file → Upload files**) into a new folder called `demo-portraits`.
+   - Needed: `amelia.jpg` (34, fair skin with light freckles, auburn hair), `priya.jpg` (29, South Asian, medium brown skin, dark hair tied back), `marcus.jpg` (38, Black, deep brown skin, short hair, clean-shaven), `sofia.jpg` (45, Latina, medium olive skin, dark brown hair), `grace.jpg` (52, East Asian, light skin, black hair with some grey).
+   - Nice to have: `hannah.jpg` (31, white, light skin, blonde), `olivia.jpg` (27, mixed heritage, light brown skin, curly hair), `daniel.jpg` (41, white, fair skin, clean-shaven), `nina.jpg` (58, Middle Eastern, light olive skin, grey-streaked hair), `chloe.jpg` (36, Black, medium brown skin, natural hair), `isabel.jpg` (24, Filipina, light-medium skin, long black hair), `rachel.jpg` (47, white, medium skin with sun freckles).
+2. **Resend:** create an API key and add `RESEND_API_KEY` and `EMAIL_FROM` in Vercel (details in the chat). Nothing reads them until booking and the report email.
+
+---
+
 ## Session 3, part 4 · Reports that answer the client
 
 **HD and the simulation both worked on Joshua's first HD scan** (20:22): YouCam HD returned scores by area for wrinkles and pores, and the simulation was made for 4 units. But the report read the same in every section, because the priorities were simply the three lowest scores, and YouCam's lowest are almost always eyes and firmness. The client's own goal, "sun spots", wasn't mentioned at all.

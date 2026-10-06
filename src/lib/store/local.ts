@@ -9,7 +9,8 @@ import os from "node:os";
 import path from "node:path";
 import { SEED_CLINICS } from "@/data/clinics";
 import { SEED_PRODUCTS, SEED_TREATMENTS } from "@/data/menu";
-import type { ApiUsage, Client, Consent, Intake, Report, Sandbox, Scan } from "@/lib/domain";
+import { SEED_STAFF } from "@/data/staff";
+import type { ApiUsage, Appointment, Client, ClientPlan, Consent, Intake, Message, PlanItem, Report, Sandbox, Scan } from "@/lib/domain";
 import { localSecret } from "@/lib/env";
 import { newId, newToken } from "@/lib/ids";
 import { scanStoragePaths } from "./scan-paths";
@@ -22,11 +23,42 @@ interface Db {
   intakes: Intake[];
   scans: Scan[];
   reports: Report[];
+  plans: ClientPlan[];
+  planItems: PlanItem[];
+  appointments: Appointment[];
+  messages: Message[];
   usage: ApiUsage[];
   events: { id: string; clinicId: string; sandboxId: string | null; type: string; createdAt: string }[];
 }
 
-const emptyDb = (): Db => ({ sandboxes: [], clients: [], consents: [], intakes: [], scans: [], reports: [], usage: [], events: [] });
+const emptyDb = (): Db => ({
+  sandboxes: [],
+  clients: [],
+  consents: [],
+  intakes: [],
+  scans: [],
+  reports: [],
+  plans: [],
+  planItems: [],
+  appointments: [],
+  messages: [],
+  usage: [],
+  events: [],
+});
+
+/** Removes clients and everything that hangs off them, as the database's on delete cascade does. */
+function dropClients(db: Db, ids: Set<string>): void {
+  const plans = new Set(db.plans.filter((p) => ids.has(p.clientId)).map((p) => p.id));
+  db.clients = db.clients.filter((c) => !ids.has(c.id));
+  db.consents = db.consents.filter((c) => !ids.has(c.clientId));
+  db.intakes = db.intakes.filter((i) => !ids.has(i.clientId));
+  db.scans = db.scans.filter((s) => !ids.has(s.clientId));
+  db.reports = db.reports.filter((r) => !ids.has(r.clientId));
+  db.plans = db.plans.filter((p) => !plans.has(p.id));
+  db.planItems = db.planItems.filter((i) => !plans.has(i.planId));
+  db.appointments = db.appointments.filter((a) => !ids.has(a.clientId));
+  db.messages = db.messages.filter((m) => !ids.has(m.clientId));
+}
 
 export const LOCAL_DIR =
   process.env.REBLOOM_DATA_DIR ?? (process.env.VERCEL ? path.join(os.tmpdir(), "rebloom") : path.join(process.cwd(), ".data"));
@@ -88,6 +120,9 @@ export const localStore: Store = {
   async listProducts(clinicId) {
     return SEED_PRODUCTS.filter((p) => p.clinicId === clinicId && p.active);
   },
+  async listStaff(clinicId) {
+    return SEED_STAFF.filter((s) => s.clinicId === clinicId);
+  },
 
   getSandbox: (id) => tx((db) => db.sandboxes.find((s) => s.id === id) ?? null),
   createSandbox: (id, now) =>
@@ -109,15 +144,31 @@ export const localStore: Store = {
   deleteSandboxes: (ids) =>
     tx((db) => {
       const gone = new Set(ids);
-      const clients = new Set(db.clients.filter((c) => c.sandboxId && gone.has(c.sandboxId)).map((c) => c.id));
       db.sandboxes = db.sandboxes.filter((s) => !gone.has(s.id));
-      db.clients = db.clients.filter((c) => !clients.has(c.id));
-      db.consents = db.consents.filter((c) => !clients.has(c.clientId));
-      db.intakes = db.intakes.filter((i) => !clients.has(i.clientId));
-      db.scans = db.scans.filter((s) => !clients.has(s.clientId));
-      db.reports = db.reports.filter((r) => !clients.has(r.clientId));
+      dropClients(db, new Set(db.clients.filter((c) => c.sandboxId && gone.has(c.sandboxId)).map((c) => c.id)));
       db.events = db.events.filter((e) => !(e.sandboxId && gone.has(e.sandboxId)));
       // Usage stays, so spent units keep counting against the budget.
+    }, true),
+  setClockOffset: (sandboxId, days) =>
+    tx((db) => {
+      const sandbox = must(db.sandboxes.find((s) => s.id === sandboxId), "Sandbox");
+      if (!Number.isInteger(days) || days < sandbox.clockOffsetDays) throw new Error("The demo clock only moves forward.");
+      sandbox.clockOffsetDays = days;
+      return sandbox;
+    }, true),
+  seedDemoClients: (clinicId, sandboxId, bundle) =>
+    tx((db) => {
+      if (db.clients.some((c) => c.clinicId === clinicId && c.sandboxId === sandboxId && c.demoKey)) return false;
+      db.clients.push(...bundle.clients);
+      db.consents.push(...bundle.consents);
+      db.intakes.push(...bundle.intakes);
+      db.scans.push(...bundle.scans);
+      db.reports.push(...bundle.reports);
+      db.plans.push(...bundle.plans);
+      db.planItems.push(...bundle.planItems);
+      db.appointments.push(...bundle.appointments);
+      db.messages.push(...bundle.messages);
+      return true;
     }, true),
 
   createClient: ({ clinicId, sandboxId, now }) =>
@@ -129,9 +180,11 @@ export const localStore: Store = {
         firstName: null,
         email: null,
         phone: null,
+        lastName: null,
         ageRange: null,
         status: "started",
         isDemo: false,
+        demoKey: null,
         createdAt: now.toISOString(),
       };
       db.clients.push(client);
@@ -144,6 +197,32 @@ export const localStore: Store = {
       Object.assign(client, patch);
       return client;
     }, true),
+  listClients: (clinicId, sandboxId) =>
+    tx((db) =>
+      db.clients
+        .filter((c) => c.clinicId === clinicId && c.sandboxId === sandboxId)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    ),
+
+  listPlans: (clientId) =>
+    tx((db) =>
+      db.plans
+        .filter((p) => p.clientId === clientId)
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+        .map((p) => ({ ...p, items: db.planItems.filter((i) => i.planId === p.id).sort((a, b) => a.position - b.position) })),
+    ),
+  listAppointments: (clinicId, sandboxId) =>
+    tx((db) =>
+      db.appointments
+        .filter((a) => a.clinicId === clinicId && a.sandboxId === sandboxId)
+        .sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
+    ),
+  listMessages: (clinicId, sandboxId) =>
+    tx((db) =>
+      db.messages
+        .filter((m) => m.clinicId === clinicId && m.sandboxId === sandboxId)
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    ),
 
   addConsent: (input) =>
     tx((db) => {
@@ -249,11 +328,7 @@ export const localStore: Store = {
       const client = db.clients.find((c) => c.id === clientId);
       if (!client) return { storagePaths: [] };
       const storagePaths = scanStoragePaths(db.scans.filter((s) => s.clientId === clientId));
-      db.scans = db.scans.filter((s) => s.clientId !== clientId);
-      db.intakes = db.intakes.filter((i) => i.clientId !== clientId);
-      db.consents = db.consents.filter((c) => c.clientId !== clientId);
-      db.reports = db.reports.filter((r) => r.clientId !== clientId);
-      db.clients = db.clients.filter((c) => c.id !== clientId);
+      dropClients(db, new Set([clientId]));
       db.events.push({
         id: newId(),
         clinicId: client.clinicId,

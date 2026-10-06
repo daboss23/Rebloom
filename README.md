@@ -70,7 +70,7 @@ Schema lives in `supabase/migrations` (tables, row level security, the private `
 
 ```bash
 pnpm db:migrate    # apply new migrations through Supabase's Management API
-pnpm db:seed       # upsert the demo clinics, treatments and products from src/data
+pnpm db:seed       # upsert the demo clinics, staff, treatments and products from src/data
 pnpm db:status     # what's applied, row counts, and whether the photo bucket is private
 ```
 
