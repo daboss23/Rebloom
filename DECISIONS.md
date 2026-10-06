@@ -258,3 +258,9 @@ Joshua chose to build the dashboard before booking: the rebook queue is what set
 - **The outbox (C).** `messages` logs every email the product sends or would send. A `dedupe_key` per client lets the rebook engine run as often as it likes without queuing the same message twice.
 - **Time travel only moves forward (C).** `setClockOffset` refuses to wind a sandbox's clock back, so a stale tab can't undo another tab's jump.
 - **Staff** are shared, not copied: Dana and Claire at Maison Verre, Maya and Rosa at Tidewater (C, Tidewater's names are placeholders).
+
+## D-050 · A guarded Resend test route (J + C, Oct 6)
+Joshua asked for Resend's starter route: one test email from `onboarding@resend.dev` to his own Gmail, returning the email id, or a 500 with the error. It lives at `POST /api/send`, with two changes from the starter (C):
+- **It answers only to `Authorization: Bearer <CRON_SECRET>`**, like the YouCam check (D-044), and is a 404 to anyone else. As a public route, anyone who found it could send from the account and use up its free quota.
+- **POST, not GET,** so a link preview or prefetch can never send an email.
+Resend is reached only through `src/lib/email/resend.ts`, which imports `server-only`: if a client component ever imports it, the build fails, so the key can't reach a browser. To send the test: `curl -X POST https://<site>/api/send -H "Authorization: Bearer <CRON_SECRET>"`.
