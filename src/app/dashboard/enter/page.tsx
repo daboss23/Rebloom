@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { enterDemo } from "@/app/dashboard/actions";
+import { Bloom } from "@/components/dashboard/Bloom";
+import { LightField } from "@/components/dashboard/LightField";
 import { IconArrowLeft, IconArrowRight } from "@/components/ui/Icons";
 import { ClinicWordmark } from "@/components/ui/Wordmarks";
 import { MAISON_VERRE } from "@/data/clinics";
@@ -14,24 +16,32 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/** The door to the clinic dashboard. For now, one way in: the demo, as Dana (brief 3.2). */
+/** The door to the clinic dashboard: morning light on water, the gold logo, and one way in (brief 3.2). */
 export default async function EnterPage() {
   if (await readSession()) redirect("/dashboard");
 
   return (
-    <div className="rebloom min-h-dvh flex flex-col">
-      <header className="px-6 sm:px-10 h-16 flex items-center justify-between border-b border-mist">
-        <Link href="/" className="group inline-flex items-center gap-2 text-[13px] text-text-3 hover:text-ink">
-          <IconArrowLeft width={15} height={15} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
-          Rebloom home
-        </Link>
-        <span className="t-label">Clinic dashboard</span>
-      </header>
+    <div className="rebloom relative min-h-dvh overflow-hidden">
+      <div aria-hidden className="pointer-events-none fixed inset-0">
+        <LightField variant="ice" />
+      </div>
+      <div aria-hidden className="pointer-events-none fixed inset-0 bg-[linear-gradient(100deg,rgba(244,249,251,0.82)_0%,rgba(244,249,251,0.45)_45%,rgba(244,249,251,0.05)_100%)]" />
 
-      <main className="flex-1 grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
-        <section className="relative overflow-hidden px-6 sm:px-10 pt-16 pb-12 lg:py-24 flex flex-col justify-between">
-          <div className="reveal">
-            <p className="t-label">Who to contact today, and why</p>
+      <div className="relative flex min-h-dvh flex-col">
+        <header className="flex h-16 items-center justify-between px-6 sm:px-10">
+          <Link href="/" className="group inline-flex items-center gap-2 text-[13px] text-text-2 hover:text-ink">
+            <IconArrowLeft width={15} height={15} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
+            Rebloom home
+          </Link>
+          <span className="text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">Clinic dashboard</span>
+        </header>
+
+        <main className="grid flex-1 items-center gap-12 px-6 pb-16 pt-6 sm:px-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,26rem)] lg:gap-20 lg:pb-24">
+          <section className="focus-in">
+            <p className="flex items-center gap-2.5 text-[11px] uppercase tracking-[0.22em] text-[#9e4a5d]">
+              <Bloom size={16} unfurl />
+              Every client&apos;s next beginning
+            </p>
             <h1 className="mt-8">
               <Image
                 src="/brand/rebloom/rebloom-gold.webp"
@@ -39,59 +49,63 @@ export default async function EnterPage() {
                 width={1811}
                 height={257}
                 priority
-                sizes="(min-width: 1024px) 720px, 92vw"
-                className="h-auto w-full max-w-[720px]"
+                sizes="(min-width: 1024px) 760px, 92vw"
+                className="h-auto w-full max-w-[760px] drop-shadow-[0_14px_30px_rgba(154,107,34,0.25)]"
               />
             </h1>
-            <p className="mt-8 max-w-md text-[17px] leading-relaxed text-text-2">
-              Everyone sells the scan. Rebloom sells the second visit. Each morning, one quiet list of the clients
-              worth a message, with the reason in one sentence.
+            <p className="mt-10 max-w-lg font-display text-[clamp(26px,2.8vw,36px)] font-light leading-[1.2] text-ink">
+              Everyone sells the scan. Rebloom sells the second visit.
             </p>
-          </div>
-          <dl className="mt-16 grid grid-cols-3 gap-6 max-w-lg border-t border-mist pt-6">
-            {[
-              ["Measured", "on raw scan data"],
-              ["Explained", "in one sentence"],
-              ["Sent", "only after you read it"],
-            ].map(([term, detail]) => (
-              <div key={term}>
-                <dt className="font-display text-[22px] font-light text-ink">{term}</dt>
-                <dd className="t-caption mt-1">{detail}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
+            <p className="mt-4 max-w-md text-[16px] leading-relaxed text-text-2">
+              Each morning, the clients whose skin is changing, and the ones who need a little care, each with the reason
+              in one sentence.
+            </p>
+            <dl className="mt-12 grid max-w-xl grid-cols-3 gap-3">
+              {[
+                ["Measured", "on raw scan data"],
+                ["Explained", "in one sentence"],
+                ["Sent", "only after you read it"],
+              ].map(([term, detail], i) => (
+                <div key={term} className="glass focus-in min-w-0 px-3 py-4 sm:px-4" style={{ animationDelay: `${300 + i * 90}ms` }}>
+                  <dt className="font-display text-[19px] font-light text-ink sm:text-[24px]">{term}</dt>
+                  <dd className="mt-1 text-[12.5px] text-text-3">{detail}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
 
-        <section className="border-t lg:border-t-0 lg:border-l border-mist bg-panel px-6 sm:px-10 py-12 lg:py-24 flex items-center">
-          <div className="w-full max-w-sm mx-auto rise">
-            <p className="t-label">Demo clinic</p>
+          <section className="glass focus-in p-8 sm:p-10" style={{ animationDelay: "180ms" }}>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-text-3">Demo clinic</p>
             <div className="mt-5">
               <ClinicWordmark clinic={MAISON_VERRE} />
             </div>
             <p className="t-caption mt-3">{MAISON_VERRE.address}</p>
 
-            <div className="mt-10 border-t border-mist pt-8">
-              <p className="text-[15px] text-ink">
-                Sign in as {DANA.name}, {DANA.title.toLowerCase()}.
-              </p>
-              <p className="t-body mt-2 !text-[14px]">
+            <div className="mt-8 border-t border-[#0c1a22]/[0.08] pt-8">
+              <div className="flex items-center gap-4">
+                <span aria-hidden className="grid h-12 w-12 place-items-center rounded-full bg-[linear-gradient(140deg,#ffe4d8,#f4b9a3_45%,#8fbfd6)] font-display text-[22px] text-white [text-shadow:0_1px_2px_rgba(125,52,71,0.35)]">
+                  {DANA.name[0]}
+                </span>
+                <span>
+                  <span className="block text-[16px] text-ink">{DANA.name}</span>
+                  <span className="block text-[13px] text-text-3">{DANA.title}</span>
+                </span>
+              </div>
+              <p className="mt-5 text-[14.5px] leading-relaxed text-text-2">
                 Twelve demo clients, laid out around today. Send, confirm and move the clock freely: everything stays in
                 this browser.
               </p>
               <form action={enterDemo} className="mt-8">
-                <button
-                  type="submit"
-                  className="group w-full inline-flex items-center justify-between gap-3 min-h-14 px-6 bg-ink text-porcelain text-[15px] transition-[background-color,transform] duration-200 ease-out hover:bg-[#2a3035] active:scale-[0.99]"
-                >
+                <button type="submit" className="btn-gold group w-full justify-between !h-14 px-6 text-[16px]">
                   Enter demo as {DANA.name}
                   <IconArrowRight width={18} height={18} className="transition-transform duration-300 ease-out group-hover:translate-x-1" />
                 </button>
               </form>
               <p className="t-caption mt-5 !text-[12px]">Clinic sign-in by email arrives at launch.</p>
             </div>
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
+      </div>
     </div>
   );
 }

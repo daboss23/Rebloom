@@ -20,13 +20,19 @@ export function TimeTravel({ dateLabel, offsetDays, compact }: { dateLabel: stri
 
   return (
     <div className={cx("flex items-center gap-4", compact && "w-full justify-between")} aria-busy={pending}>
-      <div className="leading-tight">
-        <p className="t-label !text-[10px]">Demo clock{offsetDays > 0 ? ` · +${offsetDays} days` : ""}</p>
-        <p className="text-[14px] text-ink tabular-nums">
-          {dateLabel}
-        </p>
+      <div className="flex items-center gap-3 leading-tight">
+        <span aria-hidden className={cx("relative hidden h-8 w-8 shrink-0 place-items-center sm:grid rounded-full border border-[#c99645]/50", pending && "animate-spin [animation-duration:1.4s]")}>
+          <span className="absolute left-1/2 top-[7px] h-[9px] w-px -translate-x-1/2 bg-[#9a6b22]" />
+          <span className="absolute left-1/2 top-1/2 h-px w-[7px] bg-[#9a6b22]" />
+        </span>
+        <span>
+          <span className="t-label block whitespace-nowrap !text-[10px]">Demo clock{offsetDays > 0 ? ` · +${offsetDays} days` : ""}</span>
+          <span key={dateLabel} className="focus-in block text-[14px] text-ink tabular-nums">
+            {dateLabel}
+          </span>
+        </span>
       </div>
-      <div role="group" aria-label="Move the demo clock forward" className="flex border border-mist">
+      <div role="group" aria-label="Move the demo clock forward" className="flex overflow-hidden rounded-[12px] border border-white/80 bg-white/55 shadow-[0_8px_20px_-14px_rgba(12,44,62,0.35)]">
         {STEPS.map((step, i) => (
           <button
             key={step.days}
@@ -40,9 +46,9 @@ export function TimeTravel({ dateLabel, offsetDays, compact }: { dateLabel: stri
               })
             }
             className={cx(
-              "h-9 px-3 text-[12.5px] text-text-2 transition-[background-color,color,transform] duration-150 ease-out",
-              "hover:bg-mist hover:text-ink active:scale-[0.97] disabled:opacity-50",
-              i > 0 && "border-l border-mist",
+              "h-9 whitespace-nowrap px-2.5 text-[12.5px] text-text-2 sm:px-3.5 transition-[background-color,color,transform] duration-150 ease-out",
+              "hover:bg-white hover:text-ink active:scale-[0.96] disabled:opacity-50",
+              i > 0 && "border-l border-[#0c1a22]/[0.07]",
             )}
           >
             {step.label}

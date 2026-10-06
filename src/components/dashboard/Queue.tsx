@@ -5,34 +5,75 @@ import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { markDone, sendRebook, undoDone } from "@/app/dashboard/actions";
 import { cx } from "@/components/ui/cx";
 import { IconArrowUpRight, IconClose, IconMail, IconPhone } from "@/components/ui/Icons";
+import { Bloom } from "./Bloom";
+import { LightField } from "./LightField";
 import type { QueueRow } from "./queue-row";
 
-/** A small square, the queue's only ornament. Filled glacier: a moment to act on. Hollow: at risk. */
+/** A small square marks the kind: sea for a moment to act on, amber ring for at risk, ice for the rest. */
 export function KindMark({ kind, atRisk }: { kind: QueueRow["kind"]; atRisk: boolean }) {
   return (
     <span
       aria-hidden
       className={cx(
-        "inline-block h-[7px] w-[7px] shrink-0",
-        kind === "progress_moment" ? "bg-glacier-deep" : atRisk ? "border border-ink" : "bg-sage/60",
+        "inline-block h-[7px] w-[7px] shrink-0 rounded-[2px]",
+        kind === "progress_moment" ? "bg-glacier-deep" : atRisk ? "border border-[#b8691f]" : "bg-glacier",
       )}
     />
   );
 }
 
-const secondary =
-  "inline-flex h-10 items-center justify-center gap-2 border px-4 text-[13.5px] whitespace-nowrap " +
-  "transition-[background-color,border-color,color,transform] duration-200 ease-out active:scale-[0.97] disabled:opacity-40";
+/** The kind, as a small tinted label. Never colour alone: the words are always there. */
+export function KindChip({ row }: { row: Pick<QueueRow, "kind" | "label" | "atRisk"> }) {
+  const tone =
+    row.kind === "progress_moment"
+      ? "bg-[linear-gradient(90deg,rgba(255,214,196,0.55),rgba(244,185,163,0.35))] text-[#7d3447]"
+      : row.atRisk
+        ? "bg-[#e9a35f]/15 text-[#8a4b12]"
+        : "bg-white/70 text-text-3 ring-1 ring-inset ring-[#0c1a22]/[0.06]";
+  return (
+    <span className={cx("inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[10.5px] uppercase tracking-[0.12em]", tone)}>
+      {row.kind === "progress_moment" ? <Bloom size={13} unfurl className="text-[#9e4a5d]" /> : <KindMark kind={row.kind} atRisk={row.atRisk} />}
+      {row.label}
+      {row.atRisk && row.kind !== "lapsed" && <span className="opacity-80">· At risk</span>}
+    </span>
+  );
+}
+
+/** The client's initials on a small tile, its finish set by why they're here. */
+function Monogram({ row }: { row: QueueRow }) {
+  const initials = row.name
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("");
+  const finish =
+    row.kind === "progress_moment"
+      ? "bg-[linear-gradient(140deg,#ffe4d8_0%,#f4b9a3_38%,#8fbfd6_100%)] text-white [text-shadow:0_1px_2px_rgba(125,52,71,0.35)]"
+      : row.atRisk
+        ? "bg-[linear-gradient(150deg,#1b3a4e_0%,#0b1a24_100%)] text-[#e2c07a]"
+        : "bg-white/80 text-[#1e5a78] ring-1 ring-inset ring-white";
+  return (
+    <span
+      aria-hidden
+      className={cx(
+        "grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[15px] font-display text-[20px] tracking-[0.04em] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_10px_20px_-14px_rgba(12,44,62,0.55)]",
+        finish,
+      )}
+    >
+      {initials}
+    </span>
+  );
+}
 
 export function Queue({ rows, demo, empty, hideNames }: { rows: QueueRow[]; demo: boolean; empty: string; hideNames?: boolean }) {
   const [open, setOpen] = useState<QueueRow | null>(null);
   const [leaving, setLeaving] = useState<Set<string>>(new Set());
-  const [toast, setToast] = useState<{ text: string; id: number; undo?: () => void } | null>(null);
+  const [toast, setToast] = useState<{ text: string; id: number; undo?: () => void; bloom?: boolean } | null>(null);
   const [pending, start] = useTransition();
   const toastCount = useRef(0);
   // Edits survive closing the sheet, so a stray Escape never costs Dana her words.
   const [drafts, setDrafts] = useState<Record<string, { subject: string; body: string }>>({});
-  const say = (text: string, undo?: () => void) => setToast({ text, id: ++toastCount.current, undo });
+  const say = (text: string, undo?: () => void, bloom?: boolean) => setToast({ text, id: ++toastCount.current, undo, bloom });
 
   useEffect(() => {
     if (!toast) return;
@@ -41,9 +82,9 @@ export function Queue({ rows, demo, empty, hideNames }: { rows: QueueRow[]; demo
   }, [toast]);
 
   const key = (row: QueueRow) => row.dedupeKey + row.clientId;
-  const leave = (row: QueueRow, text: string, undo?: () => void) => {
+  const leave = (row: QueueRow, text: string, undo?: () => void, bloom?: boolean) => {
     setLeaving((s) => new Set(s).add(key(row)));
-    say(text, undo);
+    say(text, undo, bloom);
   };
   const back = (row: QueueRow) =>
     start(async () => {
@@ -66,8 +107,8 @@ export function Queue({ rows, demo, empty, hideNames }: { rows: QueueRow[]; demo
 
   if (rows.length === 0) {
     return (
-      <div className="border-y border-mist py-14 text-center">
-        <p className="font-display text-[26px] font-light text-ink">All caught up.</p>
+      <div className="glass px-8 py-14 text-center">
+        <p className="font-display text-[32px] font-light text-ink">All caught up.</p>
         <p className="t-caption mt-2">{empty}</p>
       </div>
     );
@@ -75,43 +116,49 @@ export function Queue({ rows, demo, empty, hideNames }: { rows: QueueRow[]; demo
 
   return (
     <>
-      <ol className="border-t border-mist">
+      <ol className="space-y-3">
         {rows.map((row, i) => {
           const gone = leaving.has(key(row));
           return (
             <li
               key={row.clientId + row.dedupeKey}
-              style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}
+              style={{ animationDelay: `${120 + Math.min(i, 8) * 70}ms` }}
               className={cx(
-                "reveal group relative grid gap-x-8 gap-y-3 border-b border-mist py-6",
-                "md:grid-cols-[minmax(0,1fr)_6.5rem_12rem] md:items-center",
-                "transition-[opacity,transform] duration-300 ease-out",
-                gone && "pointer-events-none opacity-0 -translate-y-1",
+                "glass lift sheen grid gap-x-6 gap-y-4 p-5 sm:p-6",
+                row.kind === "progress_moment" ? "moment !border-[#f4b9a3]/60" : "focus-in",
+                "md:grid-cols-[auto_minmax(0,1fr)_7.5rem_auto] md:items-center",
+                gone && "pointer-events-none !opacity-0 !-translate-y-1 transition-[opacity,transform] duration-300",
               )}
             >
+              <div className="flex items-center gap-4 md:contents">
+                <Monogram row={row} />
+                <div className="min-w-0 md:hidden">
+                  {!hideNames && <p className="font-display text-[22px] leading-tight text-ink">{row.name}</p>}
+                  <div className="mt-1">
+                    <KindChip row={row} />
+                  </div>
+                </div>
+              </div>
+
               <div className="min-w-0">
-                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <div className="hidden flex-wrap items-center gap-x-3 gap-y-1.5 md:flex">
                   {!hideNames && (
                     <Link
                       href={row.href}
-                      className="font-display text-[23px] leading-tight text-ink decoration-mist underline-offset-[6px] hover:underline"
+                      className="font-display text-[24px] leading-tight text-ink decoration-[#9fc9dd] decoration-1 underline-offset-[6px] hover:underline"
                     >
                       {row.name}
                     </Link>
                   )}
-                  <p className="t-label flex items-center gap-2 !text-[10.5px]">
-                    <KindMark kind={row.kind} atRisk={row.atRisk} />
-                    {row.label}
-                    {row.atRisk && row.kind !== "lapsed" && <span>· At risk</span>}
-                  </p>
+                  <KindChip row={row} />
                 </div>
-                <p className="mt-1.5 max-w-[46ch] text-[15px] leading-relaxed text-text-2">{row.reason}</p>
+                <p className="max-w-[52ch] text-[15px] leading-relaxed text-text-2 md:mt-1.5">{row.reason}</p>
               </div>
 
               <div className="flex items-baseline gap-2 md:block md:text-right">
                 {row.value ? (
                   <>
-                    <p className="font-display text-[26px] font-light leading-none text-ink lining-nums tabular-nums">{row.value}</p>
+                    <p className="gold-foil font-display text-[32px] font-light leading-none">{row.value}</p>
                     <p className="t-caption !text-[12px] md:mt-1.5">{row.valueNote}</p>
                   </>
                 ) : (
@@ -121,29 +168,29 @@ export function Queue({ rows, demo, empty, hideNames }: { rows: QueueRow[]; demo
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 md:flex-col md:items-end">
                 {row.action === "email" && (
-                  <button type="button" onClick={() => setOpen(row)} className={cx(secondary, "border-ink text-ink hover:bg-ink hover:text-porcelain")}>
+                  <button type="button" onClick={() => setOpen(row)} className="btn-sea">
                     <IconMail width={16} height={16} />
                     Review &amp; send
                   </button>
                 )}
                 {row.action === "call" && (
                   <>
-                    <a href={`tel:${row.phone ?? ""}`} className={cx(secondary, "border-ink text-ink hover:bg-ink hover:text-porcelain")}>
+                    <a href={`tel:${row.phone ?? ""}`} className="btn-sea">
                       <IconPhone width={16} height={16} />
                       Call {row.phone}
                     </a>
-                    <button type="button" disabled={pending} onClick={() => done(row)} className="text-[12.5px] text-text-3 underline decoration-mist underline-offset-4 hover:text-ink hover:decoration-ink">
+                    <button type="button" disabled={pending} onClick={() => done(row)} className="text-[12.5px] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 hover:text-ink hover:decoration-ink">
                       Mark as called
                     </button>
                   </>
                 )}
                 {row.action === "review" && (
                   <>
-                    <Link href={row.href} className={cx(secondary, "border-ink text-ink hover:bg-ink hover:text-porcelain")}>
+                    <Link href={row.href} className="btn-ghost">
                       Open brief
                       <IconArrowUpRight width={15} height={15} />
                     </Link>
-                    <button type="button" disabled={pending} onClick={() => done(row)} className="text-[12.5px] text-text-3 underline decoration-mist underline-offset-4 hover:text-ink hover:decoration-ink">
+                    <button type="button" disabled={pending} onClick={() => done(row)} className="text-[12.5px] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 hover:text-ink hover:decoration-ink">
                       Mark as reviewed
                     </button>
                   </>
@@ -167,7 +214,7 @@ export function Queue({ rows, demo, empty, hideNames }: { rows: QueueRow[]; demo
               delete rest[key(open)];
               return rest;
             });
-            leave(open, text);
+            leave(open, text, undefined, true);
             setOpen(null);
           }}
         />
@@ -175,10 +222,11 @@ export function Queue({ rows, demo, empty, hideNames }: { rows: QueueRow[]; demo
 
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
         {toast && (
-          <div key={toast.id} className="toast on-dark pointer-events-auto flex max-w-md items-center gap-6 bg-ink py-3.5 pl-5 pr-4 text-[13.5px] text-porcelain">
+          <div key={toast.id} className="toast sea on-dark pointer-events-auto flex max-w-md items-center gap-6 rounded-[14px] py-3.5 pl-5 pr-4 text-[13.5px] shadow-[0_24px_48px_-20px_rgba(12,26,34,0.6)]">
+            {toast.bloom && <Bloom size={22} unfurl className="text-[#f1d49a]" />}
             <p>{toast.text}</p>
             {toast.undo && (
-              <button type="button" onClick={toast.undo} className="text-[13px] text-glacier underline underline-offset-4 hover:text-porcelain">
+              <button type="button" onClick={toast.undo} className="text-[13px] text-[#e2c07a] underline underline-offset-4 hover:text-white">
                 Undo
               </button>
             )}
@@ -249,7 +297,7 @@ function SendSheet({
       }}
       // A click on the dimmed page closes an untouched draft only; an edited one needs Cancel or Escape.
       onClick={(e) => e.target === ref.current && !edited && dismiss()}
-      className="sheet fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-dvh w-full max-w-[560px] border-l border-mist bg-porcelain p-0 text-text-2"
+      className="sheet fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-dvh w-full max-w-[580px] border-0 bg-[#f4f8fa]/95 p-0 text-text-2 shadow-[-30px_0_80px_-30px_rgba(12,26,34,0.45)] backdrop-blur-2xl sm:rounded-l-[24px] sm:overflow-hidden"
     >
       <form
         onSubmit={(e) => {
@@ -258,33 +306,36 @@ function SendSheet({
         }}
         className="flex h-full flex-col"
       >
-        <header className="flex items-start justify-between gap-6 border-b border-mist px-7 pb-5 pt-7">
-          <div>
-            <p className="t-label flex items-center gap-2 !text-[10.5px]">
-              <KindMark kind={row.kind} atRisk={row.atRisk} />
-              {row.label}
-            </p>
-            <h2 id={titleId} className="mt-2 font-display text-[30px] font-light leading-tight text-ink">
-              Review &amp; send
-            </h2>
-            <p className="mt-1 text-[14px] text-text-2">
-              To {row.name} <span className="text-text-3">· {row.email}</span>
-            </p>
+        <header className="sea on-dark relative overflow-hidden px-7 pb-7 pt-7">
+          <LightField variant="sea" className="opacity-70" />
+          <div className="relative flex items-start justify-between gap-6">
+            <div>
+              <p className="flex items-center gap-2 text-[10.5px] uppercase tracking-[0.16em] text-ink-soft">
+                <KindMark kind={row.kind} atRisk={row.atRisk} />
+                {row.label}
+              </p>
+              <h2 id={titleId} className="mt-3 font-display text-[36px] font-light leading-none text-white">
+                Review &amp; send
+              </h2>
+              <p className="mt-3 text-[14px] text-ink-soft">
+                To <span className="text-white">{row.name}</span> · {row.email}
+              </p>
+            </div>
+            <button type="button" onClick={dismiss} aria-label="Close" className="-mr-2 grid h-10 w-10 place-items-center rounded-full text-ink-soft transition-colors duration-150 hover:bg-white/10 hover:text-white">
+              <IconClose />
+            </button>
           </div>
-          <button type="button" onClick={dismiss} aria-label="Close" className="-mr-2 grid h-10 w-10 place-items-center text-text-3 transition-colors duration-150 hover:text-ink">
-            <IconClose />
-          </button>
+          <p className="relative mt-6 rounded-[12px] bg-white/[0.07] px-4 py-3 text-[14px] leading-relaxed text-[#dbe8ef] ring-1 ring-inset ring-white/10">{row.reason}</p>
         </header>
 
         <div className="flex-1 overflow-y-auto px-7 py-6">
-          <p className="border-l border-glacier-deep pl-4 text-[14px] leading-relaxed text-text-2">{row.reason}</p>
 
           <label className="mt-7 block">
             <span className="t-label">Subject</span>
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="mt-2 h-11 w-full border-0 border-b border-mist bg-transparent text-[16px] text-ink outline-none transition-colors duration-200 focus:border-ink"
+              className="mt-2 h-12 w-full rounded-[12px] border border-[#0c1a22]/10 bg-white/80 px-4 text-[16px] text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-[#1e5a78]/50 focus:shadow-[0_0_0_4px_rgba(159,201,221,0.35)]"
             />
           </label>
 
@@ -295,7 +346,7 @@ function SendSheet({
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={15}
-              className="mt-3 w-full resize-y border border-mist bg-transparent p-4 text-[15px] leading-relaxed text-ink outline-none transition-colors duration-200 focus:border-ink"
+              className="mt-2 w-full resize-y rounded-[12px] border border-[#0c1a22]/10 bg-white/80 p-4 text-[15px] leading-relaxed text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-[#1e5a78]/50 focus:shadow-[0_0_0_4px_rgba(159,201,221,0.35)]"
             />
           </label>
           {error && (
@@ -305,7 +356,7 @@ function SendSheet({
           )}
         </div>
 
-        <footer className="border-t border-mist px-7 py-5">
+        <footer className="border-t border-[#0c1a22]/[0.07] bg-white/50 px-7 py-5">
           {demo && <p className="t-caption mb-4 !text-[12.5px]">Demo mode: this message is logged in the outbox, not emailed.</p>}
           <div className="flex items-center justify-end gap-5">
             <button type="button" onClick={dismiss} className="h-11 text-[14px] text-text-3 transition-colors duration-150 hover:text-ink">
@@ -314,7 +365,7 @@ function SendSheet({
             <button
               type="submit"
               disabled={pending}
-              className="inline-flex h-12 min-w-36 items-center justify-center bg-ink px-6 text-[15px] text-porcelain transition-[background-color,transform,opacity] duration-200 ease-out hover:bg-[#2a3035] active:scale-[0.98] disabled:opacity-60"
+              className="btn-gold min-w-40 px-7 disabled:opacity-60"
             >
               {pending ? "Sending" : "Send email"}
             </button>

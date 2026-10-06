@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CountUp } from "@/components/dashboard/CountUp";
+import { LightField } from "@/components/dashboard/LightField";
 import { MonthBars } from "@/components/dashboard/MonthBars";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import { IconArrowRight } from "@/components/ui/Icons";
 import { computeInsights } from "@/lib/dashboard/insights";
 import { loadBook } from "@/lib/dashboard/load";
@@ -25,39 +28,37 @@ export default async function InsightsPage() {
 
   return (
     <div>
-      <header className="reveal">
-        <p className="t-label">
-          {book.clinic.name} · {first.label} to {last.label}
-        </p>
-        <h1 className="mt-3 font-display text-[clamp(40px,5vw,56px)] font-light leading-[1.02] tracking-[-0.02em] text-ink">Insights</h1>
-      </header>
+      <PageHeader kicker={`${book.clinic.name} · ${first.label} to ${last.label}`} title="Insights" />
 
-      <section aria-labelledby="kept" className="mt-14 grid gap-x-16 gap-y-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-        <div className="reveal" style={{ animationDelay: "60ms" }}>
-          <h2 id="kept" className="t-label">
-            Revenue kept through rebooking
-          </h2>
-          <p className="mt-4 font-display text-[clamp(72px,10vw,132px)] font-light leading-[0.9] tracking-[-0.035em] text-ink tabular-nums">
-            {formatPrice(insights.keptCents)}
-          </p>
-          <p className="mt-6 max-w-sm text-[15px] leading-relaxed text-text-2">
-            Every treatment visit after a client&apos;s first, over the last six months. The second visit, and every one
-            after it.
-          </p>
-          <p className="t-caption mt-3">
-            This month so far: <span className="text-ink">{formatPrice(insights.keptThisMonthCents)}</span>
-          </p>
+      <section aria-labelledby="kept" className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+        <div className="sea on-dark focus-in relative overflow-hidden rounded-[28px] p-8 shadow-[0_40px_80px_-40px_rgba(12,26,34,0.7)] sm:p-10" style={{ animationDelay: "60ms" }}>
+          <LightField variant="sea" className="opacity-60" />
+          <div className="relative flex h-full flex-col">
+            <h2 id="kept" className="text-[11px] uppercase tracking-[0.22em] text-[#e2c07a]">
+              Revenue kept through rebooking
+            </h2>
+            <p className="gold-foil mt-6 font-display text-[clamp(72px,9vw,128px)] font-light leading-[0.9] tracking-[-0.035em]">
+              <CountUp value={Math.round(insights.keptCents / 100)} format="money" duration={1600} delay={200} />
+            </p>
+            <p className="mt-6 max-w-sm text-[15px] leading-relaxed text-[#dbe8ef]">
+              Every treatment visit after a client&apos;s first, over the last six months. The second visit, and every one
+              after it.
+            </p>
+            <p className="mt-auto pt-8 text-[13px] text-ink-soft">
+              This month so far: <span className="text-white">{formatPrice(insights.keptThisMonthCents)}</span>
+            </p>
+          </div>
         </div>
 
-        <div className="reveal min-w-0" style={{ animationDelay: "120ms" }}>
-          <h2 className="t-label">Revenue kept, month by month</h2>
+        <div className="glass focus-in min-w-0 p-6 sm:p-8" style={{ animationDelay: "140ms" }}>
+          <h2 className="font-display text-[26px] font-light text-ink">Revenue kept, month by month</h2>
           <div className="mt-6">
             <MonthBars months={insights.months} title="Revenue kept through rebooking, by month" />
           </div>
         </div>
       </section>
 
-      <dl className="mt-20 grid gap-x-12 sm:grid-cols-3">
+      <dl className="mt-6 grid gap-6 sm:grid-cols-3">
         {[
           {
             term: "Rebook rate",
@@ -76,9 +77,9 @@ export default async function InsightsPage() {
             href: "/dashboard/rebook",
           },
         ].map((stat, i) => (
-          <div key={stat.term} className="reveal border-t border-ink/70 pt-5 pb-10" style={{ animationDelay: `${180 + i * 60}ms` }}>
+          <div key={stat.term} className="glass lift focus-in p-7" style={{ animationDelay: `${220 + i * 80}ms` }}>
             <dt className="t-label">{stat.term}</dt>
-            <dd className="mt-3 font-display text-[64px] font-light leading-none tracking-[-0.02em] text-ink tabular-nums">{stat.value}</dd>
+            <dd className="mt-4 font-display text-[72px] font-light leading-none tracking-[-0.02em] text-ink">{stat.value}</dd>
             <dd className="mt-4 max-w-xs text-[14px] leading-relaxed text-text-2">{stat.note}</dd>
             {stat.href && (
               <dd className="mt-3">

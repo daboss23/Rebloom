@@ -13,11 +13,11 @@ export interface NavItem {
 
 const isActive = (pathname: string, href: string) => (href === "/dashboard" ? pathname === href : pathname.startsWith(href));
 
-/** The left menu on desktop. */
+/** The left menu on desktop, on deep sea. The current page carries a short gold rule. */
 export function SideNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
   return (
-    <ul className="flex flex-col gap-px">
+    <ul className="flex flex-col gap-1">
       {items.map((item) => {
         const active = isActive(pathname, item.href);
         return (
@@ -26,18 +26,23 @@ export function SideNav({ items }: { items: NavItem[] }) {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cx(
-                "group flex h-10 items-center justify-between px-3 text-[14px] transition-colors duration-200",
-                active ? "bg-mist text-ink" : "text-text-2 hover:bg-mist/60 hover:text-ink",
+                "group relative flex h-11 items-center justify-between rounded-[12px] px-4 text-[14px] transition-[background-color,color] duration-200",
+                active ? "bg-white/[0.08] text-white" : "text-ink-soft hover:bg-white/[0.04] hover:text-white",
               )}
             >
               <span className="flex items-center gap-3">
                 <span
                   aria-hidden
-                  className={cx("h-px w-3 transition-colors duration-200", active ? "bg-ink" : "bg-transparent group-hover:bg-sage")}
+                  className={cx(
+                    "h-px transition-[width,background-color] duration-300 ease-out",
+                    active ? "w-4 bg-[#e2c07a]" : "w-2 bg-white/20 group-hover:w-3 group-hover:bg-white/40",
+                  )}
                 />
                 {item.label}
               </span>
-              {item.count !== undefined && <span className="tabular-nums text-[12px] text-text-3">{item.count}</span>}
+              {item.count !== undefined && (
+                <span className={cx("tabular-nums text-[12px]", active ? "text-[#e2c07a]" : "text-ink-soft/80")}>{item.count}</span>
+              )}
             </Link>
           </li>
         );
@@ -59,8 +64,8 @@ export function TabNav({ items }: { items: NavItem[] }) {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cx(
-                "flex h-11 items-center gap-2 border-b px-2 text-[14px] transition-colors duration-200",
-                active ? "border-ink text-ink" : "border-transparent text-text-3 hover:text-ink",
+                "flex h-11 items-center gap-2 border-b-2 px-2 text-[14px] transition-colors duration-200",
+                active ? "border-[#c99645] text-ink" : "border-transparent text-text-3 hover:text-ink",
               )}
             >
               {item.label}

@@ -23,25 +23,39 @@
 }
 
 /*
- * Rebloom's own surface: the clinic dashboard (DECISIONS D-051). Cool and glacial where the clinic
- * pages are warm. Same names, so every component re-themes itself inside `.rebloom`.
- * Contrast on frost: text-2 9.2:1, text-3 5.6:1, glacier-deep 6.0:1. Glacier is a fill, never text.
+ * Rebloom's own surface: the clinic dashboard (DECISIONS D-051, D-058). Light through ice and water:
+ * a luminous ice ground, frosted glass panels with real depth, a deep-sea menu, and gold from the logo
+ * for money. Same token names as the brief, so every component re-themes inside `.rebloom`.
+ * Contrast on the ice ground: ink 15.8:1, text-2 9.8:1, text-3 5.3:1, sea 6.7:1, gold text 4.2:1.
  */
 .rebloom {
-  --bg: #f3f5f6; /* Frost */
-  --ink: #15191c; /* Deep charcoal */
-  --accent: #a9c4d3; /* Glacier. Fills only. */
-  --accent-deep: #3e6276; /* Glacier, deep: marks, chart bars, small accent text. */
-  --surface: #e3e8eb; /* Ice mist */
-  --panel: #ebeff1; /* The second neutral layer: the menu and quiet panels. */
-  --detail: #8a9aa4; /* Decorative only. */
-  --text-2: #3a4349;
-  --text-3: #59646b;
-  --ink-soft: #b4c0c8; /* Secondary text on charcoal. */
+  --bg: #edf3f6; /* Ice white */
+  --ink: #0c1a22; /* Deep-sea ink */
+  --accent: #9fc9dd; /* Ice. Fills and light, never text on light. */
+  --accent-deep: #1e5a78; /* Sea: marks, chart bars, links of note. */
+  --surface: #d5e3ea; /* Hairlines and quiet fills */
+  --panel: #e4edf2;
+  --detail: #8fa6b2; /* Decorative only. */
+  --text-2: #2e3f49;
+  --text-3: #556773;
+  --ink-soft: #a9bcc8; /* Secondary text on deep sea. */
+  --gold: #9a6b22; /* Gold text on light. */
+  --gold-bright: #e2c07a; /* Gold on deep sea. */
+  --growth: #1f7a63; /* Fresh green: real improvement. 4.7:1 on the ice ground. */
+  --bloom: #9e4a5d; /* Dawn rose, as text. 5.2:1. */
+  --sea-deep: #0e2230;
   --clinic-accent: var(--accent);
   --clinic-on-accent: var(--ink);
-  background: var(--bg);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   color: var(--text-2);
+  background:
+    radial-gradient(1100px 640px at 8% -12%, rgb(255 255 255 / 0.95), transparent 62%),
+    radial-gradient(760px 520px at 100% 0%, rgb(255 214 196 / 0.45), transparent 64%),
+    radial-gradient(900px 620px at 78% 30%, rgb(159 201 221 / 0.36), transparent 66%),
+    radial-gradient(1100px 760px at 64% 112%, rgb(30 90 120 / 0.13), transparent 62%),
+    linear-gradient(180deg, #f3f8fa 0%, #e8f0f4 100%);
+  background-attachment: fixed;
   /* Cormorant's old-style figures dip below the line; numbers here are read, so they stand on it. */
   font-variant-numeric: lining-nums;
 }
@@ -51,7 +65,216 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 html:has(.rebloom) {
-  background: #f3f5f6;
+  background: #edf3f6;
+}
+
+/* ---------- Materials ---------- */
+
+/* Frosted glass: a lit top edge, a soft cool shadow below, the page's light showing through. */
+.glass {
+  position: relative;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.8), rgb(255 255 255 / 0.58));
+  border: 1px solid rgb(255 255 255 / 0.8);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.95),
+    0 1px 2px rgb(12 26 34 / 0.04),
+    0 22px 44px -26px rgb(12 44 62 / 0.32);
+  backdrop-filter: blur(22px) saturate(1.4);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+}
+/* Deep sea: the menu, the plan, the sheet's header. */
+.sea {
+  color: #f3f8fa;
+  background:
+    radial-gradient(520px 340px at 0% 0%, rgb(30 90 120 / 0.5), transparent 70%),
+    linear-gradient(165deg, #12293a 0%, #0b1a24 58%, #0d2130 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07);
+}
+/* Gold leaf, matched to the logo. Darker stops on light grounds so large figures stay above 3:1. */
+.gold-foil {
+  background: linear-gradient(100deg, #6e4810 0%, #a87628 24%, #d9b46a 42%, #9a6b22 60%, #c79a4a 78%, #7a5014 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.sea .gold-foil,
+.gold-foil-bright {
+  background: linear-gradient(100deg, #b98a3c 0%, #f1d49a 30%, #fff1cf 46%, #d9ae62 64%, #f3dca6 82%, #c4974a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Cards that lift a little under the pointer, with a pass of light across the glass. */
+@media (hover: hover) and (pointer: fine) {
+  .lift {
+    transition:
+      transform 320ms var(--ease-out),
+      box-shadow 320ms var(--ease-out);
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.95),
+      0 2px 4px rgb(12 26 34 / 0.05),
+      0 30px 56px -28px rgb(12 44 62 / 0.42);
+  }
+  .sheen {
+    overflow: hidden;
+  }
+  .sheen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 0.55) 48%, transparent 66%);
+    transform: translateX(-110%);
+  }
+  .sheen:hover::after {
+    transform: translateX(110%);
+    transition: transform 1100ms var(--ease-out);
+  }
+}
+
+/* Buttons. Sea: the one action a row is for. Ghost: everything quieter. */
+.btn-sea {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 2.75rem;
+  padding: 0 1.15rem;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #fff;
+  white-space: nowrap;
+  background: linear-gradient(180deg, #23668a 0%, #134560 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    0 10px 22px -12px rgb(19 69 96 / 0.75);
+  transition:
+    transform 160ms ease-out,
+    filter 200ms ease-out,
+    box-shadow 200ms ease-out;
+}
+.btn-sea:hover {
+  filter: brightness(1.08);
+}
+.btn-sea:active {
+  transform: scale(0.97);
+}
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 2.75rem;
+  padding: 0 1.1rem;
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--ink);
+  white-space: nowrap;
+  background: rgb(255 255 255 / 0.55);
+  border: 1px solid rgb(12 26 34 / 0.12);
+  transition:
+    transform 160ms ease-out,
+    background-color 200ms ease-out,
+    border-color 200ms ease-out;
+}
+.btn-ghost:hover {
+  background: rgb(255 255 255 / 0.9);
+  border-color: rgb(12 26 34 / 0.24);
+}
+.btn-ghost:active {
+  transform: scale(0.97);
+}
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 3rem;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #1a1206;
+  background: linear-gradient(100deg, #c99645 0%, #f1d49a 45%, #d9ae62 70%, #b98a3c 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.45),
+    0 12px 26px -14px rgb(201 150 69 / 0.8);
+  transition:
+    transform 160ms ease-out,
+    filter 200ms ease-out;
+}
+.btn-gold:hover {
+  filter: brightness(1.06);
+}
+.btn-gold:active {
+  transform: scale(0.98);
+}
+
+/* The bloom mark opening: each petal draws itself in, a beat after the last. */
+.bloom-unfurl path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: petal 900ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+.bloom-unfurl circle {
+  transform-origin: 12px 12px;
+  animation: bloom-heart 700ms 350ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+@keyframes petal {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes bloom-heart {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+/* A progress moment breathes, slowly, so the eye finds it first. */
+@keyframes breathe-glow {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.95),
+      0 0 0 1px rgb(244 185 163 / 0.35),
+      0 26px 50px -26px rgb(158 74 93 / 0.35);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.95),
+      0 0 0 1px rgb(244 185 163 / 0.6),
+      0 26px 56px -22px rgb(158 74 93 / 0.5);
+  }
+}
+.moment {
+  animation:
+    focus-in 760ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both,
+    breathe-glow 5.5s 1s ease-in-out infinite;
+}
+
+/* Things arriving come into focus: rise a little, sharpen from a soft blur. */
+.focus-in {
+  animation: focus-in 760ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+@keyframes focus-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
 }
 
 @theme inline {

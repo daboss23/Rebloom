@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { KindMarkStatic } from "@/components/dashboard/KindMarkStatic";
+import { PageHeader, pill } from "@/components/dashboard/PageHeader";
 import { Queue } from "@/components/dashboard/Queue";
 import { toQueueRow } from "@/components/dashboard/queue-row";
 import { cx } from "@/components/ui/cx";
@@ -44,61 +45,50 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
 
   return (
     <div>
-      <header className="reveal flex flex-wrap items-end justify-between gap-6">
-        <div>
-          <p className="t-label">
-            {book.queue.items.length} waiting · {formatPrice(ready)} ready to rebook
-          </p>
-          <h1 className="mt-3 font-display text-[clamp(40px,5vw,56px)] font-light leading-[1.02] tracking-[-0.02em] text-ink">Rebook</h1>
-          <p className="mt-3 max-w-xl text-[15px] text-text-2">
-            Every rule is written down and every flag says why. Measured on raw scan data, never the flattering number.
-          </p>
-        </div>
-        <nav aria-label="Filter the queue">
-          <ul className="flex flex-wrap gap-1">
-            {VIEWS.map((v) => {
-              const active = v.key === view.key;
-              const n = v.action ? book.queue.items.filter((i) => i.action === v.action).length : book.queue.items.length;
-              return (
-                <li key={v.key}>
-                  <Link
-                    href={v.key === "all" ? "/dashboard/rebook" : `/dashboard/rebook?show=${v.key}`}
-                    aria-current={active ? "page" : undefined}
-                    scroll={false}
-                    className={cx(
-                      "flex h-9 items-center gap-2 border px-3 text-[13px] transition-colors duration-200",
-                      active ? "border-ink bg-ink text-porcelain" : "border-mist text-text-2 hover:border-ink hover:text-ink",
-                    )}
-                  >
-                    {v.label}
-                    <span className={cx("tabular-nums text-[12px]", active ? "text-ink-soft" : "text-text-3")}>{n}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-      </header>
+      <PageHeader
+        kicker={`${book.queue.items.length} waiting · ${formatPrice(ready)} ready to rebook`}
+        title="Rebook"
+        aside={
+          <nav aria-label="Filter the queue">
+            <ul className="flex flex-wrap gap-2">
+              {VIEWS.map((v) => {
+                const active = v.key === view.key;
+                const n = v.action ? book.queue.items.filter((i) => i.action === v.action).length : book.queue.items.length;
+                return (
+                  <li key={v.key}>
+                    <Link href={v.key === "all" ? "/dashboard/rebook" : `/dashboard/rebook?show=${v.key}`} aria-current={active ? "page" : undefined} scroll={false} className={pill(active)}>
+                      {v.label}
+                      <span className={cx("tabular-nums text-[12px]", active ? "text-white/70" : "text-text-3")}>{n}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        }
+      >
+        Every rule is written down and every flag says why. Measured on raw scan data, never the flattering number.
+      </PageHeader>
 
-      <section aria-label="Waiting" className="mt-12">
+      <section aria-label="Waiting" className="mt-10">
         <Queue rows={rows} demo={env.DEMO_MODE} empty="Nothing waiting here. Move the clock forward to see who comes due." />
       </section>
 
-      <section aria-labelledby="outbox" className="mt-20">
+      <section aria-labelledby="outbox" className="glass focus-in mt-14 p-6 sm:p-8">
         <div className="flex flex-wrap items-baseline justify-between gap-4">
-          <h2 id="outbox" className="font-display text-[30px] font-light text-ink">
+          <h2 id="outbox" className="font-display text-[34px] font-light text-ink">
             Outbox
           </h2>
           {env.DEMO_MODE && <p className="t-caption !text-[12.5px]">Demo mode: messages are logged here, never emailed.</p>}
         </div>
         {outbox.length === 0 ? (
-          <p className="t-caption mt-4 border-t border-mist pt-5">Nothing sent yet. Messages you send from the queue land here, word for word.</p>
+          <p className="t-caption mt-4 pt-1">Nothing sent yet. Messages you send from the queue land here, word for word.</p>
         ) : (
-          <ul className="mt-4 border-t border-mist">
+          <ul className="mt-4">
             {outbox.map((m) => {
               const client = byId.get(m.clientId)?.client;
               return (
-                <li key={m.id} className="border-b border-mist">
+                <li key={m.id} className="border-b border-[#0c1a22]/[0.07] last:border-0">
                   <details className="group">
                     <summary className="grid cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto_1rem] items-baseline gap-x-6 gap-y-1 py-4 md:grid-cols-[11rem_minmax(0,1fr)_9rem_6rem_1rem] [&::-webkit-details-marker]:hidden">
                       <span className="text-[15px] text-ink">{client ? fullName(client) : "Removed client"}</span>
@@ -120,7 +110,7 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
                     {m.status !== "skipped" && (
                       <div className="pb-6 md:pl-[11rem]">
                         <p className="t-caption !text-[12.5px]">To {client?.email}</p>
-                        <pre className="mt-3 max-w-2xl whitespace-pre-wrap font-sans text-[14.5px] leading-relaxed text-text-2">{m.body}</pre>
+                        <pre className="mt-3 max-w-2xl whitespace-pre-wrap rounded-[14px] bg-white/70 p-5 font-sans text-[14.5px] leading-relaxed text-text-2 ring-1 ring-inset ring-white">{m.body}</pre>
                       </div>
                     )}
                   </details>
@@ -131,13 +121,13 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
         )}
       </section>
 
-      <section aria-labelledby="rules" className="mt-20">
-        <h2 id="rules" className="t-label">
+      <section aria-labelledby="rules" className="mt-14">
+        <h2 id="rules" className="font-display text-[34px] font-light text-ink">
           The rules
         </h2>
-        <dl className="mt-3 grid gap-x-10 sm:grid-cols-2">
+        <dl className="mt-5 grid gap-4 sm:grid-cols-2">
           {RULES.map(([kind, rule]) => (
-            <div key={kind} className="border-t border-mist py-4">
+            <div key={kind} className="glass p-5">
               <dt className="flex items-center gap-2 text-[14px] text-ink">
                 <KindMarkStatic kind={kind} />
                 {TRIGGER_LABEL[kind]}

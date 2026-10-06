@@ -15,10 +15,14 @@ export function Sparkline({ values, className, width = 72, height = 22 }: { valu
   const y = (v: number) => pad + (1 - (v - min) / (max - min || 1)) * (height - pad * 2);
   const d = values.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
   const last = values.length - 1;
+  // Rising lines grow green: real improvement is the point of the product.
+  const rising = values[last] > values[0];
+  const stroke = rising ? "var(--growth)" : "var(--accent-deep)";
   return (
     <svg aria-hidden width={width} height={height} viewBox={`0 0 ${width} ${height}`} className={cx("overflow-visible", className)}>
-      <path d={d} fill="none" stroke="var(--accent-deep)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={x(last)} cy={y(values[last])} r={2.25} fill="var(--accent-deep)" />
+      <path d={`${d} L${x(last).toFixed(1)},${height} L${x(0).toFixed(1)},${height} Z`} fill={rising ? "#7fd1b4" : "var(--accent)"} opacity={rising ? 0.22 : 0.28} />
+      <path d={d} fill="none" stroke={stroke} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={x(last)} cy={y(values[last])} r={2.75} fill="#c99645" stroke="#fff" strokeWidth={1} />
     </svg>
   );
 }

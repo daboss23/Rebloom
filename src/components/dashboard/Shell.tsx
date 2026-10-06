@@ -17,7 +17,7 @@ interface ShellProps {
   children: ReactNode;
 }
 
-/** The dashboard frame: a slim menu on the left, the clinic and the demo clock across the top. */
+/** The dashboard frame: a deep-sea menu carrying the gold logo, glass across the top. */
 export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, clientCount, children }: ShellProps) {
   const items: NavItem[] = [
     { href: "/dashboard", label: "Today" },
@@ -28,38 +28,44 @@ export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, 
   const settings: NavItem[] = [{ href: "/dashboard/settings", label: "Settings" }];
 
   return (
-    <div className="rebloom min-h-dvh lg:grid lg:grid-cols-[232px_minmax(0,1fr)]">
+    <div className="rebloom min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-ink focus:px-4 focus:py-2 focus:text-porcelain">
         Skip to content
       </a>
 
       {/* ---------- Desktop menu ---------- */}
-      <aside className="hidden lg:flex sticky top-0 h-dvh flex-col border-r border-mist bg-panel px-4 pb-6 pt-7">
-        <Link href="/dashboard" className="px-3" aria-label="Rebloom, today">
-          <RebloomWordmark height={21} />
+      <aside className="sea on-dark hidden lg:flex sticky top-0 h-dvh flex-col px-4 pb-6 pt-8">
+        <Link href="/dashboard" className="px-4" aria-label="Rebloom, today">
+          <RebloomWordmark height={22} />
         </Link>
-        <nav aria-label="Dashboard" className="mt-10">
+        <p className="mt-3 px-4 text-[10.5px] uppercase tracking-[0.22em] text-ink-soft/80">{clinic.name}</p>
+        <nav aria-label="Dashboard" className="mt-12">
           <SideNav items={items} />
         </nav>
         <div className="mt-auto">
           <nav aria-label="Settings">
             <SideNav items={settings} />
           </nav>
-          <div className="mt-6 border-t border-mist px-3 pt-5">
-            <p className="text-[14px] text-ink">{staff.name}</p>
-            <p className="t-caption !text-[12px]">{staff.title}</p>
-            <form action={signOut}>
-              <button type="submit" className="mt-3 text-[12px] text-text-3 underline decoration-mist underline-offset-4 transition-colors duration-200 hover:text-ink hover:decoration-ink">
-                Sign out
-              </button>
-            </form>
+          <div className="mt-6 flex items-center gap-3 border-t border-white/10 px-4 pt-6">
+            <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#e2c07a]/50 font-display text-[18px] text-[#e2c07a]">
+              {staff.name[0]}
+            </span>
+            <div className="min-w-0">
+              <p className="text-[14px] text-white">{staff.name}</p>
+              <p className="text-[12px] text-ink-soft">{staff.title}</p>
+            </div>
           </div>
+          <form action={signOut} className="px-4">
+            <button type="submit" className="mt-4 text-[12px] text-ink-soft underline decoration-white/20 underline-offset-4 transition-colors duration-200 hover:text-white hover:decoration-white/60">
+              Sign out
+            </button>
+          </form>
         </div>
       </aside>
 
       <div className="min-w-0">
         {/* ---------- Top bar ---------- */}
-        <header className="sticky top-0 z-30 border-b border-mist bg-porcelain">
+        <header className="sticky top-0 z-30 border-b border-white/70 bg-white/55 backdrop-blur-xl backdrop-saturate-150">
           <div className="flex h-16 items-center justify-between gap-6 px-4 sm:px-6 lg:px-12">
             <div className="flex min-w-0 items-center gap-4">
               <Link href="/dashboard" className="lg:hidden" aria-label="Rebloom, today">
@@ -77,19 +83,19 @@ export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, 
               </div>
             )}
           </div>
-          <nav aria-label="Dashboard" className="border-t border-mist px-4 sm:px-6 lg:hidden">
+          <nav aria-label="Dashboard" className="border-t border-white/70 px-4 sm:px-6 lg:hidden">
             <TabNav items={[...items, ...settings]} />
           </nav>
         </header>
 
         {demo && (
-          <div className="border-b border-mist px-4 py-3 sm:px-6 md:hidden">
+          <div className="border-b border-white/70 bg-white/40 px-4 py-3 sm:px-6 md:hidden">
             <TimeTravel dateLabel={dateLabel} offsetDays={offsetDays} compact />
           </div>
         )}
 
-        <main id="main" tabIndex={-1} className="px-4 pb-24 pt-10 sm:px-6 lg:px-12 lg:pt-14">
-          <div className="mx-auto max-w-[1180px]">{children}</div>
+        <main id="main" tabIndex={-1} className="px-4 pb-24 pt-8 sm:px-6 lg:px-12 lg:pt-10">
+          <div className="mx-auto max-w-[1220px]">{children}</div>
         </main>
       </div>
     </div>

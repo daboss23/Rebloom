@@ -11,7 +11,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("Today says who to contact and why, and a reviewed email moves to the outbox", async ({ page }) => {
-  await expect(page.getByText("people to contact")).toBeVisible();
+  const count = page.getByRole("listitem").filter({ hasText: "people to contact" });
+  await expect(count).toContainText("7");
   const sofia = page.getByRole("listitem").filter({ hasText: "Sofia Morales" });
   await expect(sofia).toContainText("Progress moment");
   await expect(sofia).toContainText(/Wrinkles improved \d+ points since the first scan/);
@@ -25,7 +26,9 @@ test("Today says who to contact and why, and a reviewed email moves to the outbo
 
   await expect(page.getByText("Sent to Sofia. Logged in the outbox, not emailed (demo).")).toBeVisible();
   await expect(sheet).toBeHidden();
-  await expect(page.getByRole("list").first().getByRole("link", { name: "Sofia Morales" })).toHaveCount(0);
+  await expect(page.getByRole("listitem").filter({ hasText: "Wrinkles improved" })).toHaveCount(0);
+  // The morning's numbers follow: one fewer person to contact.
+  await expect(count).toContainText("6");
 
   await page.goto("/dashboard/rebook");
   const sent = page.locator("details").filter({ hasText: "Sofia Morales" });

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ConfirmPlan } from "@/components/dashboard/ConfirmPlan";
 import { NoteEditor } from "@/components/dashboard/NoteEditor";
+import { LightField } from "@/components/dashboard/LightField";
 import { Portrait } from "@/components/dashboard/Portrait";
 import { Queue } from "@/components/dashboard/Queue";
 import { toQueueRow } from "@/components/dashboard/queue-row";
@@ -135,10 +136,10 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
         All clients
       </Link>
 
-      <header className="reveal mt-6 flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+      <header className="focus-in mt-6 flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
         <div className="min-w-0">
-          <p className="t-label">{kicker}</p>
-          <h1 className="mt-3 font-display text-[clamp(44px,6vw,64px)] font-light leading-[1] tracking-[-0.02em] text-ink">{shortName(client)}</h1>
+          <p className="text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">{kicker}</p>
+          <h1 className="mt-3 font-display text-[clamp(52px,7vw,88px)] font-light leading-[0.95] tracking-[-0.025em] text-ink">{shortName(client)}</h1>
           <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[14.5px] text-text-2">
             <StatusMark status={status} />
             {info.age && <span className="text-text-3">· {info.age}</span>}
@@ -153,7 +154,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
             href={`/r/${report.token}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-11 items-center gap-2 border border-ink px-5 text-[14px] text-ink transition-[background-color,color,transform] duration-200 ease-out hover:bg-ink hover:text-porcelain active:scale-[0.98]"
+            className="btn-ghost"
           >
             View client report
             <span className="sr-only">(opens in a new tab)</span>
@@ -170,18 +171,18 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
 
       <div className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2 xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_minmax(0,23rem)]">
         {/* ---------- Face and scores ---------- */}
-        <section aria-labelledby="scores" className="min-w-0">
+        <section aria-labelledby="scores" className="glass focus-in min-w-0 self-start p-4" style={{ animationDelay: "80ms" }}>
           <Portrait src={photo} initials={initials} caption={latest ? `Scan ${String(latest.scanNumber).padStart(2, "0")} · ${monthDay(local(latest.createdAt))}` : "No scan yet"} />
-          <h2 id="scores" className="t-label mt-8">
+          <h2 id="scores" className="t-label mt-6 px-2">
             Lowest scores
           </h2>
-          <ul className="mt-2">
+          <ul className="mt-1 px-2">
             {scores.map((s) => (
-              <li key={s.score.key} className="grid grid-cols-[minmax(0,1fr)_auto_3.25rem] items-center gap-4 border-b border-mist py-3">
+              <li key={s.score.key} className="grid grid-cols-[minmax(0,1fr)_auto_3.25rem] items-center gap-4 border-b border-[#0c1a22]/[0.06] py-3 last:border-0">
                 <span className="text-[14.5px] text-ink">{s.label}</span>
                 <span className="flex items-center gap-3">
                   {s.delta !== null && (
-                    <span className={cx("text-[12px] tabular-nums", s.delta > 0 ? "text-glacier-deep" : "text-text-3")}>
+                    <span className={cx("text-[12px] tabular-nums", s.delta > 0 ? "font-medium text-[color:var(--growth)]" : "text-text-3")}>
                       {s.delta > 0 ? `+${s.delta}` : s.delta}
                     </span>
                   )}
@@ -192,19 +193,22 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
             ))}
           </ul>
           {info.skinAge !== null && (
-            <p className="t-caption mt-4 !text-[12.5px]">
+            <p className="t-caption mt-3 px-2 pb-2 !text-[12.5px]">
               Skin age reads {info.skinAge}. For you only, never shown to the client.
             </p>
           )}
         </section>
 
         {/* ---------- Their words, facts, flags, note ---------- */}
-        <section aria-label="About the client" className="min-w-0">
+        <section aria-label="About the client" className="glass focus-in min-w-0 self-start p-6 sm:p-8" style={{ animationDelay: "160ms" }}>
           {intake?.goalText && (
             <figure>
               <figcaption className="t-label">In {name}&apos;s words</figcaption>
-              <blockquote className="mt-4 font-display text-[clamp(24px,2.4vw,30px)] font-light leading-snug text-ink">
-                &ldquo;{intake.goalText}&rdquo;
+              <blockquote className="relative mt-3 pt-9 font-display text-[clamp(26px,2.6vw,34px)] font-light leading-snug text-ink">
+                <span aria-hidden className="gold-foil absolute -left-0.5 top-0 font-display text-[64px] leading-[0.8]">
+                  &ldquo;
+                </span>
+                <span className="relative">{intake.goalText}</span>
               </blockquote>
             </figure>
           )}
@@ -215,7 +219,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
               ["Past treatments", info.pastTreatments],
               ["Skin type", info.skinType ?? "Unknown"],
             ].map(([term, value]) => (
-              <div key={term} className="border-t border-mist py-4">
+              <div key={term} className="border-t border-[#0c1a22]/[0.07] py-4">
                 <dt className="t-label !text-[10.5px]">{term}</dt>
                 <dd className="mt-1.5 text-[15px] text-ink">{value}</dd>
               </div>
@@ -223,9 +227,9 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
           </dl>
 
           {info.flags.length > 0 && (
-            <div className="mt-4 border border-glacier-deep/40 p-5">
+            <div className="mt-4 rounded-[16px] bg-[#e9a35f]/10 p-5 ring-1 ring-inset ring-[#e9a35f]/30">
               <p className="flex items-center gap-2.5 text-[14.5px] text-ink">
-                <IconAlert width={17} height={17} className="text-glacier-deep" />
+                <IconAlert width={17} height={17} className="text-[#b8691f]" />
                 Review before treatment
               </p>
               <ul className="mt-3 space-y-2.5">
@@ -247,11 +251,11 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
 
           <h2 className="t-label mt-12">Visits</h2>
           {pastVisits.length === 0 ? (
-            <p className="t-caption mt-3 border-t border-mist pt-4">No visits yet.</p>
+            <p className="t-caption mt-3 pt-2">No visits yet.</p>
           ) : (
             <ol className="mt-2">
               {pastVisits.map((a) => (
-                <li key={a.id} className="grid grid-cols-[6.5rem_minmax(0,1fr)_auto] items-baseline gap-4 border-b border-mist py-3 text-[14px]">
+                <li key={a.id} className="grid grid-cols-[6.5rem_minmax(0,1fr)_auto] items-baseline gap-4 border-b border-[#0c1a22]/[0.06] py-3 text-[14px] last:border-0">
                   <span className={cx("tabular-nums", a.status === "booked" ? "text-ink" : "text-text-3")}>{shortDay(local(a.startsAt))}</span>
                   <span className="truncate text-text-2">{a.treatmentId ? treatmentName(a.treatmentId) : "First consultation"}</span>
                   <span className="t-caption !text-[12px]">{a.status === "booked" ? `Booked · ${time(a.startsAt)}` : a.status === "completed" ? "Done" : "Missed"}</span>
@@ -262,8 +266,14 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
         </section>
 
         {/* ---------- The plan ---------- */}
-        <section aria-labelledby="plan" className="on-dark md:col-span-2 xl:col-span-1 self-start bg-ink p-7 text-porcelain sm:p-8">
-          <h2 id="plan" className="t-label !text-ink-soft">
+        <section
+          aria-labelledby="plan"
+          className="sea on-dark focus-in relative overflow-hidden rounded-[22px] p-7 shadow-[0_40px_80px_-40px_rgba(12,26,34,0.7)] md:col-span-2 xl:col-span-1 self-start sm:p-8"
+          style={{ animationDelay: "240ms" }}
+        >
+          <LightField variant="sea" className="opacity-45" />
+          <div className="relative">
+          <h2 id="plan" className="text-[11px] uppercase tracking-[0.22em] text-[#e2c07a]">
             {planLabel}
           </h2>
           {lines.length === 0 ? (
@@ -272,7 +282,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
             <>
               <ul className="mt-4">
                 {lines.map((line) => (
-                  <li key={line.key} className="flex items-start justify-between gap-6 border-b border-white/12 py-4">
+                  <li key={line.key} className="flex items-start justify-between gap-6 border-b border-white/10 py-4">
                     <span className="min-w-0">
                       <span className="block text-[15.5px] text-porcelain">{line.name}</span>
                       {line.detail && <span className="mt-1 block text-[13px] text-ink-soft">{line.detail}</span>}
@@ -283,7 +293,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
               </ul>
               <div className="mt-8 flex items-baseline justify-between gap-6">
                 <span className="text-[14px] text-ink-soft">Plan value</span>
-                <span className="font-display text-[44px] font-light leading-none tabular-nums text-porcelain">{formatPrice(total)}</span>
+                <span className="gold-foil font-display text-[56px] font-light leading-none">{formatPrice(total)}</span>
               </div>
               <p className="mt-5 text-[13px] leading-relaxed text-ink-soft">{planNote}</p>
               {(!facts.plan || facts.plan.status === "proposed") && (
@@ -293,6 +303,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
               )}
             </>
           )}
+          </div>
         </section>
       </div>
     </div>
