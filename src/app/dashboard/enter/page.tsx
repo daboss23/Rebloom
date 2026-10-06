@@ -55,7 +55,7 @@ export default async function EnterPage() {
               />
             </h1>
             <p className="mt-10 max-w-[34rem] font-display text-[clamp(26px,2.6vw,34px)] font-light leading-[1.2] text-ink">
-              Everyone sells the scan. Rebloom sells the second visit.
+              <span className="block">Everyone sells the scan.</span> <span className="block">Rebloom sells the result.</span>
             </p>
             <p className="mt-4 max-w-[30rem] text-[16px] leading-relaxed text-text-2">
               Each morning, the clients whose skin is changing, and the ones who need a little care, each with the reason

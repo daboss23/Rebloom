@@ -35,7 +35,7 @@ test("an uploaded photo without a face is explained, not accepted", async ({ pag
 
 test("the Rebloom landing page offers both demo clinics", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Everyone sells the scan. Rebloom sells the second visit.");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Everyone sells the scan. Rebloom sells the result.");
   await expect(page.getByRole("link", { name: /Maison Verre/ })).toHaveAttribute("href", "/c/maison-verre");
   await expect(page.getByRole("link", { name: /Tidewater Skin Studio/ })).toHaveAttribute("href", "/c/tidewater");
 });

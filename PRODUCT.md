@@ -16,7 +16,7 @@ web
 Rebloom is a retention engine for skin clinics. Clinics sell courses of treatment, but most clients stop after one session. Rebloom turns a skin scan into measured proof that treatment is working, and turns that proof into the next booking. Success: the second visit gets booked.
 
 ## Positioning
-"Everyone sells the scan. Rebloom sells the second visit." The rebook engine is rules-based and transparent: every queue item says, in one sentence, why that person should be contacted now, measured on raw scan data.
+"Everyone sells the scan. Rebloom sells the result." The result is measured, and it is what brings a client back for the second visit. The rebook engine is rules-based and transparent: every queue item says, in one sentence, why that person should be contacted now, measured on raw scan data.
 
 ## Operating Context
 - The dashboard answers one question each morning: who should we contact today, and why?

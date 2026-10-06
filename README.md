@@ -1,6 +1,6 @@
 # Rebloom
 
-**The retention engine for skin clinics. Everyone sells the scan. Rebloom sells the second visit.**
+**The retention engine for skin clinics. Everyone sells the scan. Rebloom sells the result.**
 
 Rebloom is our entry to Perfect Corp's YouCam API Skin AI & eCommerce VTO Hackathon (Skin AI track). Maison Verre (Santa Monica) and Tidewater Skin Studio (Charleston) are fictional demo clinics using it.
 

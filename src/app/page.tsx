@@ -25,7 +25,7 @@ import { SCORED_CONCERNS } from "@/lib/skin/concerns";
  * green only for measured change, the bloom only for a progress moment. Cormorant light, Inter.
  * STORY: a clinic owner or judge sees what Rebloom does at a glance, feels what one-and-done costs, trusts
  * the honest mechanism, does the arithmetic on their own clinic, and enters the demo.
- * FIRST VIEWPORT: full-bleed light; the positioning line across two lines at display scale, "the second visit"
+ * FIRST VIEWPORT: full-bleed light; the positioning line across two lines at display scale, "the result"
  * in gold; the promise and the gold "Enter the clinic dashboard" on the left; the live queue on the right.
  * FORM: a direct-response page in the dashboard's grammar: proof, problem, mechanism, honesty, arithmetic,
  * white label, objections, close.
@@ -151,7 +151,7 @@ function Hero({ p }: { p: LandingPreview }) {
         >
           <span className="block">Everyone sells the scan.</span>{" "}
           <span className="block">
-            Rebloom sells <span className="gold-foil">the second visit.</span>
+            Rebloom sells <span className="gold-foil">the result.</span>
           </span>
         </h1>
 

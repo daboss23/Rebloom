@@ -15,7 +15,7 @@
 - **Tests:** 318 unit tests (the engine checked on ten different days, both clinics, and with time travel), 14 browser tests (7 new for the dashboard), lint, typecheck, the copy check and the production build all pass.
 
 ### The landing page (D-059)
-- **`/` now matches the dashboard** and opens on the product itself: the live rebook queue for the demo clinic, computed by the engine, beside "Everyone sells the scan. Rebloom sells the second visit."
+- **`/` now matches the dashboard** and opens on the product itself: the live rebook queue for the demo clinic, computed by the engine, beside "Everyone sells the scan. Rebloom sells the result."
 - Then the problem in dollars from the demo menu, how the loop works (five steps, each drawn from the demo clients), the YouCam work and the raw-score decision, a calculator for a clinic's own figures, the two demo clinics to scan as a client, plain answers to the usual questions, and a close. Every CTA leads to the demo dashboard or the client scan.
 
 ### What's next

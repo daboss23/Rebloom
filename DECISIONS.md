@@ -319,3 +319,6 @@ Joshua asked for the landing page to complement the dashboard, in the same style
 - **One label per action:** "Enter the clinic dashboard" (primary, gold) and "Try the client experience" (to the clinic cards), as the brief names them.
 - **Motion:** the hero arrives as the dashboard does (focus-in, count-up, the progress moment breathing). Three moments are tied to scrolling where the browser supports it (the course that lapses, the progress line drawing itself, the months rising); with reduced motion or without support, each shows its final state.
 
+## D-060 · The pitch line becomes "Rebloom sells the result" (J, Oct 6). Updates D-001 and brief section 1
+Joshua changed the positioning line to "Everyone sells the scan. Rebloom sells the result." It now leads the landing page, the dashboard sign-in, the README and the page description. The second visit stays as the mechanism, not the slogan: the result is measured on raw scan data, and showing it is what brings a client back ("From first scan to second visit" on the landing page, "The second visit, and every one after it" on Insights). The product's honesty rules still hold: a result is shown, never promised.
+

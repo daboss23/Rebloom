@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     default: "Rebloom · The retention engine for skin clinics",
     template: "%s",
   },
-  description: "Everyone sells the scan. Rebloom sells the second visit.",
+  description: "Everyone sells the scan. Rebloom sells the result.",
 };
 
 export const viewport: Viewport = {
