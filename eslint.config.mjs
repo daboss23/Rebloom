@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "public/mediapipe/**",
     ".data/**",
+    // Third-party design skills and their tooling (CLAUDE.md), not app code.
+    ".claude/**",
   ]),
 ]);
 
