@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { enterDemo } from "@/app/dashboard/actions";
-import { IconArrowRight } from "@/components/ui/Icons";
+import { IconArrowLeft, IconArrowRight } from "@/components/ui/Icons";
 import { ClinicWordmark } from "@/components/ui/Wordmarks";
 import { MAISON_VERRE } from "@/data/clinics";
 import { DANA } from "@/data/staff";
@@ -20,8 +21,9 @@ export default async function EnterPage() {
   return (
     <div className="rebloom min-h-dvh flex flex-col">
       <header className="px-6 sm:px-10 h-16 flex items-center justify-between border-b border-mist">
-        <Link href="/" className="font-display text-[22px] font-light text-ink">
-          Rebloom
+        <Link href="/" className="group inline-flex items-center gap-2 text-[13px] text-text-3 hover:text-ink">
+          <IconArrowLeft width={15} height={15} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
+          Rebloom home
         </Link>
         <span className="t-label">Clinic dashboard</span>
       </header>
@@ -30,8 +32,16 @@ export default async function EnterPage() {
         <section className="relative overflow-hidden px-6 sm:px-10 pt-16 pb-12 lg:py-24 flex flex-col justify-between">
           <div className="reveal">
             <p className="t-label">Who to contact today, and why</p>
-            <h1 className="mt-6 font-display font-light text-ink leading-[0.86] tracking-[-0.035em] text-[clamp(84px,15vw,208px)]">
-              Rebloom
+            <h1 className="mt-8">
+              <Image
+                src="/brand/rebloom/rebloom-gold.webp"
+                alt="Rebloom"
+                width={1811}
+                height={257}
+                priority
+                sizes="(min-width: 1024px) 720px, 92vw"
+                className="h-auto w-full max-w-[720px]"
+              />
             </h1>
             <p className="mt-8 max-w-md text-[17px] leading-relaxed text-text-2">
               Everyone sells the scan. Rebloom sells the second visit. Each morning, one quiet list of the clients

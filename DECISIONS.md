@@ -296,3 +296,8 @@ The brief follows the mockup's third screen: face, lowest scores with their tren
 
 ## D-056 · Settings is one quiet page (C, Oct 6)
 Menu (read only: the AI's only source), Brand (a preview in the clinic's own colours) and Connects to (Stripe and email status, then Boulevard, Vagaro, Zenoti, Mindbody, Square Appointments, and webhooks and Zapier as "coming soon" text cards) sit on one page with anchors, instead of three routes. Editing the menu and brand comes later.
+
+## D-057 · Rebloom's logo arrives: gold, with a flat cream version (J + C, Oct 6). Updates D-001
+Joshua supplied two Rebloom logos: a gold, softly shaded one and a flat cream one. Originals are in `brand/rebloom/`; trimmed web copies in `public/brand/rebloom/`. `RebloomWordmark` now renders the logo instead of text, everywhere Rebloom shows its name (dashboard, sign-in, landing, policy pages). "Powered by Rebloom" on client pages stays as text: at that size the logo would blur.
+- **Gold on light surfaces, cream on charcoal (C).** The cream logo is about 1.1:1 against frost or porcelain, so it's for dark backgrounds only. Gold reads best on charcoal; on frost it holds up large (the sign-in page) and turns pale small (the dashboard menu). Whether the menu becomes charcoal is open with Joshua.
+- The gold carries its own shading. That's the mark itself, not interface decoration, so the brief's "no gradients" rule still holds for everything around it.

@@ -36,7 +36,7 @@ export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, 
       {/* ---------- Desktop menu ---------- */}
       <aside className="hidden lg:flex sticky top-0 h-dvh flex-col border-r border-mist bg-panel px-4 pb-6 pt-7">
         <Link href="/dashboard" className="px-3" aria-label="Rebloom, today">
-          <RebloomWordmark className="!text-[28px] !font-light tracking-[-0.01em]" />
+          <RebloomWordmark height={21} />
         </Link>
         <nav aria-label="Dashboard" className="mt-10">
           <SideNav items={items} />
@@ -63,7 +63,7 @@ export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, 
           <div className="flex h-16 items-center justify-between gap-6 px-4 sm:px-6 lg:px-12">
             <div className="flex min-w-0 items-center gap-4">
               <Link href="/dashboard" className="lg:hidden" aria-label="Rebloom, today">
-                <RebloomWordmark className="!text-[24px] !font-light" />
+                <RebloomWordmark height={16} />
               </Link>
               <span aria-hidden className="h-5 w-px bg-mist lg:hidden" />
               <p className="min-w-0 truncate text-[14px] text-text-2">

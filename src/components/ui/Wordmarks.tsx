@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Clinic } from "@/lib/domain";
 import { cx } from "./cx";
 
@@ -29,18 +30,27 @@ export function ClinicWordmark({ clinic, className }: { clinic: Pick<Clinic, "wo
   );
 }
 
-/** Rebloom's text wordmark, until a logo arrives (DECISIONS D-001). */
-export function RebloomWordmark({ className, onDark }: { className?: string; onDark?: boolean }) {
+/** Intrinsic size of the trimmed logo files in public/brand/rebloom. */
+const REBLOOM_LOGO = { gold: { w: 1811, h: 257 }, cream: { w: 1805, h: 243 } } as const;
+
+/**
+ * Rebloom's logo (DECISIONS D-057). Gold on light surfaces; the flat cream version on charcoal, where gold's
+ * shading would muddy. `height` is the rendered cap-to-baseline box in pixels.
+ */
+export function RebloomWordmark({ className, onDark, height = 20 }: { className?: string; onDark?: boolean; height?: number }) {
+  const variant = onDark ? "cream" : "gold";
+  const { w, h } = REBLOOM_LOGO[variant];
   return (
-    <span
-      className={cx(
-        "font-display font-medium text-[24px] leading-none tracking-[0.01em]",
-        onDark ? "text-porcelain" : "text-ink",
-        className,
-      )}
-    >
-      Rebloom
-    </span>
+    <Image
+      src={`/brand/rebloom/rebloom-${variant}.webp`}
+      alt="Rebloom"
+      width={w}
+      height={h}
+      sizes={`${Math.ceil((height * w) / h)}px`}
+      className={cx("inline-block w-auto select-none", className)}
+      style={{ height }}
+      draggable={false}
+    />
   );
 }
 
