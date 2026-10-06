@@ -1,16 +1,25 @@
 import type {
   ApiUsage,
+  Appointment,
   Client,
+  ClientPlan,
   Clinic,
   Consent,
   Intake,
+  Message,
+  PlanItem,
   Product,
   Report,
   Sandbox,
   Scan,
   ScanStatus,
+  Staff,
   Treatment,
 } from "@/lib/domain";
+import type { DemoBundle } from "@/lib/demo/seed";
+
+/** A plan with its items, in order. */
+export type PlanWithItems = ClientPlan & { items: PlanItem[] };
 
 export type NewScan = Pick<
   Scan,
@@ -29,6 +38,7 @@ export interface Store {
   getClinic(id: string): Promise<Clinic | null>;
   listTreatments(clinicId: string): Promise<Treatment[]>;
   listProducts(clinicId: string): Promise<Product[]>;
+  listStaff(clinicId: string): Promise<Staff[]>;
 
   getSandbox(id: string): Promise<Sandbox | null>;
   createSandbox(id: string, now: Date): Promise<Sandbox>;
@@ -39,10 +49,26 @@ export interface Store {
   expiredSandboxes(before: Date, limit: number): Promise<{ ids: string[]; storagePaths: string[] }>;
   /** Deletes sandboxes and everything in them, keeping api_usage so spent units stay counted. */
   deleteSandboxes(ids: string[]): Promise<void>;
+  /** Time travel (DECISIONS D-016): how many days this sandbox's clock runs ahead. Never backwards. */
+  setClockOffset(sandboxId: string, days: number): Promise<Sandbox>;
+  /**
+   * Copies the demo clients into a sandbox, all or nothing (DECISIONS D-014). False when this sandbox
+   * already has its copy for the clinic, including when a racing request has just made it.
+   */
+  seedDemoClients(clinicId: string, sandboxId: string, bundle: DemoBundle): Promise<boolean>;
 
   createClient(input: { clinicId: string; sandboxId: string | null; now: Date }): Promise<Client>;
   getClient(id: string): Promise<Client | null>;
   updateClient(id: string, patch: Partial<Omit<Client, "id">>): Promise<Client>;
+  /** One clinic's clients in one sandbox, newest first. Nobody sees another sandbox's clients (D-013). */
+  listClients(clinicId: string, sandboxId: string): Promise<Client[]>;
+
+  /** A client's plans, oldest first. */
+  listPlans(clientId: string): Promise<PlanWithItems[]>;
+  /** One clinic's appointments in one sandbox, in time order. */
+  listAppointments(clinicId: string, sandboxId: string): Promise<Appointment[]>;
+  /** One clinic's outbox in one sandbox, oldest first. */
+  listMessages(clinicId: string, sandboxId: string): Promise<Message[]>;
 
   addConsent(consent: Omit<Consent, "id">): Promise<Consent>;
   listConsents(clientId: string): Promise<Consent[]>;

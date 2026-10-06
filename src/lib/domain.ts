@@ -77,11 +77,14 @@ export interface Client {
   /** Per-browser sandbox (DECISIONS D-013). Null for shared seed templates. */
   sandboxId: string | null;
   firstName: string | null;
+  lastName: string | null;
   email: string | null;
   phone: string | null;
   ageRange: AgeRange | null;
   status: ClientStatus;
   isDemo: boolean;
+  /** Which demo client this row was copied from ("amelia"). Null for real clients (DECISIONS D-049). */
+  demoKey: string | null;
   createdAt: ISODateTime;
 }
 
@@ -236,4 +239,95 @@ export interface Sandbox {
   createdAt: ISODateTime;
   /** Days the demo clock has been moved forward (time travel). */
   clockOffsetDays: number;
+}
+
+// ---------- The clinic side (Week 3) ----------
+
+export interface Staff {
+  id: string;
+  clinicId: string;
+  /** Supabase Auth user, once dashboard login exists. */
+  userId: string | null;
+  name: string;
+  /** "Lead Aesthetician" */
+  title: string;
+  role: "owner" | "practitioner";
+  createdAt: ISODateTime;
+}
+
+export type PlanStatus = "proposed" | "confirmed" | "completed" | "cancelled";
+
+/**
+ * A plan a practitioner proposed or confirmed, with prices fixed at that moment. The report's suggested
+ * plan is computed (src/lib/plan/build.ts) and never stored; this is what the clinic agreed with the client.
+ */
+export interface ClientPlan {
+  id: string;
+  clientId: string;
+  /** The scan it was built from. */
+  scanId: string | null;
+  status: PlanStatus;
+  confirmedBy: string | null;
+  confirmedAt: ISODateTime | null;
+  /** Every item, home care included, computed in code. */
+  totalCents: number;
+  createdAt: ISODateTime;
+}
+
+export interface PlanItem {
+  id: string;
+  planId: string;
+  /** Exactly one of treatmentId and productId is set. */
+  treatmentId: string | null;
+  productId: string | null;
+  /** Sessions for a treatment, units for a product. */
+  quantity: number;
+  unitPriceCents: number;
+  position: number;
+  /** When the first session is planned. Null for products. */
+  targetDate: ISODate | null;
+}
+
+export type AppointmentKind = "consult" | "treatment";
+export type AppointmentStatus = "booked" | "completed" | "cancelled" | "no_show";
+export type DepositStatus = "none" | "pending" | "paid" | "refunded";
+
+export interface Appointment {
+  id: string;
+  clinicId: string;
+  clientId: string;
+  sandboxId: string | null;
+  kind: AppointmentKind;
+  /** Set for treatments, null for a consult. */
+  treatmentId: string | null;
+  planItemId: string | null;
+  staffId: string | null;
+  startsAt: ISODateTime;
+  endsAt: ISODateTime;
+  status: AppointmentStatus;
+  depositCents: number;
+  depositStatus: DepositStatus;
+  depositPaymentIntent: string | null;
+  createdAt: ISODateTime;
+}
+
+export type MessageStatus = "draft" | "queued" | "sent" | "failed" | "skipped";
+
+/** The outbox. Demo emails go to a visible log, never a real inbox (brief section 5). */
+export interface Message {
+  id: string;
+  clinicId: string;
+  clientId: string;
+  sandboxId: string | null;
+  /** "report_link", "booking_confirmation", or a rebook trigger such as "next_session_due". */
+  type: string;
+  channel: "email" | "sms";
+  subject: string | null;
+  body: string;
+  status: MessageStatus;
+  /** The rebook engine's idempotency key: it never queues the same message twice. */
+  dedupeKey: string | null;
+  scheduledFor: ISODateTime | null;
+  sentAt: ISODateTime | null;
+  createdAt: ISODateTime;
 }

@@ -4,12 +4,12 @@ import "server-only";
 // for every table with no policies, so the public keys can read nothing (see the migration).
 
 import { createClient, type PostgrestError, type SupabaseClient } from "@supabase/supabase-js";
-import type { Client, Consent, Intake, Report, Sandbox, Scan } from "@/lib/domain";
+import type { Appointment, Client, ClientPlan, Consent, Intake, Message, PlanItem, Report, Sandbox, Scan, Staff } from "@/lib/domain";
 import { env, supabaseSecretKey } from "@/lib/env";
 import { newId, newToken } from "@/lib/ids";
 import { clinicFromRow, fromRow, menuItemFromRow, toRow, type Row } from "./rows";
 import { scanStoragePaths } from "./scan-paths";
-import type { ObjectStorage, Store, UploadTarget } from "./types";
+import type { ObjectStorage, PlanWithItems, Store, UploadTarget } from "./types";
 
 export const SCANS_BUCKET = "scans";
 
@@ -84,6 +84,9 @@ export const supabaseStore: Store = {
     );
     return (rows ?? []).map((r) => menuItemFromRow(r));
   },
+  async listStaff(clinicId) {
+    return many<Staff>(await db().from("staff").select("*").eq("clinic_id", clinicId).order("created_at").order("name"), "listStaff");
+  },
 
   async getSandbox(id) {
     if (!isUuid(id)) return null;
@@ -113,6 +116,39 @@ export const supabaseStore: Store = {
     // Clients, consents, intakes, scans, reports and events go with the sandbox (on delete cascade).
     check(await db().from("sandboxes").delete().in("id", ids), "deleteSandboxes");
   },
+  async setClockOffset(sandboxId, days) {
+    if (!Number.isInteger(days) || days < 0) throw new Error("The demo clock only moves forward.");
+    // Only forward: a stale tab can't wind back a clock another tab already moved.
+    const moved = maybe<Sandbox>(
+      await db().from("sandboxes").update({ clock_offset_days: days }).eq("id", sandboxId).lte("clock_offset_days", days).select().maybeSingle(),
+      "setClockOffset",
+    );
+    if (!moved) throw new Error("The demo clock only moves forward.");
+    return moved;
+  },
+  async seedDemoClients(clinicId, sandboxId, bundle) {
+    // Rows in the database's own column order and names, so the function can insert them whole.
+    const rows = (items: object[]) => items.map((item) => toRow(item));
+    const seeded = check(
+      await db().rpc("seed_demo_clients", {
+        p_clinic_id: clinicId,
+        p_sandbox_id: sandboxId,
+        p_bundle: {
+          clients: rows(bundle.clients),
+          consents: rows(bundle.consents),
+          intakes: rows(bundle.intakes),
+          scans: rows(bundle.scans),
+          reports: rows(bundle.reports),
+          plans: rows(bundle.plans),
+          plan_items: rows(bundle.planItems),
+          appointments: rows(bundle.appointments),
+          messages: rows(bundle.messages),
+        },
+      }),
+      "seedDemoClients",
+    );
+    return seeded === true;
+  },
 
   async createClient({ clinicId, sandboxId, now }) {
     const client: Client = {
@@ -120,11 +156,13 @@ export const supabaseStore: Store = {
       clinicId,
       sandboxId,
       firstName: null,
+      lastName: null,
       email: null,
       phone: null,
       ageRange: null,
       status: "started",
       isDemo: false,
+      demoKey: null,
       createdAt: now.toISOString(),
     };
     return one<Client>(await db().from("clients").insert(toRow(client)).select().single(), "createClient");
@@ -135,6 +173,44 @@ export const supabaseStore: Store = {
   },
   async updateClient(id, patch) {
     return one<Client>(await db().from("clients").update(toRow(patch)).eq("id", id).select().single(), "updateClient");
+  },
+  async listClients(clinicId, sandboxId) {
+    if (!isUuid(sandboxId)) return [];
+    return many<Client>(
+      await db().from("clients").select("*").eq("clinic_id", clinicId).eq("sandbox_id", sandboxId).order("created_at", { ascending: false }),
+      "listClients",
+    );
+  },
+
+  async listPlans(clientId) {
+    if (!isUuid(clientId)) return [];
+    const rows = check(
+      await db()
+        .from("plans")
+        .select("*, plan_items(*)")
+        .eq("client_id", clientId)
+        .order("created_at")
+        .order("position", { referencedTable: "plan_items" }),
+      "listPlans",
+    );
+    return (rows ?? []).map(({ plan_items, ...plan }): PlanWithItems => ({
+      ...fromRow<ClientPlan>(plan),
+      items: ((plan_items as Row[] | null) ?? []).map((i) => fromRow<PlanItem>(i)),
+    }));
+  },
+  async listAppointments(clinicId, sandboxId) {
+    if (!isUuid(sandboxId)) return [];
+    return many<Appointment>(
+      await db().from("appointments").select("*").eq("clinic_id", clinicId).eq("sandbox_id", sandboxId).order("starts_at"),
+      "listAppointments",
+    );
+  },
+  async listMessages(clinicId, sandboxId) {
+    if (!isUuid(sandboxId)) return [];
+    return many<Message>(
+      await db().from("messages").select("*").eq("clinic_id", clinicId).eq("sandbox_id", sandboxId).order("created_at"),
+      "listMessages",
+    );
   },
 
   async addConsent(input) {
