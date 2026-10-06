@@ -6,6 +6,7 @@ import { CountUp } from "@/components/dashboard/CountUp";
 import { KindChip, Monogram } from "@/components/dashboard/Kind";
 import { LightField } from "@/components/dashboard/LightField";
 import { Calculator } from "@/components/landing/Calculator";
+import { EnterDemo } from "@/components/landing/EnterDemo";
 import { MiniBars } from "@/components/landing/MiniBars";
 import { ScoreLine } from "@/components/landing/ScoreLine";
 import { cx } from "@/components/ui/cx";
@@ -13,8 +14,10 @@ import { IconArrowRight, IconCheckCircle, IconMail, IconPlus } from "@/component
 import { ClinicWordmark, RebloomWordmark } from "@/components/ui/Wordmarks";
 import { MAISON_VERRE, SEED_CLINICS } from "@/data/clinics";
 import { clinicThemeStyle } from "@/lib/brand";
+import type { MonthBar } from "@/lib/dashboard/insights";
 import { landingPreview, type LandingPreview, type PreviewRow } from "@/lib/landing/preview";
 import { formatPrice } from "@/lib/plan/build";
+import { LAPSED_AFTER_DAYS, MISSED_AFTER_DAYS, PROGRESS_MOMENT_RAW_DELTA, PROGRESS_SCAN_AFTER_DAYS, REPORT_FOLLOW_UP_DAYS, STALLED_RAW_DELTA } from "@/lib/rebook/thresholds";
 import { SCORED_CONCERNS } from "@/lib/skin/concerns";
 
 /*
@@ -22,7 +25,8 @@ import { SCORED_CONCERNS } from "@/lib/skin/concerns";
  * THESIS: the landing page is the dashboard's morning, live. It refuses the category's screenshot and feature
  * grid: the first thing a visitor sees is the real rebook queue, computed by the engine from the demo clinic.
  * OWN-WORLD: the dashboard's (D-058). Caustic light on ice, frosted glass, deep sea, gold only for money,
- * green only for measured change, the bloom only for a progress moment. Cormorant light, Inter.
+ * green only for measured change, the bloom for renewal (a progress moment, and the line that names the
+ * product). Cormorant light, Inter.
  * STORY: a clinic owner or judge sees what Rebloom does at a glance, feels what one-and-done costs, trusts
  * the honest mechanism, does the arithmetic on their own clinic, and enters the demo.
  * FIRST VIEWPORT: full-bleed light; the positioning line across two lines at display scale, "the result"
@@ -43,6 +47,11 @@ const wrap = "mx-auto w-full max-w-[1280px] px-5 sm:px-10";
 const sectionTitle = "font-display text-[clamp(40px,5vw,68px)] font-light leading-[1.02] tracking-[-0.02em] text-ink [text-wrap:balance]";
 const enter = "/dashboard/enter";
 
+const WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+/** "twelve", from the data; numerals past twelve. */
+const words = (n: number) => WORDS[n] ?? String(n);
+const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
+
 export default function RebloomHome() {
   const p = landingPreview();
   return (
@@ -54,7 +63,7 @@ export default function RebloomHome() {
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-40 border-b border-white/70 bg-white/60 backdrop-blur-xl backdrop-saturate-150">
+      <header className="sticky top-0 z-40 border-b border-white/70 bg-white/80 backdrop-blur-xl backdrop-saturate-150">
         <div className={`${wrap} flex h-16 items-center justify-between gap-4 sm:gap-6 lg:h-[72px]`}>
           <Link href="/" aria-label="Rebloom home" className="shrink-0">
             <RebloomWordmark height={18} className="!h-4 sm:!h-[18px]" />
@@ -74,7 +83,7 @@ export default function RebloomHome() {
               ))}
             </ul>
           </nav>
-          <Link href={enter} className="btn-gold !hidden !h-9 whitespace-nowrap px-3.5 text-[13px] min-[390px]:!inline-flex sm:!h-10 sm:px-4 sm:text-[13.5px]">
+          <Link href={enter} className="btn-gold !hidden !h-11 whitespace-nowrap px-3.5 text-[13px] min-[390px]:!inline-flex sm:!h-10 sm:px-4 sm:text-[13.5px]">
             Enter the clinic dashboard
           </Link>
         </div>
@@ -87,7 +96,7 @@ export default function RebloomHome() {
         <Honest />
         <Numbers p={p} />
         <Try />
-        <Questions />
+        <Questions p={p} />
         <Close />
       </main>
 
@@ -127,7 +136,7 @@ function Hero({ p }: { p: LandingPreview }) {
   );
   const figures = [
     { value: p.rows.length, words: p.rows.length === 1 ? "person to contact" : "people to contact", gold: false },
-    { value: p.visitsToday, words: p.visitsToday === 1 ? "visit today" : "visits today", gold: false },
+    { value: p.visits.count, words: `${p.visits.count === 1 ? "visit" : "visits"} ${p.visits.day}`, gold: false },
     { value: Math.round(p.readyCents / 100), words: "ready to rebook", gold: true },
   ];
 
@@ -156,17 +165,14 @@ function Hero({ p }: { p: LandingPreview }) {
         </h1>
 
         <div className="mt-10 grid gap-14 lg:mt-14 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-16 xl:gap-20">
-          <div className="focus-in" style={{ animationDelay: "180ms" }}>
+          <div className="focus-in lg:sticky lg:top-28 lg:self-start" style={{ animationDelay: "180ms" }}>
             <p className="max-w-[31rem] text-[18px] leading-relaxed text-text-2 sm:text-[19px]">
-              Rebloom turns every skin scan into measured proof that treatment is working, then tells your team who to
-              rebook today.
+              Rebloom measures each client&apos;s skin with YouCam&apos;s AI, shows them what changed, and tells your team
+              who to rebook today.
             </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link href={enter} className="btn-gold group !h-14 gap-2.5 px-6 text-[15.5px]">
-                Enter the clinic dashboard
-                <IconArrowRight width={18} height={18} className="transition-transform duration-300 ease-out group-hover:translate-x-1" />
-              </Link>
-              <a href="#try" className="btn-ghost !h-14 px-6 text-[15px]">
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
+              <EnterDemo buttonClassName="!h-14 px-6 text-[15.5px]" />
+              <a href="#try" className="btn-ghost !h-14 w-full px-6 text-[15px] sm:w-auto lg:w-full xl:w-auto">
                 Try the client experience
               </a>
             </div>
@@ -179,9 +185,9 @@ function Hero({ p }: { p: LandingPreview }) {
               </h2>
               <p className="text-[12.5px] text-text-3">{date}</p>
             </div>
-            <ul className="focus-in mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-[18px] bg-white/60 ring-1 ring-white/80 backdrop-blur-xl" style={{ animationDelay: "300ms" }}>
+            <ul className="focus-in mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-[18px] bg-white/80 ring-1 ring-white/80 pointer-fine:bg-white/60 pointer-fine:backdrop-blur-xl" style={{ animationDelay: "300ms" }}>
               {figures.map((f, i) => (
-                <li key={f.words} className="bg-white/45 px-4 py-4 sm:px-5">
+                <li key={f.words} className="bg-white/70 px-4 py-4 pointer-fine:bg-white/45 sm:px-5">
                   <span className={cx("block font-display text-[clamp(32px,3.4vw,44px)] font-light leading-none tracking-[-0.02em]", f.gold ? "gold-foil" : "text-ink")}>
                     <CountUp value={f.value} format={f.gold ? "money" : "int"} delay={500 + i * 120} />
                   </span>
@@ -194,9 +200,9 @@ function Hero({ p }: { p: LandingPreview }) {
                 <QueuePreviewRow key={row.name} row={row} delay={380 + i * 90} />
               ))}
             </ol>
-            <p className="focus-in mt-5 text-[13px] leading-relaxed text-text-3" style={{ animationDelay: "700ms" }}>
-              {more > 0 && `${more} more in the queue. `}Twelve sample clients at {p.clinicName}, run through the same engine as
-              the dashboard.
+            <p className="focus-in mt-5 text-[13px] font-normal leading-relaxed text-text-3" style={{ animationDelay: "700ms" }}>
+              {more > 0 && `${more} more in the queue. `}
+              {capital(words(p.clientCount))} sample clients at {p.clinicName}, run through the same engine as the dashboard.
             </p>
           </section>
         </div>
@@ -341,10 +347,7 @@ function How({ p }: { p: LandingPreview }) {
         <p className="max-w-xl font-display text-[clamp(24px,2.4vw,30px)] font-light leading-snug text-ink">
           Every example above comes from the demo clinic. See the rest of its morning.
         </p>
-        <Link href={enter} className="btn-gold group !h-14 shrink-0 gap-2.5 px-6 text-[15.5px]">
-          Enter the clinic dashboard
-          <IconArrowRight width={18} height={18} className="transition-transform duration-300 ease-out group-hover:translate-x-1" />
-        </Link>
+        <EnterDemo className="w-full shrink-0 sm:w-auto" buttonClassName="!h-14 px-6 text-[15.5px]" />
       </div>
     </section>
   );
@@ -391,8 +394,8 @@ function ReportCell({ p }: { p: LandingPreview }) {
         <div>
           <CellTitle>A report in your clinic&apos;s name.</CellTitle>
           <p className="mt-3 text-[15.5px] leading-relaxed text-text-2">
-            Their own face, the three areas most likely to show change, and a plan priced from your menu. Rebloom stays
-            out of sight.
+            Their own face, the {r ? words(r.priorities.length) : "few"} areas most likely to show change, and a plan priced
+            from your menu, all under your clinic&apos;s name.
           </p>
         </div>
         {r && (
@@ -432,8 +435,8 @@ function ProofCell({ p }: { p: LandingPreview }) {
     <Cell className="border border-white/80 bg-[radial-gradient(120%_70%_at_100%_0%,rgba(255,214,196,0.6)_0%,rgba(255,214,196,0)_58%),linear-gradient(180deg,#f9fcfd_0%,#e4f0f5_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_22px_44px_-26px_rgba(12,44,62,0.32)] lg:col-span-7 lg:row-span-2 lg:flex lg:flex-col">
       <CellTitle>Proof they can see.</CellTitle>
       <p className="mt-3 max-w-[36rem] text-[15.5px] leading-relaxed text-text-2">
-        Progress scans between sessions show real change. Rebloom checks YouCam&apos;s raw measurement before calling
-        anything progress, and only compares scans taken the same way.
+        Progress scans between sessions measure what changed. Rebloom judges progress on YouCam&apos;s raw measurement,
+        not the friendlier display score, and only compares scans taken the same way.
       </p>
       {s && (
         <>
@@ -441,18 +444,21 @@ function ProofCell({ p }: { p: LandingPreview }) {
             <span className="font-display text-[clamp(72px,8vw,112px)] font-light leading-[0.85] tracking-[-0.03em] text-[var(--growth)]">+{s.delta}</span>
             <span className="text-[15px] leading-snug text-text-2">
               <Bloom size={22} className="mb-2 text-[#9e4a5d]" />
-              {s.label}, {s.name},
+              {s.label}, {s.name} (a sample client),
               <br />
-              over {s.weeks} weeks and {s.series.length} scans
+              over {s.weeks}&nbsp;weeks and {s.series.length}&nbsp;scans
             </span>
+          </p>
+          <p className="mt-4 text-[13.5px] font-normal leading-relaxed text-text-3">
+            Raw measurement {s.raw.from} to {s.raw.to}. A raw rise of {PROGRESS_MOMENT_RAW_DELTA} or more counts as progress.
           </p>
           {/* On wide screens the chart takes whatever height the two cells beside it give the row. */}
           <ScoreLine series={s.series} label={`${s.name}'s ${s.label.toLowerCase()}`} className="mt-6 lg:flex lg:flex-1 lg:flex-col" plotClassName="lg:min-h-60 lg:flex-1" />
         </>
       )}
-      <p className="mt-6 flex items-center gap-2.5 text-[14px] text-[var(--growth)]">
-        <IconCheckCircle width={18} height={18} className="shrink-0" />
-        Same light, same angle. Verified at capture.
+      <p className="mt-6 flex items-center gap-2.5 text-[14px] text-text-2">
+        <IconCheckCircle width={18} height={18} className="shrink-0 text-[#1e5a78]" />
+        Rescans count only when both passed the same capture checks.
       </p>
     </Cell>
   );
@@ -463,9 +469,10 @@ function MomentCell({ p }: { p: LandingPreview }) {
   return (
     <Cell className="glass !rounded-[22px] lg:col-span-5">
       {m && (
-        <div aria-hidden className="rounded-[16px] bg-white/90 p-5 shadow-[0_18px_36px_-24px_rgba(12,44,62,0.45)] ring-1 ring-[#0c1a22]/[0.06]">
+        <figure className="rounded-[16px] bg-white/90 p-5 shadow-[0_18px_36px_-24px_rgba(12,44,62,0.45)] ring-1 ring-[#0c1a22]/[0.06]">
+          <figcaption className="sr-only">The drafted email, as the practitioner sees it before sending.</figcaption>
           <p className="flex items-center gap-2 text-[12.5px] text-text-3">
-            <IconMail width={15} height={15} />
+            <IconMail aria-hidden width={15} height={15} />
             To {m.name}
           </p>
           <p className="mt-2 text-[15px] text-ink">{m.subject}</p>
@@ -476,9 +483,11 @@ function MomentCell({ p }: { p: LandingPreview }) {
           </div>
           <div className="mt-4 flex items-center justify-between">
             <span className="text-[13px] text-text-3">{p.practitioner}</span>
-            <span className="btn-gold !h-9 px-4 text-[13px]">Send email</span>
+            <span aria-hidden className="btn-gold pointer-events-none !h-9 px-4 text-[13px]">
+              Send email
+            </span>
           </div>
-        </div>
+        </figure>
       )}
       <div className="mt-7">
         <CellTitle>The message, already written.</CellTitle>
@@ -493,9 +502,9 @@ function MomentCell({ p }: { p: LandingPreview }) {
 
 function CatchCell({ p }: { p: LandingPreview }) {
   const rules = [
-    { label: "Stalled", rule: "Two rescans in a row with almost no change" },
-    { label: "Missed", rule: "A session due, and never booked" },
-    { label: "Lapsed", rule: "Months since the last visit" },
+    { label: "Stalled", rule: `Two rescans in a row that move less than ${STALLED_RAW_DELTA} raw points` },
+    { label: "Missed", rule: `A session ${MISSED_AFTER_DAYS} days overdue, never booked` },
+    { label: "Lapsed", rule: `A session ${LAPSED_AFTER_DAYS} days overdue` },
   ];
   return (
     <Cell className="sea on-dark lg:col-span-5">
@@ -506,7 +515,7 @@ function CatchCell({ p }: { p: LandingPreview }) {
         </p>
         <ul className="mt-6 space-y-3">
           {rules.map((r) => (
-            <li key={r.label} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px] text-[#dbe8ef]">
+            <li key={r.label} className="flex flex-col items-start gap-1.5 text-[14px] text-[#dbe8ef] sm:flex-row sm:items-center sm:gap-3">
               <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-[#e9a35f]/15 px-2.5 text-[10.5px] uppercase tracking-[0.12em] text-[#f0bd85]">
                 <span aria-hidden className="inline-block h-[7px] w-[7px] rounded-[2px] border border-[#f0bd85]" />
                 {r.label}
@@ -516,7 +525,7 @@ function CatchCell({ p }: { p: LandingPreview }) {
           ))}
         </ul>
         <p className="mt-7 border-t border-white/10 pt-5 text-[14px] text-ink-soft">
-          At the demo clinic today: <span className="font-display text-[22px] text-[#f1d49a]">{p.atRisk}</span> clients at risk,
+          At the demo clinic today: <span className="font-display text-[22px] text-[#f0bd85]">{p.atRisk}</span> clients at risk,
           each with the reason.
         </p>
       </div>
@@ -533,7 +542,7 @@ function Honest() {
       detail: `One photo, ${SCORED_CONCERNS.length} visible concerns, with wrinkles and pores scored by area of the face. Standard definition when a photo is too small for HD.`,
     },
     { name: "Detection masks", detail: "Each concern drawn onto the client's own photo: a face map they can tap." },
-    { name: "AI Skin Simulation", detail: "An illustration of what the plan could do, labelled every time and never shown at full strength." },
+    { name: "AI Skin Simulation", detail: "An illustration of what the plan could do, labeled every time and never shown at full strength." },
   ];
   return (
     <section aria-labelledby="honest-title" className={`${wrap} pt-28 lg:pt-40`}>
@@ -565,8 +574,11 @@ function Honest() {
 /* ---------- The arithmetic, on their numbers and on the demo's ---------- */
 
 function Numbers({ p }: { p: LandingPreview }) {
-  const first = p.months[0];
-  const last = p.months[p.months.length - 1];
+  // Months before the first kept visit only add empty bars.
+  const months = p.months.slice(Math.max(0, p.months.findIndex((m) => m.cents > 0)));
+  const monthName = (m: MonthBar) => new Intl.DateTimeFormat("en-US", { month: "long", timeZone: "UTC" }).format(new Date(`${m.month}-15T12:00:00Z`));
+  const first = months[0];
+  const last = months[months.length - 1];
   return (
     <section id="numbers" aria-labelledby="numbers-title" className={`${wrap} scroll-mt-24 pt-28 lg:pt-40`}>
       <h2 id="numbers-title" className={`${sectionTitle} max-w-3xl`}>
@@ -584,13 +596,13 @@ function Numbers({ p }: { p: LandingPreview }) {
               {formatPrice(p.keptCents)}
             </p>
             <p className="mt-3 max-w-[22rem] text-[15px] leading-relaxed text-[#dbe8ef]">
-              kept through rebooking at the demo clinic, {first.label} to {last.label}: every treatment visit after a
-              client&apos;s first.
+              kept through rebooking at the demo clinic, {monthName(first)} to {monthName(last)}: every treatment visit after
+              a client&apos;s first.
             </p>
             <div className="mt-8">
-              <MiniBars months={p.months} title="Revenue kept through rebooking at the demo clinic, by month" />
+              <MiniBars months={months} title="Revenue kept through rebooking at the demo clinic, by month" />
             </div>
-            <p className="mt-6 text-[13px] leading-relaxed text-ink-soft">
+            <p className="mt-6 text-[13px] font-normal leading-relaxed text-ink-soft">
               {p.rebook.yes} of {p.rebook.of} sample clients came back after their first treatment, or are booked to.
               Gold is this month so far.
             </p>
@@ -612,8 +624,8 @@ function Try() {
             One platform. Each clinic&apos;s own brand.
           </h2>
           <p className="mt-6 max-w-[30rem] text-[17px] leading-relaxed text-text-2">
-            Scan your face as a client of either demo clinic. Clients only ever see the clinic&apos;s name, colors and
-            voice.
+            Scan your face as a client of either demo clinic. Clients see the clinic&apos;s name, logo and voice. Rebloom is
+            one small line at the foot of the page.
           </p>
         </div>
         <ul className="grid gap-5 sm:grid-cols-2 lg:col-span-7">
@@ -645,15 +657,15 @@ function Try() {
 
 /* ---------- Objections, answered plainly ---------- */
 
-function Questions() {
+function Questions({ p }: { p: LandingPreview }) {
   const faqs: [string, string][] = [
     [
       "Can I try it without signing up?",
-      "Yes. Enter the clinic dashboard and your browser gets its own copy of the demo clinic: twelve sample clients, laid out around today. Send, confirm and move the clock forward as freely as you like.",
+      `Yes. Enter the clinic dashboard and your browser gets its own copy of the demo clinic: ${words(p.clientCount)} sample clients, laid out around today. Send, confirm and move the clock forward as freely as you like.`,
     ],
     [
       "How does it decide who to contact?",
-      "With plain rules you can read: real change since the first scan, two rescans without change, a session due and not booked, a report with nothing booked, a course finished, or a long silence. Each person appears once, with the reason in one sentence.",
+      `With plain rules you can read. Among them: a raw score up ${PROGRESS_MOMENT_RAW_DELTA} or more since the first scan, with the next session not booked; two rescans in a row that move less than ${STALLED_RAW_DELTA}; a session ${MISSED_AFTER_DAYS} days overdue; a report with nothing booked after ${REPORT_FOLLOW_UP_DAYS} days; a course finished ${PROGRESS_SCAN_AFTER_DAYS} days ago; a session ${LAPSED_AFTER_DAYS} days overdue. Each person appears once, with the reason in one sentence.`,
     ],
     [
       "Does anything go out on its own?",
@@ -661,11 +673,11 @@ function Questions() {
     ],
     [
       "Will clients see Rebloom?",
-      "Barely. The scan and the report carry your clinic's name, colors and voice, with a small Powered by Rebloom line at the foot of the page. Emails are signed by your practitioner.",
+      "Only as one small line. The scan and the report carry your clinic's name, logo and voice, with Powered by Rebloom at the foot of the page. Emails are signed by your practitioner.",
     ],
     [
       "What happens to client photos?",
-      "Nothing without consent. Clients agree before the camera opens. Photos stay in private storage, open only through the client's own report link, and are deleted when the client asks.",
+      "Nothing happens without consent: clients agree before the camera opens. Photos are seen only by the client and your practitioners. YouCam measures each photo and keeps it no longer than 24 hours. Photos are deleted when the client asks, or 12 months after their last visit.",
     ],
     [
       "Is Rebloom a medical tool?",
@@ -706,18 +718,14 @@ function Close() {
       <div className="sea on-dark relative overflow-hidden rounded-[32px] px-6 py-20 text-center shadow-[0_40px_80px_-44px_rgba(12,26,34,0.65)] sm:px-12 lg:py-28">
         <LightField variant="sea" className="opacity-75" />
         <div className="relative mx-auto max-w-3xl">
-          <Bloom size={30} className="mx-auto text-[#f1d49a]" />
-          <h2 id="close-title" className="mt-7 font-display text-[clamp(40px,5.2vw,72px)] font-light leading-[1.02] tracking-[-0.02em] text-white [text-wrap:balance]">
+          <h2 id="close-title" className="font-display text-[clamp(40px,5.2vw,72px)] font-light leading-[1.02] tracking-[-0.02em] text-white [text-wrap:balance]">
             Your next bookings are already in your client list.
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-[17px] leading-relaxed text-[#dbe8ef]">
             No sign-up. Open the demo and see who Rebloom would have your team contact this morning, and why.
           </p>
           <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-            <Link href={enter} className="btn-gold group !h-14 gap-2.5 px-7 text-[15.5px]">
-              Enter the clinic dashboard
-              <IconArrowRight width={18} height={18} className="transition-transform duration-300 ease-out group-hover:translate-x-1" />
-            </Link>
+            <EnterDemo className="w-full sm:w-auto" buttonClassName="!h-14 px-7 text-[15.5px]" />
             <a
               href="#try"
               className="inline-flex h-14 items-center justify-center rounded-[12px] border border-white/25 px-7 text-[15px] text-white transition-[background-color,border-color,transform] duration-200 hover:border-white/45 hover:bg-white/10 active:scale-[0.97]"

@@ -1,7 +1,7 @@
 import { cx } from "@/components/ui/cx";
 
 /**
- * One client's score across their scans: a green line rising through labelled points, the latest in gold.
+ * One client's score across their scans: a green line rising through labeled points, the latest marked.
  * The line stretches to its box; points and numbers are HTML on top, so they stay round and crisp at any
  * width. Where the browser can, it draws in from the left as it scrolls into view (globals.css, .reveal-line).
  */
@@ -36,7 +36,7 @@ export function ScoreLine({ series, label, className, plotClassName }: { series:
               <span
                 className={cx(
                   "absolute left-0 top-0 block -translate-x-1/2 -translate-y-1/2 rounded-full",
-                  isLast ? "h-3.5 w-3.5 bg-[#c99645] ring-[3px] ring-white" : "h-2.5 w-2.5 bg-white ring-2 ring-[var(--growth)]",
+                  isLast ? "h-3.5 w-3.5 bg-[var(--growth)] ring-[3px] ring-white" : "h-2.5 w-2.5 bg-white ring-2 ring-[var(--growth)]",
                 )}
               />
               <span

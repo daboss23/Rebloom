@@ -158,10 +158,12 @@ export function LightField({ variant = "ice", className }: { variant?: keyof typ
     let frame = 0;
     let last = 0;
     let visible = true;
+    // About 30 frames a second, or 15 on touch screens, where the battery and the glass above pay for each one.
+    const gap = window.matchMedia("(pointer: coarse)").matches ? 66 : 33;
     const start = performance.now();
     const loop = (now: number) => {
       frame = requestAnimationFrame(loop);
-      if (!visible || document.hidden || now - last < 33) return;
+      if (!visible || document.hidden || now - last < gap) return;
       last = now;
       draw(offset + (now - start) / 1000);
     };

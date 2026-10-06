@@ -18,6 +18,7 @@ export function Calculator({ price: defaultPrice }: { price: number }) {
 
   return (
     <div>
+      <p className="mb-5 text-[13.5px] font-normal text-text-3">Example figures. Tap any number to make it yours.</p>
       <p className="font-display text-[clamp(26px,2.6vw,36px)] font-light leading-[1.5] text-ink">
         You see{" "}
         <Field id={`${id}-clients`} label="New clients a month" value={clients} onChange={(v) => setClients(digits(v, 4))} fallback="40" />{" "}
@@ -48,8 +49,7 @@ export function Calculator({ price: defaultPrice }: { price: number }) {
         </span>
       </output>
       <p className="t-caption mt-6 max-w-[34rem] !text-[13px]">
-        Simple arithmetic on your own figures, not a forecast. It counts one extra visit per client, and most courses
-        run three sessions or more.
+        Simple arithmetic on your own figures, not a forecast. It counts one extra visit per client, nothing more.
       </p>
     </div>
   );
@@ -76,7 +76,7 @@ function Field({
   clamp?: number;
 }) {
   return (
-    <label className="inline-flex items-baseline whitespace-nowrap border-b-2 border-[#c99645]/55 transition-colors duration-200 focus-within:border-[#9a6b22] hover:border-[#9a6b22]/80 has-[:focus-visible]:outline has-[:focus-visible]:outline-1 has-[:focus-visible]:outline-offset-4 has-[:focus-visible]:outline-ink">
+    <label className="inline-flex cursor-text items-baseline whitespace-nowrap rounded-t-[6px] border-b-2 border-[#c99645]/60 bg-[#c99645]/[0.07] px-1 transition-colors duration-200 focus-within:border-[#9a6b22] focus-within:bg-[#c99645]/[0.14] hover:border-[#9a6b22]/80 hover:bg-[#c99645]/[0.12] has-[:focus-visible]:outline has-[:focus-visible]:outline-1 has-[:focus-visible]:outline-offset-4 has-[:focus-visible]:outline-ink">
       <span className="sr-only">{label}</span>
       {prefix && <span aria-hidden>{prefix}</span>}
       <input

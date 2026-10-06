@@ -13,6 +13,7 @@ import { fullName, leadTrend, visitsOn } from "@/lib/dashboard/view";
 import type { ISODate } from "@/lib/domain";
 import { env } from "@/lib/env";
 import { stableId } from "@/lib/ids";
+import { nextOpenDay, shiftDate } from "@/lib/plan/build";
 import { bestChange, buildQueue, clientFacts, priorityKeys, TRIGGER_LABEL, type ClientFacts, type EngineInput, type TriggerKind } from "@/lib/rebook/engine";
 import { concernLabel } from "@/lib/skin/concerns";
 
@@ -33,7 +34,10 @@ export interface LandingPreview {
   today: ISODate;
   /** Everyone waiting on the practitioner, most pressing first. */
   rows: PreviewRow[];
-  visitsToday: number;
+  /** Sample clients in the demo clinic. */
+  clientCount: number;
+  /** Visits on the next open day: today, or the day the clinic opens again. */
+  visits: { count: number; day: string };
   readyCents: number;
   /** Insights: revenue from every treatment visit after a client's first, over six months. */
   keptCents: number;
@@ -41,7 +45,17 @@ export interface LandingPreview {
   rebook: { rate: number | null; of: number; yes: number };
   atRisk: number;
   /** The demo's fullest progress story: the most improved client across the most scans. */
-  story: { name: string; firstName: string; label: string; series: number[]; delta: number; weeks: number } | null;
+  story: {
+    name: string;
+    firstName: string;
+    label: string;
+    /** Display scores, one per scan, oldest first. */
+    series: number[];
+    delta: number;
+    /** The raw measurement underneath, first scan and latest: what progress is judged on (D-009). */
+    raw: { from: number; to: number };
+    weeks: number;
+  } | null;
   /** What that client's first report put first, and the treatments it suggested. */
   report: { firstName: string; priorities: { label: string; score: number }[]; treatments: { name: string; sessions: number }[]; totalCents: number } | null;
   /** The first progress moment's drafted email, without its link. */
@@ -92,6 +106,13 @@ export function landingPreview(now: Date = virtualNow({ demoToday: env.DEMO_TODA
   });
 
   // The menu's signature course: the peel series, or failing that the first treatment sold as a course.
+  // A closed day has no visits: show the day the clinic opens again, as the dashboard does.
+  const open = Boolean(clinic.hours.days[new Date(`${today}T12:00:00Z`).getUTCDay() as 0]);
+  const visitsDay = open ? today : nextOpenDay(shiftDate(today, 1), clinic.hours);
+  const visitsLabel = open
+    ? "today"
+    : new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "UTC" }).format(new Date(`${visitsDay}T12:00:00Z`));
+
   const signature =
     treatments.find((t) => t.id === stableId(`treatment:${clinic.slug}:peel-series`)) ??
     treatments.find((t) => (t.sessionsTypical ?? 0) > 1) ??
@@ -111,7 +132,8 @@ export function landingPreview(now: Date = virtualNow({ demoToday: env.DEMO_TODA
       valueCents: item.valueCents,
       valueNote: item.valueNote,
     })),
-    visitsToday: visitsOn(today, facts, treatments, clinic.timezone).length,
+    clientCount: facts.filter((f) => f.client.demoKey).length,
+    visits: { count: visitsOn(visitsDay, facts, treatments, clinic.timezone).length, day: visitsLabel },
     readyCents: queue.items.reduce((n, i) => n + (i.valueCents ?? 0), 0),
     keptCents: insights.keptCents,
     months: insights.months,
@@ -142,13 +164,22 @@ function storyOf(facts: ClientFacts[], treatments: EngineInput["treatments"]): P
   const trend = leadTrend(f, best.key)!;
   const first = f.scans[0];
   const last = f.scans[f.scans.length - 1];
+  const rawOf = (scan: typeof first) => scan.result!.concerns.find((c) => c.key === best.key)?.raw ?? 0;
   const weeks = Math.round((Date.parse(last.createdAt) - Date.parse(first.createdAt)) / (7 * 86_400_000));
   const lines = (f.plan?.items ?? []).flatMap((item) => {
     const t = treatments.find((x) => x.id === item.treatmentId);
     return t ? [{ name: t.name, sessions: item.quantity, cents: item.quantity * item.unitPriceCents }] : [];
   });
   return {
-    story: { name: fullName(f.client), firstName: f.client.firstName!, label: trend.label, series: trend.series, delta: trend.delta ?? 0, weeks },
+    story: {
+      name: fullName(f.client),
+      firstName: f.client.firstName!,
+      label: trend.label,
+      series: trend.series,
+      delta: trend.delta ?? 0,
+      raw: { from: Math.round(rawOf(first)), to: Math.round(rawOf(last)) },
+      weeks,
+    },
     report: {
       firstName: f.client.firstName!,
       priorities: priorityKeys(f)
