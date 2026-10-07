@@ -36,7 +36,7 @@ Rebloom is a retention engine for skin clinics. Clinics sell courses of treatmen
 - Voice: calm, precise, unhurried. A trusted senior practitioner, not a marketer.
 
 ## Evidence on Hand
-- Twelve authored demo clients in `src/data/demo-clients.ts`, labelled as demo data. Demo portraits are still to be supplied (D-030); until then, portraits fall back to placeholders.
+- Twelve authored demo clients in `src/data/demo-clients.ts`, labelled as demo data. All twelve have AI-generated portraits in `public/demo-portraits` (D-030).
 - Demo prices in `src/data/menu.ts`. Never invent customers, testimonials or benchmarks.
 
 ## Product Principles
