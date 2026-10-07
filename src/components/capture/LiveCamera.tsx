@@ -7,11 +7,14 @@ import { failingChecks, instructionFor, lightMatch, toCaptureQuality, type Check
 import { portraitCrop, type Point } from "@/lib/capture/metrics";
 import { GATE } from "@/lib/capture/thresholds";
 import type { Shot } from "./CaptureFlow";
+import { FaceMesh, type MeshFeed } from "./FaceMesh";
 import { getLandmarker } from "./landmarker";
 import { measure, packLandmarks, renderShot, type Measurement } from "./measure";
 
 /** The face guide oval, in a 300 x 400 viewBox. Its width is 70% of the frame, matching the gate. */
 const OVAL = { cx: 150, cy: 188, rx: 105, ry: 140 };
+/** The same oval as a path that starts at the top, so the hold ring fills clockwise from 12 o'clock. */
+const OVAL_FROM_TOP = `M ${OVAL.cx} ${OVAL.cy - OVAL.ry} A ${OVAL.rx} ${OVAL.ry} 0 1 1 ${OVAL.cx} ${OVAL.cy + OVAL.ry} A ${OVAL.rx} ${OVAL.ry} 0 1 1 ${OVAL.cx} ${OVAL.cy - OVAL.ry}`;
 
 /** starting: waiting for the camera. loading: camera on, face guide still loading. */
 type Status = "starting" | "loading" | "live" | "capturing";
@@ -37,6 +40,7 @@ export function LiveCamera({
   const [hold, setHold] = useState(0);
   const [suggestUpload, setSuggestUpload] = useState(false);
   const [lightHint, setLightHint] = useState<string | null>(null);
+  const mesh = useRef<MeshFeed>({ points: null, ready: false, hold: 0 });
   const baselineRef = useRef(baseline);
 
   useEffect(() => {
@@ -115,6 +119,8 @@ export function LiveCamera({
         previousCenter = m.center;
         latest.current = m;
         const f = failingChecks(m.metrics);
+        mesh.current.points = m.landmarks;
+        mesh.current.ready = f.length === 0;
         setFails(f);
         // Only once a face is in view, so the light is read from the face, not the room.
         setLightHint(baselineRef.current && !f.includes("no_face") ? lightMatch(baselineRef.current, m.metrics).hint : null);
@@ -122,10 +128,12 @@ export function LiveCamera({
           passSince ??= t;
           const progress = Math.min(1, (t - passSince) / GATE.holdMs);
           setHold(progress);
+          mesh.current.hold = progress;
           if (progress >= 1) void capture();
         } else {
           passSince = null;
           setHold(0);
+          mesh.current.hold = 0;
         }
       };
       raf = requestAnimationFrame(loop);
@@ -162,6 +170,7 @@ export function LiveCamera({
           aria-label="Camera preview"
           className="absolute inset-0 h-full w-full object-cover -scale-x-100"
         />
+        <FaceMesh feed={mesh} mirrored />
         <svg viewBox="0 0 300 400" className="absolute inset-0 h-full w-full" aria-hidden preserveAspectRatio="none">
           <defs>
             <mask id="oval-cutout">
@@ -171,8 +180,8 @@ export function LiveCamera({
           </defs>
           <rect width="300" height="400" fill="rgba(12,26,34,0.5)" mask="url(#oval-cutout)" />
           <ellipse {...OVAL} fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-          <ellipse
-            {...OVAL}
+          <path
+            d={OVAL_FROM_TOP}
             fill="none"
             stroke="var(--clinic-accent)"
             strokeWidth="2"
@@ -181,7 +190,6 @@ export function LiveCamera({
             strokeDasharray={1}
             strokeDashoffset={1 - hold}
             opacity={hold > 0 ? 1 : 0}
-            transform={`rotate(-90 ${OVAL.cx} ${OVAL.cy})`}
             style={{ transition: "stroke-dashoffset 200ms linear" }}
           />
         </svg>

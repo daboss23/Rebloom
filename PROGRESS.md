@@ -10,6 +10,7 @@
 - **Rescan** (`/r/[token]/rescan`): the same camera and quality gate, a hint toward the first scan's light, never a block. Different light, source or engine makes it a lower-confidence comparison with no badges. Demo mode never invents progress. Demo clients can't be rescanned.
 - **Progress view:** the mockup's second screen. Scan 01 beside the latest, "Same light, same angle. Verified at capture.", and "What's changed" with first and latest scores, a trend line, and a badge only when the raw scores confirm the change.
 - **The scan-due email** links straight to the rescan, as a gold "Start your progress scan" button.
+- **The scan comes alive** (D-074): the face model's own points drawn live over the face in the camera, with a line of light over the hold; and the report plays the analysis back once (points, then each priority's marks in its own colour with a callout and its score counting up), with Replay.
 - **Tests:** 364 unit tests (new: progress rules, demo stories, demo-mode rescans, demo marks, the email button) and two new browser tests (a rescan from a second browser with only the report link; a demo client can't be rescanned).
 
 ### To try it

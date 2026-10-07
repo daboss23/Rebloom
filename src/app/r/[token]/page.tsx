@@ -19,6 +19,8 @@ import { getStore } from "@/lib/store";
 import { illustratedWeek } from "@/lib/simulation/intensity";
 import { simulationState, viewOf } from "@/lib/simulation/service";
 import { CONCERNS } from "@/lib/skin/concerns";
+import { concernAnchor } from "@/lib/skin/fixture-masks";
+import { demoFace } from "@/lib/demo/landmarks";
 
 /**
  * The living report: real scores and masks, wording and a plan built from this client's own scan,
@@ -35,6 +37,9 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
   const top = keys.map((k) => result.concerns.find((c) => c.key === k)!).filter(Boolean);
   // From the second scan on, the same link leads with what's changed (brief 3.1 step 10, D-073).
   const progress = buildProgress(scans, keys);
+  // The face model's points on the latest photo, for the face map's reveal (D-074). Demo portraits' come with the app.
+  const face = latest.landmarks ?? (client.demoKey ? demoFace(client.demoKey) : null);
+  const facePoints = face?.slice(0, 468).map(([x, y]) => [Math.round(x * 1000) / 1000, Math.round(y * 1000) / 1000] as [number, number]) ?? null;
   const rest = result.concerns.filter((c) => !top.some((t) => t.key === c.key)).sort((a, b) => a.ui - b.ui);
   const now = await sandboxNow();
   const tz = clinic.timezone;
@@ -138,7 +143,9 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
               describes: CONCERNS[c.key].describes,
               score: Math.round(c.ui),
               maskUrl: c.maskPath ? `/r/${token}/mask/${latest.id}/${c.key}` : null,
+              anchor: face ? concernAnchor(face, c.key) : null,
             }))}
+            landmarks={facePoints}
           />
         </section>
 

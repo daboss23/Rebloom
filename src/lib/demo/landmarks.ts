@@ -10,6 +10,11 @@ export function hasDemoLandmarks(key: string): boolean {
   return key in LANDMARKS;
 }
 
+/** A demo client's face, by their demo key ("priya"), or null. */
+export function demoFace(key: string): [number, number][] | null {
+  return LANDMARKS[key] ?? null;
+}
+
 /** The portrait's landmarks for a demo mask path ("demo/masks/priya/scan-1/pore.png"), or null. */
 export function demoLandmarksFor(maskPath: string): [number, number][] | null {
   const key = maskPath.match(new RegExp(`^${SHARED_DEMO_PREFIX}masks/([a-z]+)/`))?.[1];
