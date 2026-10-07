@@ -667,6 +667,32 @@ html:has(.landing) {
   }
 }
 
+/* The face map's reveal (DECISIONS D-074): the model's points appear as a line of light crosses the face. */
+@keyframes reveal-dot {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes reveal-scan {
+  0% {
+    opacity: 0;
+    transform: translateY(var(--scan-from));
+  }
+  12%,
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(var(--scan-to));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

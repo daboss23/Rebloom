@@ -131,3 +131,23 @@ describe("the progress view", () => {
     }
   });
 });
+
+describe("the face map's reveal callouts (D-074)", () => {
+  it("point inside the face, for every demo portrait and every concern", async () => {
+    const { concernAnchor } = await import("@/lib/skin/fixture-masks");
+    const { demoFace } = await import("@/lib/demo/landmarks");
+    const { SCORED_CONCERNS } = await import("@/lib/skin/concerns");
+    for (const key of ["amelia", "priya", "marcus", "sofia", "grace", "hannah", "olivia", "daniel", "nina", "chloe", "isabel", "rachel"]) {
+      const face = demoFace(key)!;
+      const xs = face.map((p) => p[0]);
+      const ys = face.map((p) => p[1]);
+      for (const concern of SCORED_CONCERNS) {
+        const [x, y] = concernAnchor(face, concern);
+        expect(x).toBeGreaterThan(Math.min(...xs));
+        expect(x).toBeLessThan(Math.max(...xs));
+        expect(y).toBeGreaterThan(Math.min(...ys));
+        expect(y).toBeLessThan(Math.max(...ys));
+      }
+    }
+  });
+});
