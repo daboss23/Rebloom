@@ -35,12 +35,23 @@ const REBLOOM_LOGO = { gold: { w: 1811, h: 257 }, cream: { w: 1805, h: 243 } } a
 
 /**
  * Rebloom's logo (DECISIONS D-057). Gold on light surfaces; the flat cream version on charcoal, where gold's
- * shading would muddy. `height` is the rendered cap-to-baseline box in pixels.
+ * shading would muddy. `height` is the rendered cap-to-baseline box in pixels. `shine` sends a slow glint of light
+ * across the gold letters every few seconds (globals.css, `.logo-shine`); it holds still when motion is unwelcome.
  */
-export function RebloomWordmark({ className, onDark, height = 20 }: { className?: string; onDark?: boolean; height?: number }) {
+export function RebloomWordmark({
+  className,
+  onDark,
+  height = 20,
+  shine,
+}: {
+  className?: string;
+  onDark?: boolean;
+  height?: number;
+  shine?: boolean;
+}) {
   const variant = onDark ? "cream" : "gold";
   const { w, h } = REBLOOM_LOGO[variant];
-  return (
+  const logo = (
     <Image
       src={`/brand/rebloom/rebloom-${variant}.webp`}
       alt="Rebloom"
@@ -51,6 +62,13 @@ export function RebloomWordmark({ className, onDark, height = 20 }: { className?
       style={{ height }}
       draggable={false}
     />
+  );
+  if (!shine || onDark) return logo;
+  return (
+    <span className="logo-shine">
+      {logo}
+      <span aria-hidden className="logo-shine-light" />
+    </span>
   );
 }
 

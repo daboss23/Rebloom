@@ -67,7 +67,7 @@ export default function RebloomHome() {
       <header className="sticky top-0 z-40 border-b border-white/70 bg-white/80 backdrop-blur-xl backdrop-saturate-150">
         <div className={`${wrap} flex h-16 items-center justify-between gap-4 sm:gap-6 lg:h-[72px]`}>
           <Link href="/" aria-label="Rebloom home" className="shrink-0">
-            <RebloomWordmark height={22} className="!h-[19px] sm:!h-[22px]" />
+            <RebloomWordmark height={22} className="!h-[19px] sm:!h-[22px]" shine />
           </Link>
           <nav aria-label="On this page" className="hidden lg:block">
             <ul className="flex items-center gap-9 text-[14px] text-text-2">
