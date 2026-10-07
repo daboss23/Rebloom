@@ -392,3 +392,6 @@ Joshua wanted the demo clients to look as complete as a real scan, since judges 
 
 ## D-071 · Booking's cards are solid (J, Oct 7). Refines D-061 and D-068
 Joshua asked for the booking cards not to be see-through. On the booking pages (`/r/[token]/book` and its confirmation), the glass cards (the booked visit, notices, "no open times") and the unchosen day and time buttons are now solid white, with no blur. A chosen day or time stays deep sea. Everywhere else keeps its frosted glass.
+
+## D-072 · Booking's water stays at the top (J, Oct 7). Refines D-068
+Joshua found the moving light distracting while choosing a date. On the booking pages the water now covers only the top of the page (440px) and fades out before "Choose a day", so the days and times sit on the calm ground. It still scrolls away with the page.
