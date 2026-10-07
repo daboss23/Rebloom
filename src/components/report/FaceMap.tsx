@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, use, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LightField } from "@/components/dashboard/LightField";
 import { Chip } from "@/components/ui/Chip";
 import { cx } from "@/components/ui/cx";
+import { CLEAR, MARK, MarkDots, faceShape } from "./MarkDots";
 
 export interface FaceMapLayer {
   key: string;
@@ -15,12 +16,6 @@ export interface FaceMapLayer {
   /** Where on the photo the concern shows (0 to 1 each way), for the reveal's callout. */
   anchor: [number, number] | null;
 }
-
-/**
- * One soft colour per priority, in rank order: its marks, its callout and its button's dot. Each keeps the hairline
- * deep-sea edge, so the marks read on every skin tone (DECISIONS D-027, D-074).
- */
-const TINTS = ["#dff3fb", "#f3d9a4", "#ffc9b8"] as const;
 
 /** The reveal's timeline, in ms. About four seconds, once per scan. */
 const T = { scanFrom: 250, scan: 1100, firstMark: 1450, markGap: 650, hold: 950, settle: 600 };
@@ -56,9 +51,11 @@ export function FaceMapPriority({ concern, className, children }: { concern: str
  * The client's photo with tappable concern overlays (brief 3.3: lead with their face). Each button shows that
  * priority's marks and score on the photo. Demo clients' marks come from their portraits' landmarks (D-070).
  *
+ * Marks are fine dots (D-075): coral where the scan found the priority, sparse green across the rest of the face.
+ *
  * The first time a scan's map comes into view it plays the analysis back (D-074): the face model's own points appear
- * as a line of light crosses the face, then each priority's marks paint in with a callout and its score. Every mark
- * and number is this scan's own. Tapping a priority skips it, "Replay" plays it again, and with reduced motion it
+ * as a line of light crosses the face, then each priority's dots spread out in turn with a callout and its score.
+ * Every dot and number is this scan's own. Tapping a priority skips it, "Replay" plays it again, and with reduced motion it
  * never plays. If the photo can't load, it shows their initials over moving light, never a broken image.
  */
 export function FaceMap({
@@ -83,6 +80,7 @@ export function FaceMap({
   const [failed, setFailed] = useState(false);
   const marked = !failed && layers.some((l) => l.maskUrl);
   const img = useRef<HTMLImageElement>(null);
+  const shape = useMemo(() => faceShape(landmarks), [landmarks]);
   const box = useRef<HTMLDivElement>(null);
 
   const [phase, setPhase] = useState<Phase>("waiting");
@@ -195,38 +193,27 @@ export function FaceMap({
           )}
         />
 
-        {layers.map((layer, i) =>
-          layer.maskUrl && !failed ? (
-            <div
-              key={layer.key}
-              aria-hidden
-              className="absolute inset-0 transition-opacity duration-[600ms] ease-gentle"
-              style={{
-                opacity: (stage === "playing" ? i < lit : stage !== "waiting" && layer.key === active) ? 1 : 0,
-                filter: "drop-shadow(0 0 1px rgba(12,26,34,0.6))",
-              }}
-            >
-              <div
-                className="absolute inset-0"
-                style={{
-                  backgroundColor: TINTS[i % TINTS.length],
-                  WebkitMaskImage: `url(${layer.maskUrl})`,
-                  maskImage: `url(${layer.maskUrl})`,
-                  WebkitMaskSize: "100% 100%",
-                  maskSize: "100% 100%",
-                }}
+        {!failed &&
+          layers.map((layer, i) =>
+            layer.maskUrl ? (
+              <MarkDots
+                key={layer.key}
+                maskUrl={layer.maskUrl}
+                face={shape}
+                // While the analysis plays back, each priority takes its turn; after, the one chosen.
+                shown={stage === "playing" ? i === lit - 1 : stage !== "waiting" && layer.key === active}
+                origin={layer.anchor}
               />
-            </div>
-          ) : null,
-        )}
+            ) : null,
+          )}
 
         {revealing && landmarks && face && (
-          // Once the marks start to paint, the points step back so the marks carry.
+          // Once the marks start to spread, the points hand over to them.
           <div
             aria-hidden
             className={cx(
               "pointer-events-none absolute inset-0 transition-opacity duration-500",
-              stage === "settling" ? "opacity-0" : lit > 0 ? "opacity-35" : "opacity-100",
+              stage === "settling" || lit > 0 ? "opacity-0" : "opacity-100",
             )}
           >
             <svg viewBox="0 0 300 400" className="absolute inset-0 h-full w-full">
@@ -276,6 +263,8 @@ export function FaceMap({
                   pathLength={1}
                   strokeDasharray={1}
                   strokeDashoffset={c.index < lit ? 0 : 1}
+                  // A non-scaling stroke can leave a sliver of an undrawn line showing, so it stays hidden until drawn.
+                  opacity={c.index < lit ? 1 : 0}
                   style={{ transition: "stroke-dashoffset 450ms cubic-bezier(0.23, 1, 0.32, 1)" }}
                 />
               ))}
@@ -286,7 +275,7 @@ export function FaceMap({
                 <div key={c.layer.key}>
                   <span
                     className={cx("absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white transition-opacity duration-300", on ? "opacity-100" : "opacity-0")}
-                    style={{ left: `${c.layer.anchor![0] * 100}%`, top: `${c.layer.anchor![1] * 100}%`, background: TINTS[c.index % TINTS.length] }}
+                    style={{ left: `${c.layer.anchor![0] * 100}%`, top: `${c.layer.anchor![1] * 100}%`, background: MARK }}
                   />
                   <div
                     className={cx(
@@ -298,8 +287,7 @@ export function FaceMap({
                   >
                     {/* Long names ("Upper eyelid firmness") wrap rather than cut off. */}
                     <span className="block text-[9.5px] uppercase leading-tight tracking-[0.07em] text-ink [overflow-wrap:anywhere]">{c.layer.label}</span>
-                    <span className="mt-1 flex items-center gap-1.5 font-display text-[24px] leading-none text-ink">
-                      <span aria-hidden className="h-2 w-2 shrink-0 rounded-full ring-1 ring-[#0c1a22]/25" style={{ background: TINTS[c.index % TINTS.length] }} />
+                    <span className="mt-1 block font-display text-[24px] leading-none text-ink">
                       {on ? <CountUp to={c.layer.score} /> : 0}
                     </span>
                   </div>
@@ -339,8 +327,20 @@ export function FaceMap({
       <p className="mt-4 text-[13.5px] leading-snug text-text-2">
         {marked ? "Choose a priority to see where it shows on your face." : "Choose a priority to see its score."}
       </p>
+      {marked && shape && (
+        <p className="mt-1.5 flex items-center gap-4 text-[12.5px] text-text-2">
+          <span className="flex items-center gap-1.5">
+            <span aria-hidden className="h-2 w-2 rounded-full ring-1 ring-[#0c1a22]/25" style={{ background: MARK }} />
+            Where it shows
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span aria-hidden className="h-2 w-2 rounded-full ring-1 ring-[#0c1a22]/25" style={{ background: CLEAR }} />
+            Not found here
+          </span>
+        </p>
+      )}
       <div role="group" aria-label="Show a priority on your photo" className="mt-2.5 grid grid-cols-3 gap-2">
-        {layers.map((layer, i) => (
+        {layers.map((layer) => (
           <Chip
             key={layer.key}
             selected={layer.key === active}
@@ -348,9 +348,8 @@ export function FaceMap({
               if (stage !== "done") skip();
               choose(layer.key);
             }}
-            className="justify-center gap-1.5 px-2 text-center"
+            className="justify-center px-2 text-center"
           >
-            {marked && <span aria-hidden className="h-2 w-2 shrink-0 rounded-full ring-1 ring-[#0c1a22]/25" style={{ background: TINTS[i % TINTS.length] }} />}
             {layer.label}
           </Chip>
         ))}

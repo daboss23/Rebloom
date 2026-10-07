@@ -9,7 +9,8 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { Checkbox, FieldLabel, TextInput } from "@/components/ui/Field";
 import { FormAlert } from "@/components/ui/FormAlert";
 import { IconLock } from "@/components/ui/Icons";
-import { Label, ScoreBar, ScoreNumber } from "@/components/ui/Typography";
+import { Label, ScoreNumber } from "@/components/ui/Typography";
+import { ScoreRuler } from "@/components/ui/ScoreRuler";
 
 // Placeholder content for the blurred report: the shape of a real report, with made-up words and
 // numbers. The client's real scores stay on the server until they opt in (brief 3.1 step 6).
@@ -265,7 +266,7 @@ function BlurredReport({ scanId }: { scanId: string }) {
               <p className="pb-2 font-display text-[26px] font-light text-ink">{row.label}</p>
               <ScoreNumber value={row.score} />
             </div>
-            <ScoreBar value={row.score} className="mt-3" />
+            <ScoreRuler value={row.score} className="mt-3" />
             <p className="t-body mt-4">{row.line}</p>
           </li>
         ))}
