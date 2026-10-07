@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { failingChecks, instructionFor, toCaptureQuality, type CheckKey } from "@/lib/capture/gate";
+import { IconSun } from "@/components/ui/Icons";
+import { failingChecks, instructionFor, lightMatch, toCaptureQuality, type CheckKey } from "@/lib/capture/gate";
 import { portraitCrop, type Point } from "@/lib/capture/metrics";
 import { GATE } from "@/lib/capture/thresholds";
 import type { Shot } from "./CaptureFlow";
@@ -19,10 +20,13 @@ export function LiveCamera({
   onCapture,
   onUploadInstead,
   onUnavailable,
+  baseline = null,
 }: {
   onCapture: (shot: Shot) => void;
   onUploadInstead: () => void;
   onUnavailable: (message: string) => void;
+  /** A rescan's first-scan light: a hint toward it, never a block (DECISIONS D-011). */
+  baseline?: { luminance: number; warmth: number } | null;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const latest = useRef<Measurement | null>(null);
@@ -32,6 +36,8 @@ export function LiveCamera({
   const [fails, setFails] = useState<CheckKey[]>(["no_face"]);
   const [hold, setHold] = useState(0);
   const [suggestUpload, setSuggestUpload] = useState(false);
+  const [lightHint, setLightHint] = useState<string | null>(null);
+  const baselineRef = useRef(baseline);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -110,6 +116,8 @@ export function LiveCamera({
         latest.current = m;
         const f = failingChecks(m.metrics);
         setFails(f);
+        // Only once a face is in view, so the light is read from the face, not the room.
+        setLightHint(baselineRef.current && !f.includes("no_face") ? lightMatch(baselineRef.current, m.metrics).hint : null);
         if (f.length === 0) {
           passSince ??= t;
           const progress = Math.min(1, (t - passSince) / GATE.holdMs);
@@ -189,6 +197,12 @@ export function LiveCamera({
       <p aria-live="polite" className="mt-6 min-h-[3.5rem] text-center font-display text-[26px] font-light leading-tight text-ink">
         {instruction}
       </p>
+      {lightHint && status === "live" && (
+        <p className="fade -mt-2 text-center text-[14px] text-text-2">
+          <IconSun aria-hidden width={16} height={16} className="mr-1.5 inline-block -translate-y-px text-[#1e5a78]" />
+          {lightHint}
+        </p>
+      )}
 
       <div className="mt-4 space-y-3">
         <Button block disabled={!ready || status !== "live"} onClick={() => void captureRef.current()} className="!min-h-14 text-[16px]">

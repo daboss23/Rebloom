@@ -5,11 +5,11 @@ import { LightField } from "@/components/dashboard/LightField";
 
 /**
  * Morning light at the top of every client page (DECISIONS D-061). It lives in the layout, so it keeps moving
- * from one step to the next. Off on the camera screen, where the phone's attention belongs to the camera.
+ * from one step to the next. Off on the camera screens (first scan and rescan), where attention belongs to the camera.
  */
 export function ShellLight() {
   const path = usePathname();
-  if (path.endsWith("/capture")) return null;
+  if (path.endsWith("/capture") || path.endsWith("/rescan")) return null;
   // The report is read by scrolling, so its water is bluer, reaches further down and fades out over a longer run.
   // Booking sits a step deeper still, so its white day and time cards stand clear of the light. Small labels on
   // that water use text-2: text-3 falls under 4.5:1 there.

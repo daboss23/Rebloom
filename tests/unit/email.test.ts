@@ -50,6 +50,13 @@ describe("the rebook email and its demo copy (DECISIONS D-064)", () => {
     expect(mail.html).not.toContain("Rebloom demo");
   });
 
+  it("turns a progress scan link into its own button (D-073)", () => {
+    const mail = rebookEmail({ clinic: MAISON_VERRE, subject: "Time to see your progress, Rachel", body: `Hi Rachel,\n\nStart it here:\n\n${url}/rescan` });
+    expect(mail.html).toContain(`href="${url}/rescan"`);
+    expect(mail.html).toContain("Start your progress scan");
+    expect(mail.html).not.toContain("Open your report");
+  });
+
   it("says plainly on a demo copy whose email it is", () => {
     const mail = rebookEmail({ clinic: MAISON_VERRE, subject: "Hello", body, demoFor: "Sofia Morales" });
     expect(mail.text.startsWith("Rebloom demo: this is the email Sofia Morales, a sample client, would receive")).toBe(true);

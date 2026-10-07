@@ -4,32 +4,11 @@ import { newId } from "@/lib/ids";
 import { readSandboxId, sandboxNow } from "@/lib/sandbox";
 import { json } from "@/lib/scans/access";
 import { scanImagePath } from "@/lib/scans/service";
+import { scanBody } from "@/lib/scans/input";
 import { SCORED_CONCERNS } from "@/lib/skin/concerns";
 import { getStorage, getStore } from "@/lib/store";
 
-const quality = z.object({
-  method: z.enum(["camera", "upload"]),
-  faceWidthRatio: z.number(),
-  centerOffset: z.number(),
-  yaw: z.number(),
-  pitch: z.number(),
-  roll: z.number(),
-  luminance: z.number(),
-  clippedShare: z.number(),
-  evenness: z.number(),
-  warmth: z.number(),
-  sharpness: z.number(),
-  eyesOpen: z.number(),
-  passedGate: z.boolean(),
-});
-
-const body = z.object({
-  clinicSlug: z.string().min(1).max(60),
-  width: z.number().int().min(360).max(4000),
-  height: z.number().int().min(480).max(5400),
-  quality,
-  landmarks: z.array(z.tuple([z.number().min(-0.5).max(1.5), z.number().min(-0.5).max(1.5)])).min(468).max(478),
-});
+const body = scanBody.extend({ clinicSlug: z.string().min(1).max(60) });
 
 /** Creates a scan and returns a one-time URL the browser uploads the photo to directly. */
 export async function POST(request: Request) {

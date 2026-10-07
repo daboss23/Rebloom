@@ -27,8 +27,11 @@ export interface RebookEmail {
   html: string;
 }
 
-/** A paragraph that is only a report link becomes the gold button; any other link stays a plain link. */
-const REPORT_LINK = /^https?:\/\/\S+\/r\/[\w-]+\/?$/;
+/**
+ * A paragraph that is only a report link, or its progress scan link (D-073), becomes the gold button; any other
+ * link stays a plain link.
+ */
+const REPORT_LINK = /^https?:\/\/\S+\/r\/[\w-]+(\/rescan)?\/?$/;
 
 /**
  * The email, from the clinic's name. `demoFor` names the sample client whose message this is, and adds a line
@@ -51,7 +54,7 @@ export function rebookEmail({ clinic, subject, body, demoFor }: { clinic: Clinic
   const rows = paragraphs
     .map((p) =>
       REPORT_LINK.test(p)
-        ? `<tr><td style="padding:22px 32px 4px;"><a href="${e(p)}" style="display:inline-block;background:#d9ae62;background-image:linear-gradient(100deg,#c99645 0%,#f1d49a 45%,#d9ae62 70%,#b98a3c 100%);color:#1a1206;text-decoration:none;font-size:16px;padding:16px 28px;border-radius:14px;">Open your report</a></td></tr>`
+        ? `<tr><td style="padding:22px 32px 4px;"><a href="${e(p)}" style="display:inline-block;background:#d9ae62;background-image:linear-gradient(100deg,#c99645 0%,#f1d49a 45%,#d9ae62 70%,#b98a3c 100%);color:#1a1206;text-decoration:none;font-size:16px;padding:16px 28px;border-radius:14px;">${/\/rescan\/?$/.test(p) ? "Start your progress scan" : "Open your report"}</a></td></tr>`
         : `<tr><td style="padding:16px 32px 0;font-size:15px;line-height:1.65;">${linkify(p).replace(/\n/g, "<br>")}</td></tr>`,
     )
     .join("\n");
