@@ -31,6 +31,14 @@ export interface Clinic {
   depositCents: number;
 }
 
+/** What the clinic owner switches on or off in Settings (DECISIONS D-066). Per sandbox in the demo. */
+export interface ClinicSettings {
+  /** Booking takes the clinic's deposit (depositCents) through Stripe. Off: a time is booked with no payment. */
+  depositRequired: boolean;
+}
+
+export const DEFAULT_CLINIC_SETTINGS: ClinicSettings = { depositRequired: true };
+
 export interface Treatment {
   id: string;
   clinicId: string;

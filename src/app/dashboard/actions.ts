@@ -16,8 +16,7 @@ import { resend } from "@/lib/email/resend";
 import { appOrigin } from "@/lib/origin";
 import { ensureSandboxId, sandboxNow } from "@/lib/sandbox";
 import { getStore } from "@/lib/store";
-import type { PlanItem } from "@/lib/domain";
-import { newId } from "@/lib/ids";
+import { keptPlan } from "@/lib/plan/keep";
 import { suggestedPlan } from "@/lib/dashboard/brief";
 import { fullName } from "@/lib/dashboard/view";
 
@@ -249,48 +248,25 @@ export async function confirmPlan(input: { clientId: string }): Promise<ActionRe
 
   const suggested = suggestedPlan(book, facts);
   if (!suggested) return { ok: false, error: "There's no scan to build a plan from yet." };
-  const planId = newId();
-  const lines = suggested.plan.recommended.lines;
-  const firstSession = (treatmentId: string) =>
-    suggested.plan.timeline.find((s) => s.kind === "session" && s.treatment.id === treatmentId && s.first);
-  const items: PlanItem[] = [
-    ...lines.map((line, position) => {
-      const first = firstSession(line.treatment.id);
-      return {
-        id: newId(),
-        planId,
-        treatmentId: line.treatment.id,
-        productId: null,
-        quantity: line.sessions,
-        unitPriceCents: line.treatment.priceCents,
-        position,
-        targetDate: first?.date ?? null,
-      };
-    }),
-    ...suggested.plan.homeCare.map(({ product }, i) => ({
-      id: newId(),
-      planId,
-      treatmentId: null,
-      productId: product.id,
-      quantity: 1,
-      unitPriceCents: product.priceCents,
-      position: lines.length + i,
-      targetDate: null,
-    })),
-  ];
-  const saved = await store.createPlan(
-    {
-      id: planId,
-      clientId: facts.client.id,
-      scanId: suggested.scan.id,
-      status: "confirmed",
-      confirmedBy: book.staff.id,
-      confirmedAt: book.now.toISOString(),
-      totalCents: items.reduce((n, i) => n + i.quantity * i.unitPriceCents, 0),
-      createdAt: book.now.toISOString(),
-    },
-    items,
-  );
+  const kept = keptPlan({
+    plan: suggested.plan,
+    clientId: facts.client.id,
+    scanId: suggested.scan.id,
+    status: "confirmed",
+    confirmedBy: book.staff.id,
+    now: book.now,
+  });
+  const saved = await store.createPlan(kept.plan, kept.items);
   revalidatePath("/dashboard", "layout");
   return saved ? { ok: true, message: "Plan confirmed." } : { ok: false, error: "This client already has a plan." };
+}
+
+/** The owner's switch for deposits at booking (DECISIONS D-066). In the demo it holds for this browser's sandbox only. */
+export async function setDepositRequired(input: { on: boolean }): Promise<ActionResult> {
+  if (typeof input?.on !== "boolean") return { ok: false, error: "Something went wrong. Please try again." };
+  const session = await readSession();
+  if (!session) return { ok: false, error: "Please sign in again." };
+  await getStore().setClinicSettings(session.clinic.id, session.sandboxId, { depositRequired: input.on }, await sandboxNow());
+  revalidatePath("/dashboard/settings");
+  return { ok: true, message: input.on ? "Deposits are on. New bookings take one." : "Deposits are off. Clients book with no payment." };
 }

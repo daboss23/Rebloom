@@ -1,10 +1,13 @@
 import type {
   ApiUsage,
   Appointment,
+  AppointmentStatus,
   Client,
   ClientPlan,
   Clinic,
+  ClinicSettings,
   Consent,
+  DepositStatus,
   Intake,
   Message,
   PlanItem,
@@ -17,6 +20,23 @@ import type {
   Treatment,
 } from "@/lib/domain";
 import type { DemoBundle } from "@/lib/demo/seed";
+
+/** Another booked visit already has that time: one treatment room per clinic (DECISIONS D-049). */
+export class SlotTakenError extends Error {
+  constructor() {
+    super("That time has just been booked.");
+    this.name = "SlotTakenError";
+  }
+}
+
+/** What a conditional appointment change expects to find. */
+export interface AppointmentMatch {
+  status: AppointmentStatus[];
+  depositStatus?: DepositStatus[];
+}
+
+/** The fields a booking may change after it's made. */
+export type AppointmentPatch = Partial<Pick<Appointment, "status" | "depositStatus" | "depositPaymentIntent" | "planItemId">>;
 
 /** A plan with its items, in order. */
 export type PlanWithItems = ClientPlan & { items: PlanItem[] };
@@ -51,6 +71,9 @@ export interface Store {
   listTreatments(clinicId: string): Promise<Treatment[]>;
   listProducts(clinicId: string): Promise<Product[]>;
   listStaff(clinicId: string): Promise<Staff[]>;
+  /** The owner's settings for a clinic in one sandbox, or the defaults when none are saved. */
+  getClinicSettings(clinicId: string, sandboxId: string | null): Promise<ClinicSettings>;
+  setClinicSettings(clinicId: string, sandboxId: string | null, patch: Partial<ClinicSettings>, now: Date): Promise<ClinicSettings>;
 
   getSandbox(id: string): Promise<Sandbox | null>;
   createSandbox(id: string, now: Date): Promise<Sandbox>;
@@ -79,6 +102,15 @@ export interface Store {
   listPlans(clientId: string): Promise<PlanWithItems[]>;
   /** One clinic's appointments in one sandbox, in time order. */
   listAppointments(clinicId: string, sandboxId: string): Promise<Appointment[]>;
+  getAppointment(id: string): Promise<Appointment | null>;
+  /** Books a visit. Throws SlotTakenError when a booked visit in the same sandbox overlaps it. */
+  addAppointment(appointment: Appointment): Promise<Appointment>;
+  /**
+   * Changes a visit only while it still matches `from`, so a deposit confirmed twice, or a hold released while it's
+   * being paid, settles exactly once. Null when it no longer matches. Throws SlotTakenError when bringing a visit
+   * back would overlap one booked since.
+   */
+  transitionAppointment(id: string, from: AppointmentMatch, patch: AppointmentPatch): Promise<Appointment | null>;
   /** One clinic's outbox in one sandbox, oldest first. */
   listMessages(clinicId: string, sandboxId: string): Promise<Message[]>;
   /**
@@ -88,6 +120,8 @@ export interface Store {
   listClinicRecords(clinicId: string, sandboxId: string): Promise<ClinicRecords>;
   /** Adds to the outbox. Null when this client already has a message with the same dedupe key. */
   addMessage(message: Omit<Message, "id">): Promise<Message | null>;
+  /** Records what happened to a message after it was queued: sent, or failed. */
+  updateMessage(id: string, patch: Partial<Pick<Message, "status" | "sentAt">>): Promise<void>;
   /** Takes back a "marked done" line (status skipped) from the outbox. Sent messages can never be removed. */
   removeSkippedMessage(clientId: string, dedupeKey: string): Promise<boolean>;
   /** Saves a plan with its items. Null when the client already has a live plan (one per client). */

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Bloom } from "@/components/dashboard/Bloom";
 import { LightField } from "@/components/dashboard/LightField";
 import { IconArrowRight, IconPhone } from "@/components/ui/Icons";
@@ -184,32 +185,108 @@ function dialable(phone: string): string {
   return digits.length === 10 ? `+1${digits}` : `+${digits}`;
 }
 
-export function ReadyWhenYouAre({ plan, clinic }: { plan: Plan; clinic: Clinic }) {
+/** What the report can say about booking (DECISIONS D-065): the visit already booked, or the one to book next. */
+export interface BookingSummary {
+  href: string;
+  /** The gold button's label. Null when there's nothing to book online. */
+  cta: string | null;
+  upcoming: { when: string; what: string } | null;
+  /** The first open time for the visit to book, "Thu Oct 8 at 10:00 AM". */
+  nextOpen: string | null;
+  /** A returning client's visit to book, "Session 2 of 3" or "A maintenance visit", for the line at the top. */
+  returning: string | null;
+}
+
+/**
+ * The booking line at the top of a returning client's report (DECISIONS D-065): someone who came from a "your next
+ * session is due" email shouldn't have to scroll the whole report to find the button. A first report tells its
+ * story first, so it has none.
+ */
+export function BookingLine({ booking }: { booking: BookingSummary | null }) {
+  const upcoming = booking?.upcoming;
+  if (!booking || (!upcoming && !(booking.returning && booking.cta))) return null;
+  return (
+    <Link
+      href={booking.href}
+      className="glass lift sheen focus-in group mt-7 flex items-center justify-between gap-4 px-5 py-4"
+      style={{ animationDelay: "200ms" }}
+    >
+      <span>
+        <span className="block text-[15px] leading-snug text-ink">
+          {upcoming ? `Your next visit · ${upcoming.when}` : `${booking.returning} is ready to book`}
+        </span>
+        <span className="t-caption block">{upcoming ? upcoming.what : booking.nextOpen ? `First open time · ${booking.nextOpen}` : "Choose a time"}</span>
+      </span>
+      <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[14px] text-[#1e5a78]">
+        {upcoming ? "See visit" : "Book"}
+        <IconArrowRight aria-hidden width={16} height={16} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+      </span>
+    </Link>
+  );
+}
+
+export function ReadyWhenYouAre({ plan, clinic, booking }: { plan: Plan; clinic: Clinic; booking: BookingSummary | null }) {
   const first = plan.timeline.find((s) => s.kind === "session");
+  const upcoming = booking?.upcoming ?? null;
+  const call = (
+    <a
+      href={`tel:${dialable(clinic.phone)}`}
+      className="group flex min-h-11 items-center justify-center gap-2 text-[14px] text-white/90 underline decoration-white/30 underline-offset-4 transition-colors duration-200 hover:text-white hover:decoration-white/70"
+    >
+      <IconPhone aria-hidden width={15} height={15} />
+      Call {clinic.phone}
+    </a>
+  );
+  const text = (
+    <a
+      href={`sms:${dialable(clinic.phone)}`}
+      className="group flex min-h-11 items-center justify-center gap-2 text-[14px] text-white/90 underline decoration-white/30 underline-offset-4 transition-colors duration-200 hover:text-white hover:decoration-white/70"
+    >
+      Questions? Text the clinic
+      <IconArrowRight aria-hidden width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+    </a>
+  );
   return (
     <section className="sea on-dark relative mt-16 overflow-hidden rounded-[28px] px-6 py-10 shadow-[0_40px_80px_-44px_rgba(12,26,34,0.65)]">
       <LightField variant="sea" className="opacity-70" />
       <div className="relative">
-        <h2 className="font-display text-[36px] font-light leading-[1.05] text-white">Ready when you are.</h2>
-        {first && (
+        <h2 className="font-display text-[36px] font-light leading-[1.05] text-white">{upcoming ? "See you soon." : "Ready when you are."}</h2>
+        {upcoming ? (
           <p className="mt-3 text-[15px] leading-relaxed text-[#dbe8ef]">
-            Suggested first visit · {formatShortDay(`${first.date}T12:00:00Z`, "UTC")} · {clinic.city}
+            Your next visit · <span className="text-white">{upcoming.when}</span> · {upcoming.what}
           </p>
+        ) : booking?.nextOpen ? (
+          <p className="mt-3 text-[15px] leading-relaxed text-[#dbe8ef]">
+            First open time · <span className="text-white">{booking.nextOpen}</span> · {clinic.city}
+          </p>
+        ) : (
+          !booking &&
+          first && (
+            <p className="mt-3 text-[15px] leading-relaxed text-[#dbe8ef]">
+              Suggested first visit · {formatShortDay(`${first.date}T12:00:00Z`, "UTC")} · {clinic.city}
+            </p>
+          )
         )}
-        <a
-          href={`tel:${dialable(clinic.phone)}`}
-          className="btn-gold group mt-7 !h-14 w-full gap-2.5 px-6 text-[16px]"
-        >
-          <IconPhone aria-hidden width={18} height={18} />
-          Call to book your first session
-        </a>
-        <a
-          href={`sms:${dialable(clinic.phone)}`}
-          className="group mt-3 flex min-h-11 items-center justify-center gap-2 text-[14px] text-white/90 underline decoration-white/30 underline-offset-4 transition-colors duration-200 hover:text-white hover:decoration-white/70"
-        >
-          Questions? Text the clinic
-          <IconArrowRight aria-hidden width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
-        </a>
+        {booking && (upcoming || booking.cta) ? (
+          <>
+            <Link href={booking.href} className="btn-gold group mt-7 !h-14 w-full gap-2.5 px-6 text-[16px]">
+              {upcoming ? "See or change your visit" : booking.cta}
+              <IconArrowRight aria-hidden width={18} height={18} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+            </Link>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-6">
+              {call}
+              {text}
+            </div>
+          </>
+        ) : (
+          <>
+            <a href={`tel:${dialable(clinic.phone)}`} className="btn-gold group mt-7 !h-14 w-full gap-2.5 px-6 text-[16px]">
+              <IconPhone aria-hidden width={18} height={18} />
+              Call to book your first session
+            </a>
+            <div className="mt-3">{text}</div>
+          </>
+        )}
       </div>
     </section>
   );

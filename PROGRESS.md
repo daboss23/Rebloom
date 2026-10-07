@@ -1,5 +1,31 @@
 # Progress
 
+## Session 7 · Wednesday October 7, 2026 · Booking
+
+**Clients now book from their report** (DECISIONS D-065). The report's gold button opens the times for the exact visit that's next, a $50 Stripe test deposit holds the time, and the visit is confirmed on the report, by email with a calendar invite, and in the dashboard. The clinic owner can switch the deposit off in Settings (D-066).
+
+### What's done
+- **Booking page** (`/r/[token]/book`): what the visit is, how long, what it costs, and why the first day offered is that day. Ten open days, then the times, then one gold button pinned at the foot of the screen with the choice written out. Every time comes from the clinic's hours, the treatment's length and what's already booked, on the client's own demo clock, and keeps clear of the run-up to their event.
+- **The right visit for each client:** a new lead books the first session of the plan their report suggests; a client mid-course books the session that's due; a finished course offers a maintenance visit; a booked visit shows instead, with Add to my calendar and Cancel.
+- **Deposit:** Stripe's hosted Checkout, test mode. The time is held while they pay and let go if they walk away. Cancel online up to 24 hours before and the deposit is refunded in full. Booking also works with no Stripe key: it just takes no deposit.
+- **Settings, Booking:** the deposit switch (on by default, per demo browser), the hours, and the cancellation rule.
+- **The report:** "Book your first session" with the next real open time, replacing "Call to book". A returning client's report opens with "Session 3 of 3 is ready to book", so a rebook email leads straight to it. Booking keeps the suggested plan for Dana to confirm at the visit.
+- **Demo portraits** for all twelve clients, the bigger landing logo and its shine went out earlier today.
+- **Tests:** 354 unit tests (19 new for booking: open times, what's next, the store's no-overlap rule, the emails and invite, the page's wording), and 19 browser tests (4 new, against a local stand-in for Stripe: pay then cancel with a refund, walk away and get the time back, book with deposits off, download the invite), with lint, typecheck, the copy check and the production build. In this workspace the full browser run on one worker occasionally times out on a different test each time (cold compiles); every test passes on its own.
+
+### What Joshua needs to do
+1. **Stripe, test mode** (dashboard.stripe.com, with Test mode on): Developers, API keys, copy the **Secret key** (`sk_test_…`) into Vercel as `STRIPE_SECRET_KEY` (Production and Preview), then Redeploy. The publishable key isn't needed.
+2. **Stripe webhook** (recommended, so a payment still confirms if the client closes the tab on Stripe's page): Developers, Webhooks, Add endpoint `https://<your domain>/api/stripe/webhook`, events `checkout.session.completed` and `checkout.session.expired`. Copy its signing secret (`whsec_…`) into Vercel as `STRIPE_WEBHOOK_SECRET` and Redeploy.
+3. **Your domain:** set `EMAIL_FROM` to an address on it (e.g. `Maison Verre <bookings@yourdomain.com>`) and `APP_URL` to it, so confirmations reach any client and their links point at the right site.
+4. **To try it:** open a demo client's report from the dashboard (Priya is a new lead), book a time, and pay with Stripe's test card `4242 4242 4242 4242`, any future date, any CVC.
+
+### What's next
+1. **Rescan and the progress view:** the report link becomes the progress page after a rescan, which the progress-moment emails point to.
+2. **Replies from clients** (Joshua asked): Resend can receive email. Each message would carry a reply address for its client; replies arrive by webhook, show as a conversation on the client's brief, and Dana answers from there. Needs MX records on a subdomain of the domain (e.g. `reply.yourdomain.com`) so the main inbox is untouched.
+3. **Clinic login** by magic link.
+
+---
+
 ## Session 6 · Wednesday October 7, 2026 · The client journey's review, personal priorities, the report email
 
 The independent review of the client journey (cut short last session) ran on phone, small phone and desktop. What it found is fixed, with two things Joshua asked for along the way.

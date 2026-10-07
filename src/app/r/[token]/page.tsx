@@ -2,13 +2,14 @@ import { Bloom } from "@/components/dashboard/Bloom";
 import { LightField } from "@/components/dashboard/LightField";
 import { DeleteData } from "@/components/report/DeleteData";
 import { FaceMap } from "@/components/report/FaceMap";
-import { HomeCare, Investment, PlanTimeline, ReadyWhenYouAre } from "@/components/report/PlanSections";
+import { BookingLine, HomeCare, Investment, PlanTimeline, ReadyWhenYouAre } from "@/components/report/PlanSections";
 import { WhatToExpect } from "@/components/report/WhatToExpect";
 import { IconPlus } from "@/components/ui/Icons";
 import { ScoreBar, ScoreNumber } from "@/components/ui/Typography";
 import { addDays, formatLongDate } from "@/lib/clock";
 import { EVENT_OPTIONS } from "@/lib/flow/intake-options";
 import { rankPriorities, statedConcerns } from "@/lib/plan/build";
+import { bookingSummary } from "@/lib/booking/summary";
 import { loadReport, reportPlan } from "@/lib/report/load";
 import { mentions, planRationale, priorityMeaning, subhead } from "@/lib/report/personal";
 import { sandboxNow } from "@/lib/sandbox";
@@ -40,6 +41,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
     ? ((await getStore().listStaff(clinic.id)).find((s) => s.role === "practitioner") ?? null)
     : null;
   const hasPlan = plan.recommended.lines.length > 0;
+  const booking = await bookingSummary(token);
   const asked = mentions(result, stated, top, plan);
 
   let event: { name: string; date: string; weeks: number } | null = null;
@@ -77,6 +79,8 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
           <span className="whitespace-nowrap text-[13.5px] text-[#1e5a78]">{event.weeks === 1 ? "1 week away" : `${event.weeks} weeks away`}</span>
         </div>
       )}
+
+      <BookingLine booking={booking} />
 
       {latest.source === "fixture" && (
         <p className="t-caption mt-5 rounded-[14px] bg-white/55 px-4 py-3 ring-1 ring-inset ring-[#0c1a22]/[0.07]">
@@ -176,7 +180,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
           />
           <Investment plan={plan} budgetBand={intake?.budgetBand ?? null} />
           <HomeCare plan={plan} />
-          <ReadyWhenYouAre plan={plan} clinic={clinic} />
+          <ReadyWhenYouAre plan={plan} clinic={clinic} booking={booking} />
         </>
       ) : (
         <section className="sea on-dark relative mt-16 overflow-hidden rounded-[28px] px-6 py-10 shadow-[0_40px_80px_-44px_rgba(12,26,34,0.65)]">
