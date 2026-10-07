@@ -33,7 +33,8 @@ export function ClinicShell({
           <Link href={`/c/${clinic.slug}`} aria-label={`${clinic.name} home`}>
             <ClinicWordmark clinic={clinic} />
           </Link>
-          {section && <span className="text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">{section}</span>}
+          {/* On the narrowest phones the clinic's name needs the whole bar. */}
+          {section && <span className="whitespace-nowrap text-[11px] uppercase tracking-[0.22em] text-[#1e5a78] max-[359px]:hidden">{section}</span>}
         </div>
       </header>
       <main className="relative mx-auto w-full max-w-[600px] flex-1 px-5">{children}</main>

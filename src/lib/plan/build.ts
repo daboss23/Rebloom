@@ -51,7 +51,7 @@ const GOAL_WORDS: [RegExp, ConcernKey, string | ((match: string) => string)][] =
   [/texture|smooth|rough|bump/i, "texture", "texture"],
   [/(sun|age|dark|brown)\s*(spots?|patches)/i, "age_spot", (m) => m.toLowerCase().replace(/\s+/, " ").replace(/spot$/, "spots").replace(/patch$/, "patches")],
   [/pigment|melasma/i, "age_spot", "pigmentation"],
-  [/uneven|\btone\b/i, "age_spot", "uneven tone"],
+  [/uneven|\btone\b|\beven(er)?\s+(skin|complexion|colou?r)/i, "age_spot", "uneven tone"],
   [/redness|\bred\b|flush/i, "redness", "redness"],
   [/acne|breakout|blemish|pimple/i, "acne", "breakouts"],
   [/\bdry|dehydrat|hydrat|moistur/i, "moisture", "dryness"],

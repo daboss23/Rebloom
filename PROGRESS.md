@@ -1,5 +1,24 @@
 # Progress
 
+## Session 6 · Wednesday October 7, 2026 · The client journey's review, personal priorities, the report email
+
+The independent review of the client journey (cut short last session) ran on phone, small phone and desktop. What it found is fixed, with two things Joshua asked for along the way.
+
+### What's done
+- **The report email (D-062).** "Send my results" now emails the private report link through Resend, from the clinic's name. The confirmation says "on their way" only when Resend accepted it; otherwise it says it wasn't emailed and opens the report from the screen.
+- **Personal priorities (D-063).** Each of the three priorities shows its own score and a line built from that person's scan, answers and plan. No stock descriptions; level scores are said to be level, never nudged apart.
+- **The report gate keeps what was typed.** A mistyped email used to clear the whole form; now the name and email stay, the email is marked and takes focus. Tab stays inside the panel instead of reaching the dimmed page behind it.
+- **Small phones.** On the screening questions the pinned Continue is slimmer, so the first question shows in full at 375 × 667. At 320px the header keeps the clinic's name clear. The event line on the report puts the date under the name.
+- **Tests:** 329 unit tests (11 new) and all 14 browser tests pass, with lint, typecheck, the copy check and the production build. Run the browser tests with `--workers=1` in the cloud workspace: with two at once, cold compiles there time out at random.
+
+### Why no email arrived, and what Joshua needs to do
+1. **Nothing sent one until now.** Deploy this, and the report email goes out whenever `RESEND_API_KEY` is set in Vercel.
+2. **Until a domain is verified, Resend only delivers to the address that owns the Resend account.** Scan with that address to see the email. For anyone else's address: Resend, Domains, add the domain, copy its DNS records into Vercel, verify, then set `EMAIL_FROM` to e.g. `reports@yourdomain.com` (D-062).
+3. **Set `APP_URL`** to the site's address, so the link in the email always points at the right site.
+4. **To test the setup:** `curl -X POST https://<site>/api/send -H "Authorization: Bearer <CRON_SECRET>"` (add `-H "content-type: application/json" -d '{"to":"you@example.com"}'` for another address). It answers with Resend's email id, or the error and what to change.
+
+---
+
 ## Session 5 · Tuesday October 6, 2026 · The clinic dashboard
 
 **The dashboard is live in demo mode at `/dashboard`.** "Enter demo as Dana" opens it. It answers one question each morning: who should we contact today, and why? Rebloom now has its own cool, glacial look; client pages stay Maison Verre (DECISIONS D-051).

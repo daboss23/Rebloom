@@ -6,7 +6,8 @@ import { CONSENT_VERSION } from "@/lib/flow/consent";
 import { INTAKE_STEPS, stepSchemas, unlockSchema, type IntakeStep } from "@/lib/flow/intake-schema";
 import { getOwnScan } from "@/lib/scans/access";
 import { hasBiometricConsent, loadFlow } from "@/lib/flow/load";
-import { REPORT_EMAIL_LIVE } from "@/lib/report/load";
+import { sendReportEmail, type ReportDelivery } from "@/lib/email/report";
+import { appOrigin } from "@/lib/origin";
 import {
   ensureSandboxId,
   requestIpHash,
@@ -26,12 +27,16 @@ export interface SentResults {
   firstName: string;
   email: string;
   reportPath: string;
-  /** False until the report email is live: the page must not claim it was sent. */
-  emailed: boolean;
+  /** Whether the report email went out. The page claims "sent" only when Resend accepted it. */
+  delivery: ReportDelivery;
 }
 
 export interface UnlockResult extends ActionResult {
   sent?: SentResults;
+  /** What was typed, sent back with an error so the form never makes them type it again. */
+  values?: { firstName: string; email: string; phone: string; reminders: boolean };
+  /** The field the error is about, so the form can mark it and move focus there. */
+  field?: "firstName" | "email" | "phone";
 }
 
 /** Records consent, creating the client for this browser if needed. */
@@ -97,7 +102,8 @@ export async function saveIntakeStep(slug: string, input: { step: IntakeStep; da
 /**
  * The report gate. Contact details unlock the report the client just scanned for (brief 3.1 step 6).
  * Until this runs, the browser never receives the report link or the real scores.
- * The client stays on the page and sees a "results sent" confirmation, not the report itself.
+ * The client stays on the page and sees a "results sent" confirmation, not the report itself, and the report
+ * link is emailed to them when Resend is set up (DECISIONS D-062).
  */
 export async function unlockReport(
   slug: string,
@@ -105,17 +111,24 @@ export async function unlockReport(
   _prev: UnlockResult | null,
   form: FormData,
 ): Promise<UnlockResult> {
-  const parsed = unlockSchema.safeParse({
-    firstName: form.get("firstName") ?? "",
-    email: form.get("email") ?? "",
-    phone: form.get("phone") ?? "",
-  });
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Please check your details." };
+  const text = (key: string) => String(form.get(key) ?? "");
+  const values = { firstName: text("firstName"), email: text("email"), phone: text("phone"), reminders: form.get("reminders") === "on" };
+  const parsed = unlockSchema.safeParse(values);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const field = issue?.path[0];
+    return {
+      ok: false,
+      error: issue?.message ?? "Please check your details.",
+      values,
+      field: field === "firstName" || field === "email" || field === "phone" ? field : undefined,
+    };
+  }
 
   const state = await loadFlow(slug);
   const scan = await getOwnScan(scanId);
   if (!state.client || !scan || scan.clientId !== state.client.id || scan.status !== "complete") {
-    return { ok: false, error: "Your session expired. Please start again." };
+    return { ok: false, error: "Your session expired. Please start again.", values };
   }
 
   const store = getStore();
@@ -137,13 +150,16 @@ export async function unlockReport(
     });
   }
   const report = await store.getOrCreateReport(client.id, now);
-  return {
-    ok: true,
-    sent: {
-      firstName: parsed.data.firstName,
-      email: parsed.data.email,
-      reportPath: `/r/${report.token}`,
-      emailed: REPORT_EMAIL_LIVE,
-    },
-  };
+  const reportPath = `/r/${report.token}`;
+  const delivery = await sendReportEmail({
+    clinic: state.clinic,
+    clientId: client.id,
+    sandboxId: client.sandboxId,
+    scanId: scan.id,
+    firstName: parsed.data.firstName,
+    email: parsed.data.email,
+    url: `${await appOrigin()}${reportPath}`,
+    now,
+  });
+  return { ok: true, sent: { firstName: parsed.data.firstName, email: parsed.data.email, reportPath, delivery } };
 }

@@ -2,12 +2,11 @@ import "server-only";
 // Everything a dashboard page reads, loaded once per request and shared by the layout and the page.
 
 import { cache } from "react";
-import { headers } from "next/headers";
 import { isoDateInZone } from "@/lib/clock";
 import { ensureDemoClients } from "@/lib/demo/ensure";
-import { env } from "@/lib/env";
 import { buildQueue, clientFacts, type ClientFacts, type EngineInput, type Queue } from "@/lib/rebook/engine";
 import { sandboxNow } from "@/lib/sandbox";
+import { appOrigin } from "@/lib/origin";
 import { getStore } from "@/lib/store";
 import { requireSession, type DashboardSession } from "./session";
 
@@ -20,15 +19,6 @@ export interface Book extends DashboardSession {
   input: EngineInput;
   facts: ClientFacts[];
   queue: Queue;
-}
-
-/** The address clients open their report on. APP_URL when set, otherwise the host this request came to. */
-export async function appOrigin(): Promise<string> {
-  if (env.APP_URL) return env.APP_URL.replace(/\/$/, "");
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
 }
 
 export const loadBook = cache(async (): Promise<Book> => {

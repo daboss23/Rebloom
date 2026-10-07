@@ -42,13 +42,13 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
   const hasPlan = plan.recommended.lines.length > 0;
   const asked = mentions(result, stated, top, plan);
 
-  let event: { label: string; weeks: number } | null = null;
+  let event: { name: string; date: string; weeks: number } | null = null;
   if (intake?.hasEvent && intake.eventDate && intake.eventType) {
     const date = new Date(`${intake.eventDate}T12:00:00Z`);
     const type = EVENT_OPTIONS.find(([v]) => v === intake.eventType)?.[1] ?? "Event";
     const weeks = Math.max(0, Math.round((date.getTime() - now.getTime()) / (7 * 86_400_000)));
     const name = intake.eventType === "other" ? "Your event" : `Your ${type.toLowerCase()}`;
-    event = { label: `${name} · ${formatLongDate(addDays(date, 0), "UTC").replace(/, \d{4}$/, "")}`, weeks };
+    event = { name, date: formatLongDate(addDays(date, 0), "UTC").replace(/, \d{4}$/, ""), weeks };
   }
 
   return (
@@ -67,9 +67,12 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
 
       {event && (
         <div className="glass focus-in mt-7 flex items-center justify-between gap-4 px-5 py-4" style={{ animationDelay: "200ms" }}>
-          <span className="flex items-center gap-3 text-[15px] text-ink">
+          <span className="flex items-center gap-3">
             <Bloom size={20} unfurl className="shrink-0 text-[#9e4a5d]" />
-            {event.label}
+            <span>
+              <span className="block text-[15px] leading-snug text-ink">{event.name}</span>
+              <span className="t-caption block">{event.date}</span>
+            </span>
           </span>
           <span className="whitespace-nowrap text-[13.5px] text-[#1e5a78]">{event.weeks === 1 ? "1 week away" : `${event.weeks} weeks away`}</span>
         </div>
@@ -109,7 +112,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
                 <ScoreNumber value={c.ui} />
               </div>
               <ScoreBar value={c.ui} className="mt-4" />
-              <p className="t-body mt-4">{priorityMeaning(i, c, top.slice(0, i), stated, plan)}</p>
+              <p className="t-body mt-4">{priorityMeaning(i, c, top.slice(0, i), stated, plan, result.concerns)}</p>
             </li>
           ))}
         </ol>

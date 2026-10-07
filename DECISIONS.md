@@ -330,3 +330,19 @@ Joshua asked for the questionnaire, the lead pop-up and the report to have "the 
 - **Phones first:** 16px fields (no zoom on focus), 44px and larger targets, denser glass with no blur on touch screens, the light at 15 frames a second there, and Continue pinned on the long screening question.
 - The brief's porcelain look (sections 7.1 to 7.6, and the `/reference` mockup) is retired. Its voice and copy rules (7.7) are unchanged.
 
+
+## D-062 · The report email goes out when Resend is set up (J + C, Oct 7). Refines D-008, D-040 and D-050
+Joshua set up Resend but no email arrived. Nothing had been built to send one: the gate's confirmation was fixed to "email isn't connected yet". Now "Send my results" emails the private report link the moment the client asks for it.
+- **When it sends:** whenever `RESEND_API_KEY` is set, demo mode included. The client typed their own address and asked for their results, so this isn't the demo-mode outbox the rebook messages use (they stay logged, never emailed, D-053).
+- **Who it's from:** the clinic's name (D-001), at `EMAIL_FROM`'s address. Without `EMAIL_FROM` it's Resend's test sender, `onboarding@resend.dev`, which **only delivers to the address that owns the Resend account**. Every other address needs a verified domain in Resend, then `EMAIL_FROM` set to an address on it.
+- **What it says:** the link, the clinic's phone and address, and why they're receiving it, in the clinic's voice (brief 7.7). Rebloom is the last line. The link uses `APP_URL` when set, otherwise the address the client is on.
+- **Honest on screen:** "your results are on their way" only when Resend accepts the email. If Resend says no, the client opens the report from the confirmation, which says it wasn't emailed. A reload shows the same, from the outbox.
+- **Once per scan:** recorded in the outbox as `report_link:<scan id>`, with the same key sent to Resend as its idempotency key.
+- **Checking the setup:** `POST /api/send` (D-050) now sends from the same address as the report email, takes an optional `{"to": "…"}`, and answers with what's set up and, for Resend's common errors, what to change.
+
+## D-063 · Each priority line is about this person (J + C, Oct 7). Refines D-045 and D-048
+Joshua asked that the three priorities each give their own score and something only true of the person who scanned. The scores already were their own. Two of the three lines weren't: a priority they hadn't asked about showed the concern's stock description, the same for everyone and the same sentence as under the face map.
+- **Every line now starts from their scan or their answers:** where the score sits among their own 15 ("your second-lowest score of the 15"), how far the lowest stands from the next ("3 points under pigmentation"), what they told us, or that they didn't mention it and the scan picked it up. Then where HD saw it most, then the treatment in their plan and its sessions.
+- **No invented differences:** when two scores are the same number, the line says "level with" the other. A number is never nudged to look different.
+- **"The same sessions"** only follows a line that named that treatment (before, it could name a treatment the line above hadn't).
+- Tests check every demo profile with three different people: three distinct lines, none a stock description, all within the copy rules. "More even skin" in their own words now reads as uneven tone.

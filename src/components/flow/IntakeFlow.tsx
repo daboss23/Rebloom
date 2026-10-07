@@ -130,8 +130,6 @@ export function IntakeFlow({ clinicSlug, initial, today }: { clinicSlug: string;
     });
   }
 
-  const optional = step === "goal" || step === "screening";
-
   return (
     <div className="pt-8">
       <div className="flex h-11 items-center justify-between">
@@ -178,18 +176,21 @@ export function IntakeFlow({ clinicSlug, initial, today }: { clinicSlug: string;
           </div>
         )}
 
-        {/* On the one long question, the way on stays in reach on a phone. Short ones simply end with it. */}
+        {/*
+          On the one long question, the way on stays in reach on a phone. The pinned bar is kept slim, and its
+          "optional" note sits under the question instead, so the first question still shows on a small phone.
+        */}
         <div
           className={
             step === "screening"
-              ? "sticky bottom-0 z-10 -mx-5 mt-10 bg-[linear-gradient(180deg,rgba(237,243,246,0)_0%,rgba(237,243,246,0.96)_30%,#edf3f6_55%)] px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8"
+              ? "sticky bottom-0 z-10 -mx-5 mt-10 bg-[linear-gradient(180deg,rgba(237,243,246,0)_0%,rgba(237,243,246,0.96)_40%,#edf3f6_70%)] px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-5"
               : "mt-10"
           }
         >
           <Button type="submit" block disabled={!canContinue(step, answers) || pending} className="!min-h-14 text-[16px]">
             {pending ? "Saving" : step === "about" ? "Continue to your photo" : "Continue"}
           </Button>
-          {optional && <p className="t-caption mt-3 text-center">This one is optional. You can continue without answering.</p>}
+          {step === "goal" && <p className="t-caption mt-3 text-center">This one is optional. You can continue without answering.</p>}
         </div>
       </form>
     </div>
@@ -358,6 +359,7 @@ function Step({
             title="A few routine questions."
             hint="Clinics ask everyone these before treatment. Your answers never rule anything out. They simply help your practitioner prepare."
           />
+          <p className="t-caption mt-2">Optional. Skip any you&apos;d rather talk through in person.</p>
           <div className="glass mt-8 divide-y divide-[#0c1a22]/[0.07] px-5">
             {SCREENING_QUESTIONS.map(([key, question]) => (
               <div key={key} className="py-5">

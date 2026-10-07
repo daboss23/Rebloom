@@ -155,7 +155,7 @@ describe("personal wording", () => {
       const text = [
         subhead(r),
         planRationale(p),
-        ...top.map((c, n) => priorityMeaning(n, c, top.slice(0, n), stated, p)),
+        ...top.map((c, n) => priorityMeaning(n, c, top.slice(0, n), stated, p, r.concerns)),
         ...mentions(r, stated, top, p).map((m) => m.text),
         ...p.homeCare.map((h) => h.reason),
       ].join("\n");
@@ -186,7 +186,7 @@ describe.skipIf(!process.env.SHOW_PLANS)("printout", () => {
       const stated = statedConcerns(i);
       const top = rankPriorities(r, stated);
       console.log(`\n=== ${name}\n${subhead(r)}\nfocus: ${p.focus.map((f) => `${f.key} ${f.ui}${f.stated ? "*" : ""}`).join(", ")}`);
-      top.forEach((c, n) => console.log(`  ${c.key} ${c.ui}: ${priorityMeaning(n, c, top.slice(0, n), stated, p)}`));
+      top.forEach((c, n) => console.log(`  ${c.key} ${c.ui}: ${priorityMeaning(n, c, top.slice(0, n), stated, p, r.concerns)}`));
       mentions(r, stated, top, p).forEach((m) => console.log(`  mention: ${m.text}`));
       console.log(planRationale(p));
       p.recommended.lines.forEach((l) => console.log(`  ${l.treatment.name} x${l.sessions} ${formatPrice(l.totalCents)}`));
@@ -250,7 +250,7 @@ describe("priorities answer what the client came in for", () => {
     const stated = statedConcerns(hdIntake);
     const p = plan(hdScan, hdIntake);
     const top = rankPriorities(hdScan, stated);
-    const lines = top.map((c, i) => priorityMeaning(i, c, top.slice(0, i), stated, p));
+    const lines = top.map((c, i) => priorityMeaning(i, c, top.slice(0, i), stated, p, hdScan.concerns));
     expect(lines.join(" ")).toMatch(/sun spots/);
     expect(lines.join(" ")).toMatch(/mouth to chin/);
     expect(new Set(lines).size).toBe(3);
@@ -319,5 +319,57 @@ describe("what-to-expect simulation (DECISIONS D-047)", () => {
     expect(findImageUrl({ url: "https://s3.test/a.jpg" })).toBe("https://s3.test/a.jpg");
     expect(findImageUrl({ output: [{ type: "simulation", url: "https://s3.test/b.jpg" }] })).toBe("https://s3.test/b.jpg");
     expect(findImageUrl({ note: "none" })).toBeNull();
+  });
+});
+
+describe("each priority speaks to this person (Joshua, Oct 7)", () => {
+  // Every demo profile, each read by someone who asked for different things.
+  const people: [string, Intake | null][] = [
+    ["ticked texture", intake({ concerns: ["texture"] })],
+    ["wrote about their wedding", intake({ concerns: ["uneven_tone"], goalText: "Smoother, more even skin for my wedding." })],
+    ["wrote about dark circles", intake({ concerns: ["fine_lines"], goalText: "Tired eyes and dark circles" })],
+  ];
+
+  it("gives each of the three its own score and its own line, never a stock description", async () => {
+    const { FIXTURE_PROFILES } = await import("@/lib/youcam/fixture");
+    const { CONCERNS } = await import("@/lib/skin/concerns");
+    const seen = new Set<string>();
+    for (const profile of FIXTURE_PROFILES) {
+      const r = result(profile.ui);
+      for (const [, i] of people) {
+        const stated = statedConcerns(i);
+        const p = plan(r, i);
+        const top = rankPriorities(r, stated);
+        const lines = top.map((c, n) => priorityMeaning(n, c, top.slice(0, n), stated, p, r.concerns));
+        expect(new Set(top.map((c) => c.ui)).size).toBe(3);
+        expect(new Set(lines).size).toBe(3);
+        for (const [n, line] of lines.entries()) {
+          expect(line).not.toContain(CONCERNS[top[n].key].describes);
+          // Where it sits among their own scores, or what they told us: something only true of them.
+          expect(line).toMatch(/lowest score|you told us|you mentioned|you didn't mention/i);
+        }
+        expect(checkCopy(lines.join("\n"))).toEqual([]);
+        // "The same sessions" only follows a line that named that treatment.
+        for (const [n, line] of lines.entries()) {
+          const same = line.match(/The same (.+) sessions work on this too/);
+          if (same) expect(lines.slice(0, n).join(" ")).toContain(same[1]);
+        }
+        lines.forEach((l) => seen.add(l));
+      }
+    }
+    // Same scores, different answers: the lines change with what each person told us.
+    expect(seen.size).toBeGreaterThan(24);
+  });
+
+  it("hears 'more even skin' as uneven tone", () => {
+    expect(statedConcerns(people[1][1]).get("age_spot")?.ownWords).toBe(true);
+  });
+
+  it("says plainly when two scores are level, rather than inventing a difference", async () => {
+    const { standing } = await import("@/lib/report/personal");
+    const r = result({ texture: 58, pore: 61, age_spot: 61 });
+    const pore = r.concerns.find((c) => c.key === "pore")!;
+    expect(standing(pore, r.concerns)).toBe("your second-lowest score, level with pigmentation");
+    expect(standing(r.concerns.find((c) => c.key === "texture")!, r.concerns)).toBe("your lowest score of the 15");
   });
 });

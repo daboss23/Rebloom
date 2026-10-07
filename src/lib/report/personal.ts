@@ -43,38 +43,79 @@ export function mostVisibleArea(concern: ConcernScore): string | null {
   return `Most visible ${AREA_PLACES[area]}.`;
 }
 
-/** The plain-words meaning under each of the three priorities. */
+const ORDINALS = ["", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth"];
+
+/**
+ * Where a score sits among this client's own scores: "your third-lowest of the 15", or "your second-lowest,
+ * level with redness" when another concern shows the same number. Only numbers the report shows.
+ */
+export function standing(concern: ConcernScore, all: ConcernScore[]): string {
+  const position = all.filter((c) => c.ui < concern.ui).length;
+  const level = all.filter((c) => c.key !== concern.key && c.ui === concern.ui).map((c) => c.key);
+  const place = position === 0 ? "your lowest score" : `your ${ORDINALS[position] ?? `${position + 1}th`}-lowest score`;
+  return level.length > 0 ? `${place}, level with ${joinLabels(level)}` : `${place} of the ${all.length}`;
+}
+
+const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
+
+/**
+ * The plain-words meaning under each of the three priorities. Every line is built from this client's own
+ * scan, answers and plan, never a stock description: where the score sits among their own scores, whether
+ * they asked about it, where HD saw it most, and which treatment in their plan works on it.
+ */
 export function priorityMeaning(
   rank: number,
   concern: ConcernScore,
   previous: ConcernScore[],
   stated: Map<ConcernKey, Stated>,
   plan: Plan,
+  all: ConcernScore[],
 ): string {
   const asked = stated.get(concern.key);
+  const name = label(concern.key).toLowerCase();
+  const place = standing(concern, all);
   const parts: string[] = [];
   if (rank === 0) {
-    parts.push("Your lowest score, and the area most likely to show visible change with treatment.");
-    if (asked) parts.push(`You mentioned ${asked.phrase} too, so we're starting in the same place.`);
+    // How far it stands out: the gap to the next score up, or who it's level with.
+    const next = all.filter((c) => c.ui > concern.ui).sort((a, b) => a.ui - b.ui)[0];
+    const tied = all.some((c) => c.key !== concern.key && c.ui === concern.ui);
+    const lead = tied || !next ? sentenceCase(place) : `Your lowest score, ${plural(next.ui - concern.ui, "point")} under ${label(next.key).toLowerCase()}`;
+    parts.push(`${lead}, and the area most likely to show visible change with treatment.`);
+    if (asked) {
+      parts.push(`You ${asked.ownWords ? "told us about" : "mentioned"} ${asked.phrase} too, so we're starting in the same place.`);
+    }
   } else if (asked) {
-    parts.push(
-      asked.ownWords
-        ? `You told us about ${asked.phrase}, and your scan shows room to improve here.`
-        : `You mentioned ${asked.phrase}, and your scan agrees there's room here.`,
-    );
+    // Asking lifts a concern into the three; say so plainly when its score alone wouldn't have.
+    const lifted = all.filter((c) => c.ui < concern.ui).length >= 3;
+    const verb = asked.ownWords ? "told us about" : "mentioned";
+    if (previous.some((p) => stated.get(p.key)?.phrase === asked.phrase)) {
+      // "Uneven tone" covers pigmentation and radiance: the second one says so, rather than repeating the first.
+      parts.push(`Part of the ${asked.phrase} you ${verb} shows here too: ${lifted ? `at ${concern.ui}, there's room to improve` : `it's ${place}`}.`);
+    } else {
+      const said = `You ${verb} ${asked.phrase}`;
+      parts.push(lifted ? `${said}, so it's in your three. At ${concern.ui}, there's room to improve.` : `${said}, and your scan agrees: it's ${place}.`);
+    }
+  } else if (stated.size > 0) {
+    parts.push(`You didn't mention ${name}, but your scan picked it up: it's ${place}.`);
   } else {
-    parts.push(CONCERNS[concern.key].describes);
+    parts.push(`${sentenceCase(place)}.`);
   }
   const where = mostVisibleArea(concern);
   if (where) parts.push(where);
 
-  const line = plan.recommended.lines.find((l) => l.covers.includes(concern.key));
+  // Each priority is paired with the first treatment in the plan that works on it. "The same sessions"
+  // only when a line above named that same treatment.
+  const lineFor = (key: ConcernKey) => plan.recommended.lines.find((l) => l.covers.includes(key));
+  const line = lineFor(concern.key);
+  const sharing = line ? previous.filter((p) => lineFor(p.key)?.treatment.id === line.treatment.id).length : 0;
   if (!line) {
     parts.push("Your practitioner will talk you through the options at your consultation.");
-  } else if (previous.some((p) => line.covers.includes(p.key))) {
+  } else if (sharing >= 2) {
+    parts.push(`One treatment, ${line.treatment.name}, works on all three.`);
+  } else if (sharing === 1) {
     parts.push(`The same ${line.treatment.name} sessions work on this too.`);
   } else {
-    parts.push(`${line.treatment.name} in your plan focuses here.`);
+    parts.push(`${line.treatment.name} in your plan focuses here, across ${plural(line.sessions, "session")}.`);
   }
   return parts.join(" ");
 }

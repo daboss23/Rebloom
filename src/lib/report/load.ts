@@ -15,12 +15,6 @@ export interface ReportData {
   latest: Scan;
 }
 
-/**
- * Whether the report email is actually sent. It arrives in Week 2 (PLAN.md). Until then the
- * confirmation after the gate never says "sent", and the report opens from the screen instead.
- */
-export const REPORT_EMAIL_LIVE = false;
-
 /** Everything a report link can see, or null. The token is the only key (brief section 5). */
 export const loadReportData = cache(async (token: string): Promise<ReportData | null> => {
   const store = getStore();

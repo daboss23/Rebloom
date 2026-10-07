@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { unlockReport, type SentResults, type UnlockResult } from "@/app/c/[clinicSlug]/actions";
 import { Bloom } from "@/components/dashboard/Bloom";
 import { LightField } from "@/components/dashboard/LightField";
@@ -78,6 +78,30 @@ export function ReportGate({
     dialog.current?.focus({ preventScroll: true });
   }, [sent]);
 
+  // A field the server turned back takes focus, so it can be corrected straight away.
+  useEffect(() => {
+    if (state?.field) document.getElementById(state.field)?.focus();
+  }, [state]);
+
+  // The panel is modal: Tab cycles through it, never out to the page dimmed behind it.
+  function keepFocusInside(e: KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== "Tab" || !dialog.current) return;
+    const focusable = [...dialog.current.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), input:not([disabled])")];
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || active === dialog.current)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+  const invalid = (field: NonNullable<UnlockResult["field"]>) =>
+    state?.field === field ? { "aria-invalid": true, "aria-describedby": "gate-error" } : {};
+
   return (
     <div className="relative pt-10 pb-8">
       <BlurredReport scanId={scanId} />
@@ -92,6 +116,7 @@ export function ReportGate({
               aria-modal="true"
               aria-labelledby="gate-title"
               tabIndex={-1}
+              onKeyDown={keepFocusInside}
               className="rise w-full max-w-[440px] overflow-hidden rounded-[28px] bg-[#f4f8fa] shadow-[0_40px_90px_-30px_rgba(12,26,34,0.7)] outline-none ring-1 ring-white/80"
             >
               {sent ? (
@@ -117,23 +142,32 @@ export function ReportGate({
                   <form action={action} className="space-y-4 px-6 pb-6 pt-6">
                     <div>
                       <FieldLabel htmlFor="firstName">First name</FieldLabel>
-                      <TextInput id="firstName" name="firstName" autoComplete="given-name" maxLength={60} required />
+                      <TextInput id="firstName" name="firstName" autoComplete="given-name" maxLength={60} required defaultValue={state?.values?.firstName} {...invalid("firstName")} />
                     </div>
                     <div>
                       <FieldLabel htmlFor="email">Email</FieldLabel>
-                      <TextInput id="email" name="email" type="email" inputMode="email" autoComplete="email" required />
+                      <TextInput
+                        id="email"
+                        name="email"
+                        type="email"
+                        inputMode="email"
+                        autoComplete="email"
+                        required
+                        defaultValue={state?.values?.email}
+                        {...invalid("email")}
+                      />
                     </div>
                     <div>
                       <FieldLabel htmlFor="phone" optional>
                         Phone
                       </FieldLabel>
-                      <TextInput id="phone" name="phone" type="tel" autoComplete="tel" maxLength={30} />
+                      <TextInput id="phone" name="phone" type="tel" autoComplete="tel" maxLength={30} defaultValue={state?.values?.phone} {...invalid("phone")} />
                     </div>
-                    <Checkbox id="reminders" name="reminders">
+                    <Checkbox id="reminders" name="reminders" defaultChecked={state?.values?.reminders}>
                       Remind me when it&apos;s time for a progress scan.
                     </Checkbox>
 
-                    {state?.error && <FormAlert>{state.error}</FormAlert>}
+                    {state?.error && <FormAlert id="gate-error">{state.error}</FormAlert>}
 
                     <Button type="submit" block disabled={pending} className="!min-h-14 text-[16px]">
                       {pending ? "Sending your results" : "Send my results"}
@@ -151,20 +185,21 @@ export function ReportGate({
 }
 
 function Confirmation({ sent, clinicName, demo }: { sent: SentResults; clinicName: string; demo: boolean }) {
+  const emailed = sent.delivery === "sent";
   return (
     <div className="fade" role="status">
       <span aria-hidden className="grid h-14 w-14 place-items-center rounded-full bg-[radial-gradient(circle_at_30%_30%,#fff_0%,#ffe4d8_55%,#f4b9a3_100%)] shadow-[0_14px_30px_-16px_rgba(158,74,93,0.6)] ring-1 ring-white">
         <Bloom size={30} unfurl className="text-[#9e4a5d]" />
       </span>
       <div className="mt-6">
-        <Label className="!text-[#1e5a78]">{sent.emailed ? "Results sent" : "All done"}</Label>
+        <Label className="!text-[#1e5a78]">{emailed ? "Results sent" : "All done"}</Label>
       </div>
       <h1 id="gate-title" className="t-h2 mt-3">
-        {sent.emailed ? `${sent.firstName}, your results are on their way.` : `${sent.firstName}, your report is ready.`}
+        {emailed ? `${sent.firstName}, your results are on their way.` : `${sent.firstName}, your report is ready.`}
       </h1>
-      {sent.emailed ? (
+      {emailed ? (
         <p className="t-body mt-4">
-          We&apos;ve sent your skin report to <span className="text-ink break-all">{sent.email}</span>, with a private
+          We&apos;ve sent your skin report to <span className="text-ink [overflow-wrap:anywhere]">{sent.email}</span>, with a private
           link that&apos;s yours to keep. Come back to it after every visit to see your progress.
         </p>
       ) : (
@@ -175,7 +210,7 @@ function Confirmation({ sent, clinicName, demo }: { sent: SentResults; clinicNam
       )}
       <p className="t-body mt-4">Thank you for completing your skin consultation with {clinicName}.</p>
 
-      {sent.emailed ? (
+      {emailed ? (
         <p className="t-caption mt-8">
           Nothing in your inbox after a few minutes? Check your spam folder, or{" "}
           <Link href={sent.reportPath} className="text-ink underline decoration-[#0c1a22]/30 underline-offset-4 hover:decoration-ink">
@@ -189,7 +224,9 @@ function Confirmation({ sent, clinicName, demo }: { sent: SentResults; clinicNam
             Open my report
           </ButtonLink>
           <p className="t-caption mt-4 text-center">
-            Demo: email isn&apos;t connected yet, so nothing was sent to {sent.email}.
+            {sent.delivery === "off"
+              ? `Demo: email isn't connected yet, so nothing was sent to ${sent.email}.`
+              : `We couldn't email your report to ${sent.email}, so open it here and bookmark the page.`}
           </p>
         </>
       )}
