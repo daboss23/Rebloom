@@ -88,7 +88,10 @@ test("a scan runs end to end in fixture mode, and Delete my data removes it", as
   await expect(page.getByText(/^Consultation and /)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Your investment" })).toBeVisible();
   await expect(page.getByText("Estimated total")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Call to book your first session" })).toHaveAttribute("href", "tel:+13105550142");
+  // Booking is online now (DECISIONS D-065), from the next real open time; the phone stays one tap away.
+  await expect(page.getByText(/^First open time/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Book your first session" })).toHaveAttribute("href", `${new URL(reportUrl).pathname}/book`);
+  await expect(page.getByRole("link", { name: "Call (310) 555-0142" })).toHaveAttribute("href", "tel:+13105550142");
   if (process.env.REPORT_SCREENSHOT) await page.screenshot({ path: process.env.REPORT_SCREENSHOT, fullPage: true });
 
   // Masks were drawn and are served only through the report link.

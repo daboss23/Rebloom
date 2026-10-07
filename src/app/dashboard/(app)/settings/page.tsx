@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { PageHeader, pill } from "@/components/dashboard/PageHeader";
+import { DepositSwitch } from "@/components/dashboard/DepositSwitch";
 import { ClientPagePreview } from "@/components/flow/ClientPagePreview";
+import { NOTICE_HOURS } from "@/lib/booking/service";
 import { loadBook } from "@/lib/dashboard/load";
+import type { OpeningHours } from "@/lib/domain";
+import { getStore } from "@/lib/store";
 import { env, features } from "@/lib/env";
 import { formatPrice } from "@/lib/plan/build";
 import { concernLabel } from "@/lib/skin/concerns";
@@ -18,12 +22,29 @@ const CONNECTS_TO = [
   ["Webhooks and Zapier", "Send events anywhere"],
 ] as const;
 
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const twelve = (hhmm: string) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return `${((h + 11) % 12) + 1}${m ? `:${String(m).padStart(2, "0")}` : ""}${h < 12 ? "am" : "pm"}`;
+};
+/** "Tuesday to Saturday, 10am to 6pm" when every open day keeps the same hours, otherwise one day at a time. */
+function hoursText(hours: OpeningHours): string {
+  const open = ([0, 1, 2, 3, 4, 5, 6] as const).filter((d) => hours.days[d]);
+  if (open.length === 0) return "Closed";
+  const same = open.every((d) => hours.days[d]!.open === hours.days[open[0]]!.open && hours.days[d]!.close === hours.days[open[0]]!.close);
+  const run = open.every((d, i) => i === 0 || d === open[i - 1] + 1);
+  const span = (d: (typeof open)[number]) => `${twelve(hours.days[d]!.open)} to ${twelve(hours.days[d]!.close)}`;
+  if (same && run && open.length > 1) return `${DAY_NAMES[open[0]]} to ${DAY_NAMES[open[open.length - 1]]}, ${span(open[0])}`;
+  return open.map((d) => `${DAY_NAMES[d]} ${span(d)}`).join(" · ");
+}
+
 const interval = (min: number, max: number) => (min === max ? `Every ${min} days` : `Every ${min} to ${max} days`);
 
 export default async function SettingsPage() {
   const book = await loadBook();
   const { clinic } = book;
   const { treatments, products } = book.input;
+  const settings = await getStore().getClinicSettings(clinic.id, book.sandboxId);
 
   return (
     <div>
@@ -36,6 +57,7 @@ export default async function SettingsPage() {
             {[
               ["#menu", "Menu"],
               ["#brand", "Brand"],
+              ["#booking", "Booking"],
               ["#connects", "Connects to"],
             ].map(([href, label]) => (
               <li key={href}>
@@ -125,7 +147,6 @@ export default async function SettingsPage() {
               ["Name", clinic.name],
               ["Wordmark", clinic.wordmark],
               ["Accent", clinic.accentHex.toUpperCase()],
-              ["Deposit", formatPrice(clinic.depositCents)],
             ].map(([term, value]) => (
               <div key={term} className="flex items-baseline justify-between gap-4 border-b border-[#0c1a22]/[0.06] py-3 last:border-0">
                 <dt className="t-label !text-[10.5px]">{term}</dt>
@@ -137,6 +158,32 @@ export default async function SettingsPage() {
             ))}
           </dl>
         </div>
+      </section>
+
+      {/* ---------- Booking (DECISIONS D-065, D-066) ---------- */}
+      <section id="booking" aria-labelledby="booking-title" className="glass focus-in mt-6 scroll-mt-28 p-6 sm:p-8">
+        <h2 id="booking-title" className="font-display text-[34px] font-light text-ink">
+          Booking
+        </h2>
+        <p className="t-caption mt-1 !text-[12.5px]">How clients book from their report. Times come from your hours and the menu.</p>
+        <div className="mt-6 rounded-[16px] bg-white/70 p-6 ring-1 ring-inset ring-white">
+          <DepositSwitch initial={settings.depositRequired} amount={formatPrice(clinic.depositCents)} />
+          {settings.depositRequired && !env.STRIPE_SECRET_KEY && (
+            <p className="t-caption -mt-1 !text-[13px] text-[#7a4210]">Stripe isn&apos;t connected yet, so no deposit is taken until it is.</p>
+          )}
+        </div>
+        <dl className="mt-4">
+          {[
+            ["Hours", hoursText(clinic.hours)],
+            ["Times", `Every ${clinic.hours.slotMinutes} minutes, one treatment room`],
+            ["Cancelling", `Online, up to ${NOTICE_HOURS} hours before. After that, clients call you.`],
+          ].map(([term, value]) => (
+            <div key={term} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-[#0c1a22]/[0.06] py-3.5 last:border-0">
+              <dt className="t-label !text-[10.5px]">{term}</dt>
+              <dd className="text-[14px] text-ink">{value}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       {/* ---------- Connects to ---------- */}

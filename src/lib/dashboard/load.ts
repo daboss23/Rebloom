@@ -43,6 +43,8 @@ export const loadBook = cache(async (): Promise<Book> => {
     treatments,
     products,
     ...records,
+    // A time held while a client pays isn't a visit yet (DECISIONS D-065).
+    appointments: records.appointments.filter((a) => !(a.status === "booked" && a.depositStatus === "pending")),
   };
   return {
     ...session,

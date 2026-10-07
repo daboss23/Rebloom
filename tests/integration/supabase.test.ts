@@ -223,6 +223,51 @@ describe.skipIf(!url || !secret)("Supabase store (live project)", () => {
     expect((await store.listMessages(clinic.id, sandboxId)).length).toBeGreaterThan(12);
   });
 
+  it("books one visit per time: the database refuses an overlap, settles a deposit once, and keeps the owner's settings per sandbox", async () => {
+    const { SlotTakenError } = await import("@/lib/store/types");
+    const mv = (await store.getClinicBySlug("maison-verre"))!;
+    const client = await store.createClient({ clinicId: mv.id, sandboxId, now });
+    const visit = (startsAt: string, endsAt: string) => ({
+      id: randomUUID(),
+      clinicId: mv.id,
+      clientId: client.id,
+      sandboxId,
+      kind: "consult" as const,
+      treatmentId: null,
+      planItemId: null,
+      staffId: null,
+      startsAt,
+      endsAt,
+      status: "booked" as const,
+      depositCents: 5000,
+      depositStatus: "pending" as const,
+      depositPaymentIntent: null,
+      createdAt: now.toISOString(),
+    });
+    const held = await store.addAppointment(visit("2031-03-04T18:00:00.000Z", "2031-03-04T19:00:00.000Z"));
+    await expect(store.addAppointment(visit("2031-03-04T18:30:00.000Z", "2031-03-04T19:30:00.000Z"))).rejects.toBeInstanceOf(SlotTakenError);
+    expect((await store.getAppointment(held.id))?.depositStatus).toBe("pending");
+
+    const settle = () =>
+      store.transitionAppointment(held.id, { status: ["booked"], depositStatus: ["pending"] }, { depositStatus: "paid", depositPaymentIntent: `pi_${randomUUID()}` });
+    const [a, b] = await Promise.all([settle(), settle()]);
+    expect([a, b].filter(Boolean)).toHaveLength(1);
+
+    expect(await store.getClinicSettings(mv.id, sandboxId)).toEqual({ depositRequired: true });
+    expect(await store.setClinicSettings(mv.id, sandboxId, { depositRequired: false }, now)).toEqual({ depositRequired: false });
+    expect(await store.setClinicSettings(mv.id, sandboxId, { depositRequired: false }, now)).toEqual({ depositRequired: false });
+    expect(await store.getClinicSettings(mv.id, sandboxId)).toEqual({ depositRequired: false });
+    // Another sandbox keeps the defaults.
+    expect(await store.getClinicSettings(mv.id, randomUUID())).toEqual({ depositRequired: true });
+
+    const message = await store.addMessage({
+      clinicId: mv.id, clientId: client.id, sandboxId, type: "booking_confirmation", channel: "email", subject: "s", body: "b",
+      status: "queued", dedupeKey: `booking_confirmed:${held.id}`, scheduledFor: null, sentAt: null, createdAt: now.toISOString(),
+    });
+    await store.updateMessage(message!.id, { status: "sent", sentAt: now.toISOString() });
+    expect((await store.listMessages(mv.id, sandboxId)).find((m) => m.id === message!.id)?.status).toBe("sent");
+  });
+
   it("moves the sandbox clock forward, never back", async () => {
     expect((await store.setClockOffset(sandboxId, 3)).clockOffsetDays).toBe(3);
     await expect(store.setClockOffset(sandboxId, 1)).rejects.toThrow("only moves forward");

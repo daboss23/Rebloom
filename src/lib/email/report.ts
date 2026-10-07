@@ -50,7 +50,7 @@ export function reportEmail({ clinic, firstName, url }: { clinic: Clinic; firstN
     `Your skin report from ${clinic.name} is ready. It shows your three priorities on your own photo, a plan built from our treatment menu, and every price upfront.`,
     `Open your report: ${url}`,
     "The link is private and yours to keep. Come back to it after every visit to see your progress.",
-    `When you're ready to book, call us on ${clinic.phone}.`,
+    `When you're ready, book your first visit from your report, or call us on ${clinic.phone}.`,
     `${clinic.name}\n${clinic.address}`,
     "You're receiving this because you asked for your results after your skin scan. You can delete your photo and details at any time from your report.",
   ];
@@ -69,7 +69,7 @@ export function reportEmail({ clinic, firstName, url }: { clinic: Clinic; firstN
 <tr><td style="padding:28px 32px 0;">
 <a href="${e(url)}" style="display:inline-block;background:#d9ae62;background-image:linear-gradient(100deg,#c99645 0%,#f1d49a 45%,#d9ae62 70%,#b98a3c 100%);color:#1a1206;text-decoration:none;font-size:16px;padding:16px 28px;border-radius:14px;">Open my report</a>
 </td></tr>
-<tr><td style="padding:24px 32px 0;font-size:14px;line-height:1.6;">The link is private and yours to keep. Come back to it after every visit to see your progress. When you're ready to book, call us on ${e(clinic.phone)}.</td></tr>
+<tr><td style="padding:24px 32px 0;font-size:14px;line-height:1.6;">The link is private and yours to keep. Come back to it after every visit to see your progress. When you're ready, book your first visit from your report, or call us on ${e(clinic.phone)}.</td></tr>
 <tr><td style="padding:24px 32px 0;font-size:13px;line-height:1.5;color:#556773;">If the button doesn't work, copy this link into your browser:<br><a href="${e(url)}" style="color:#1e5a78;word-break:break-all;">${e(url)}</a></td></tr>
 <tr><td style="padding:28px 32px 28px;font-size:13px;line-height:1.5;color:#556773;border-top:1px solid #e3ebef;">${e(clinic.name)} · ${e(clinic.address)}<br>You're receiving this because you asked for your results after your skin scan. You can delete your photo and details at any time from your report.<br><br>Powered by Rebloom</td></tr>
 </table>

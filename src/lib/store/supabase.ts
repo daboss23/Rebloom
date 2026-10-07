@@ -4,12 +4,12 @@ import "server-only";
 // for every table with no policies, so the public keys can read nothing (see the migration).
 
 import { createClient, type PostgrestError, type SupabaseClient } from "@supabase/supabase-js";
-import type { Appointment, Client, ClientPlan, Consent, Intake, Message, PlanItem, Report, Sandbox, Scan, Staff } from "@/lib/domain";
+import { DEFAULT_CLINIC_SETTINGS, type Appointment, type Client, type ClientPlan, type Consent, type Intake, type Message, type PlanItem, type Report, type Sandbox, type Scan, type Staff } from "@/lib/domain";
 import { env, supabaseSecretKey } from "@/lib/env";
 import { newId, newToken } from "@/lib/ids";
 import { clinicFromRow, fromRow, menuItemFromRow, toRow, type Row } from "./rows";
 import { scanStoragePaths } from "./scan-paths";
-import type { ObjectStorage, PlanWithItems, Store, UploadTarget } from "./types";
+import { SlotTakenError, type ObjectStorage, type PlanWithItems, type Store, type UploadTarget } from "./types";
 
 export const SCANS_BUCKET = "scans";
 
@@ -53,6 +53,8 @@ function maybe<T>(result: Result<Row>, what: string): T | null {
 const many = <T>(result: Result<Row[]>, what: string): T[] => (check(result, what) ?? []).map((r) => fromRow<T>(r));
 
 const UNIQUE_VIOLATION = "23505";
+/** appointments_no_overlap: another booked visit has that time. */
+const EXCLUSION_VIOLATION = "23P01";
 
 export const supabaseStore: Store = {
   kind: "supabase",
@@ -86,6 +88,26 @@ export const supabaseStore: Store = {
   },
   async listStaff(clinicId) {
     return many<Staff>(await db().from("staff").select("*").eq("clinic_id", clinicId).order("created_at").order("name"), "listStaff");
+  },
+  async getClinicSettings(clinicId, sandboxId) {
+    if (sandboxId !== null && !isUuid(sandboxId)) return { ...DEFAULT_CLINIC_SETTINGS };
+    let query = db().from("clinic_settings").select("deposit_required").eq("clinic_id", clinicId);
+    query = sandboxId === null ? query.is("sandbox_id", null) : query.eq("sandbox_id", sandboxId);
+    const row = check(await query.maybeSingle(), "getClinicSettings") as Row | null;
+    return { ...DEFAULT_CLINIC_SETTINGS, ...(row ? { depositRequired: Boolean(row.deposit_required) } : {}) };
+  },
+  async setClinicSettings(clinicId, sandboxId, patch, now) {
+    const current = await supabaseStore.getClinicSettings(clinicId, sandboxId);
+    const next = { ...current, ...patch };
+    const row = check(
+      await db()
+        .from("clinic_settings")
+        .upsert({ clinic_id: clinicId, sandbox_id: sandboxId, deposit_required: next.depositRequired, updated_at: now.toISOString() }, { onConflict: "clinic_id,sandbox_id" })
+        .select("deposit_required")
+        .single(),
+      "setClinicSettings",
+    ) as Row;
+    return { depositRequired: Boolean(row.deposit_required) };
   },
 
   async getSandbox(id) {
@@ -205,6 +227,24 @@ export const supabaseStore: Store = {
       "listAppointments",
     );
   },
+  async getAppointment(id) {
+    if (!isUuid(id)) return null;
+    return maybe<Appointment>(await db().from("appointments").select("*").eq("id", id).maybeSingle(), "getAppointment");
+  },
+  async addAppointment(appointment) {
+    const inserted = await db().from("appointments").insert(toRow(appointment)).select().single();
+    if (inserted.error?.code === EXCLUSION_VIOLATION) throw new SlotTakenError();
+    return one<Appointment>(inserted, "addAppointment");
+  },
+  async transitionAppointment(id, from, patch) {
+    if (!isUuid(id)) return null;
+    // One conditional UPDATE: of two requests settling the same visit, exactly one matches.
+    let query = db().from("appointments").update(toRow(patch)).eq("id", id).in("status", from.status);
+    if (from.depositStatus) query = query.in("deposit_status", from.depositStatus);
+    const updated = await query.select().maybeSingle();
+    if (updated.error?.code === EXCLUSION_VIOLATION) throw new SlotTakenError();
+    return maybe<Appointment>(updated, "transitionAppointment");
+  },
   async listMessages(clinicId, sandboxId) {
     if (!isUuid(sandboxId)) return [];
     return many<Message>(
@@ -257,6 +297,9 @@ export const supabaseStore: Store = {
     // messages_dedupe_idx: this client already has a message with this key.
     if (inserted.error?.code === UNIQUE_VIOLATION) return null;
     return one<Message>(inserted, "addMessage");
+  },
+  async updateMessage(id, patch) {
+    check(await db().from("messages").update(toRow(patch)).eq("id", id), "updateMessage");
   },
   async removeSkippedMessage(clientId, dedupeKey) {
     if (!isUuid(clientId)) return false;

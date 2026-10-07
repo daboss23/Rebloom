@@ -10,11 +10,11 @@ import path from "node:path";
 import { SEED_CLINICS } from "@/data/clinics";
 import { SEED_PRODUCTS, SEED_TREATMENTS } from "@/data/menu";
 import { SEED_STAFF } from "@/data/staff";
-import type { ApiUsage, Appointment, Client, ClientPlan, Consent, Intake, Message, PlanItem, Report, Sandbox, Scan } from "@/lib/domain";
+import { DEFAULT_CLINIC_SETTINGS, type ApiUsage, type Appointment, type Client, type ClientPlan, type ClinicSettings, type Consent, type Intake, type Message, type PlanItem, type Report, type Sandbox, type Scan } from "@/lib/domain";
 import { localSecret } from "@/lib/env";
 import { newId, newToken } from "@/lib/ids";
 import { scanStoragePaths } from "./scan-paths";
-import type { ObjectStorage, Store, UploadTarget } from "./types";
+import { SlotTakenError, type ObjectStorage, type Store, type UploadTarget } from "./types";
 
 interface Db {
   sandboxes: Sandbox[];
@@ -27,6 +27,7 @@ interface Db {
   planItems: PlanItem[];
   appointments: Appointment[];
   messages: Message[];
+  settings: (ClinicSettings & { clinicId: string; sandboxId: string | null; updatedAt: string })[];
   usage: ApiUsage[];
   events: { id: string; clinicId: string; sandboxId: string | null; type: string; createdAt: string }[];
 }
@@ -42,6 +43,7 @@ const emptyDb = (): Db => ({
   planItems: [],
   appointments: [],
   messages: [],
+  settings: [],
   usage: [],
   events: [],
 });
@@ -97,6 +99,19 @@ function tx<T>(fn: (db: Db) => T | Promise<T>, write = false): Promise<T> {
   return run;
 }
 
+/** As the database's appointments_no_overlap constraint: one booked visit at a time per clinic and sandbox. */
+function overlapsBooked(db: Db, a: Appointment): boolean {
+  return db.appointments.some(
+    (b) =>
+      b.id !== a.id &&
+      b.status === "booked" &&
+      b.clinicId === a.clinicId &&
+      b.sandboxId === a.sandboxId &&
+      Date.parse(b.startsAt) < Date.parse(a.endsAt) &&
+      Date.parse(a.startsAt) < Date.parse(b.endsAt),
+  );
+}
+
 function must<T>(value: T | undefined, what: string): T {
   if (!value) throw new Error(`${what} not found`);
   return value;
@@ -123,6 +138,18 @@ export const localStore: Store = {
   async listStaff(clinicId) {
     return SEED_STAFF.filter((s) => s.clinicId === clinicId);
   },
+  getClinicSettings: (clinicId, sandboxId) =>
+    tx((db) => {
+      const row = db.settings.find((r) => r.clinicId === clinicId && r.sandboxId === sandboxId);
+      return { ...DEFAULT_CLINIC_SETTINGS, ...(row ? { depositRequired: row.depositRequired } : {}) };
+    }),
+  setClinicSettings: (clinicId, sandboxId, patch, now) =>
+    tx((db) => {
+      let row = db.settings.find((r) => r.clinicId === clinicId && r.sandboxId === sandboxId);
+      if (!row) db.settings.push((row = { ...DEFAULT_CLINIC_SETTINGS, clinicId, sandboxId, updatedAt: now.toISOString() }));
+      Object.assign(row, patch, { updatedAt: now.toISOString() });
+      return { depositRequired: row.depositRequired };
+    }, true),
 
   getSandbox: (id) => tx((db) => db.sandboxes.find((s) => s.id === id) ?? null),
   createSandbox: (id, now) =>
@@ -147,6 +174,7 @@ export const localStore: Store = {
       db.sandboxes = db.sandboxes.filter((s) => !gone.has(s.id));
       dropClients(db, new Set(db.clients.filter((c) => c.sandboxId && gone.has(c.sandboxId)).map((c) => c.id)));
       db.events = db.events.filter((e) => !(e.sandboxId && gone.has(e.sandboxId)));
+      db.settings = db.settings.filter((s) => !(s.sandboxId && gone.has(s.sandboxId)));
       // Usage stays, so spent units keep counting against the budget.
     }, true),
   setClockOffset: (sandboxId, days) =>
@@ -217,6 +245,23 @@ export const localStore: Store = {
         .filter((a) => a.clinicId === clinicId && a.sandboxId === sandboxId)
         .sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
     ),
+  getAppointment: (id) => tx((db) => db.appointments.find((a) => a.id === id) ?? null),
+  addAppointment: (appointment) =>
+    tx((db) => {
+      if (overlapsBooked(db, appointment)) throw new SlotTakenError();
+      db.appointments.push(appointment);
+      return appointment;
+    }, true),
+  transitionAppointment: (id, from, patch) =>
+    tx((db) => {
+      const appointment = db.appointments.find((a) => a.id === id);
+      if (!appointment || !from.status.includes(appointment.status)) return null;
+      if (from.depositStatus && !from.depositStatus.includes(appointment.depositStatus)) return null;
+      const next = { ...appointment, ...patch };
+      if (next.status === "booked" && appointment.status !== "booked" && overlapsBooked(db, next)) throw new SlotTakenError();
+      Object.assign(appointment, patch);
+      return appointment;
+    }, true),
   listMessages: (clinicId, sandboxId) =>
     tx((db) =>
       db.messages
@@ -253,6 +298,10 @@ export const localStore: Store = {
       const message: Message = { id: newId(), ...input };
       db.messages.push(message);
       return message;
+    }, true),
+  updateMessage: (id, patch) =>
+    tx((db) => {
+      Object.assign(must(db.messages.find((m) => m.id === id), "Message"), patch);
     }, true),
   removeSkippedMessage: (clientId, dedupeKey) =>
     tx((db) => {

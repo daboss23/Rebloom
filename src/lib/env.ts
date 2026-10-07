@@ -73,6 +73,8 @@ export const envSchema = z.object({
       .optional(),
   ),
   STRIPE_WEBHOOK_SECRET: optional,
+  /** Only changed for browser tests against a local stand-in for Stripe. */
+  STRIPE_API_BASE: z.preprocess((v) => (v === "" ? undefined : v), z.url({ protocol: /^https?$/ }).optional()),
 
   CRON_SECRET: optional,
   IP_HASH_SALT: optional,
@@ -90,6 +92,10 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
+
+if (env.VERCEL_ENV === "production" && env.STRIPE_API_BASE) {
+  throw new Error("STRIPE_API_BASE is for local tests only. Remove it from the production environment.");
+}
 
 if (env.VERCEL_ENV === "production" && !env.YOUCAM_API_BASE.startsWith("https://")) {
   throw new Error("YOUCAM_API_BASE must use HTTPS in production. Leave it unset to use YouCam's own address.");
