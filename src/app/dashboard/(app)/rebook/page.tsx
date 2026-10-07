@@ -7,7 +7,7 @@ import { toQueueRow } from "@/components/dashboard/queue-row";
 import { cx } from "@/components/ui/cx";
 import { loadBook } from "@/lib/dashboard/load";
 import { fullName, relativeDay } from "@/lib/dashboard/view";
-import { env } from "@/lib/env";
+import { env, features } from "@/lib/env";
 import { formatPrice } from "@/lib/plan/build";
 import { TRIGGER_LABEL, TRIGGER_ORDER, type QueueAction, type TriggerKind } from "@/lib/rebook/engine";
 import {
@@ -71,7 +71,7 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
       </PageHeader>
 
       <section aria-label="Waiting" className="mt-10">
-        <Queue rows={rows} demo={env.DEMO_MODE} empty="Nothing waiting here. Move the clock forward to see who comes due." />
+        <Queue rows={rows} demo={env.DEMO_MODE} realCopy={env.DEMO_MODE && features.email} empty="Nothing waiting here. Move the clock forward to see who comes due." />
       </section>
 
       <section aria-labelledby="outbox" className="glass focus-in mt-14 p-6 sm:p-8">

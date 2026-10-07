@@ -84,6 +84,16 @@ test("the practitioner brief confirms the plan the report suggests", async ({ pa
   await expect(page.getByRole("button", { name: "Confirm plan with client" })).toHaveCount(0);
 });
 
+test("a stalled plan's brief offers the review itself, not a link back to the same page", async ({ page }) => {
+  await page.goto("/dashboard/clients");
+  await page.getByRole("link", { name: /Grace L/ }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Grace L.");
+  const flag = page.getByRole("region", { name: "In the queue" });
+  await expect(flag.getByRole("link", { name: "Open brief" })).toHaveCount(0);
+  await flag.getByRole("button", { name: "Mark as reviewed" }).click();
+  await expect(page.getByRole("button", { name: "Undo" })).toBeVisible();
+});
+
 test("the note Dana writes is saved for the client's report", async ({ page }) => {
   await page.goto("/dashboard/clients");
   await page.getByRole("link", { name: /Priya Shah/ }).click();

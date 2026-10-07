@@ -14,7 +14,7 @@ import { cx } from "@/components/ui/cx";
 import { briefFacts, lowestScores, suggestedPlan } from "@/lib/dashboard/brief";
 import { loadBook } from "@/lib/dashboard/load";
 import { monthDay, shortDay, shortName, statusOf } from "@/lib/dashboard/view";
-import { env } from "@/lib/env";
+import { env, features } from "@/lib/env";
 import { formatPrice } from "@/lib/plan/build";
 import { courses } from "@/lib/rebook/engine";
 import { concernLabel } from "@/lib/skin/concerns";
@@ -165,7 +165,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
 
       {item && (
         <section aria-label="In the queue" className="mt-10">
-          <Queue rows={[toQueueRow(item, facts)]} demo={env.DEMO_MODE} empty="" hideNames />
+          <Queue rows={[toQueueRow(item, facts)]} demo={env.DEMO_MODE} realCopy={env.DEMO_MODE && features.email} empty="" onBrief />
         </section>
       )}
 

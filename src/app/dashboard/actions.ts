@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -9,12 +10,16 @@ import { loadBook } from "@/lib/dashboard/load";
 import { clearStaffCookie, readSession, setStaffCookie } from "@/lib/dashboard/session";
 import { ensureDemoClients } from "@/lib/demo/ensure";
 import { env, features } from "@/lib/env";
+import { hintFor } from "@/lib/email/hints";
+import { DEMO_COPY_LIMIT, DEMO_COPY_TYPE, demoCopyKey, foreignLinks, rebookEmail } from "@/lib/email/rebook";
 import { resend } from "@/lib/email/resend";
+import { appOrigin } from "@/lib/origin";
 import { ensureSandboxId, sandboxNow } from "@/lib/sandbox";
 import { getStore } from "@/lib/store";
 import type { PlanItem } from "@/lib/domain";
 import { newId } from "@/lib/ids";
 import { suggestedPlan } from "@/lib/dashboard/brief";
+import { fullName } from "@/lib/dashboard/view";
 
 export interface ActionResult {
   ok: boolean;
@@ -60,6 +65,8 @@ const draftInput = z.object({
   dedupeKey: z.string().min(1),
   subject: z.string().trim().min(1, "Add a subject.").max(200),
   body: z.string().trim().min(1, "Write a message first.").max(5000),
+  /** Demo mode only: the address of whoever is trying the demo, for a real copy of the email. */
+  copyTo: z.union([z.literal(""), z.email("That email address doesn't look right.").max(254)]).optional(),
 });
 
 /**
@@ -84,12 +91,42 @@ export async function sendRebook(input: z.input<typeof draftInput>): Promise<Act
   let status: "sent" | "failed" = "sent";
   if (live) {
     try {
-      const { error } = await resend().emails.send({ from: env.EMAIL_FROM!, to: facts.client.email!, subject, text: body });
+      const mail = rebookEmail({ clinic: book.clinic, subject, body });
+      const { error } = await resend().emails.send({ from: mail.from, to: facts.client.email!, subject: mail.subject, text: mail.text, html: mail.html });
       if (error) status = "failed";
     } catch {
       status = "failed";
     }
   }
+
+  // Demo mode: the client is a sample, so a real copy can go to whoever is trying the demo (DECISIONS D-064).
+  // It goes first, so if it can't be sent nothing has happened yet and the sheet stays open to try again.
+  const copyTo = env.DEMO_MODE && features.email && parsed.data.copyTo ? parsed.data.copyTo : null;
+  const name = facts.client.firstName ?? "the client";
+  if (copyTo) {
+    const copies = book.input.messages.filter((m) => m.type === DEMO_COPY_TYPE && m.status === "sent").length;
+    if (copies >= DEMO_COPY_LIMIT) return { ok: false, error: `This demo has sent its ${DEMO_COPY_LIMIT} copies. Clear the address to log the message without one.` };
+    if (foreignLinks(`${subject}\n${body}`, await appOrigin()).length > 0) {
+      return { ok: false, error: "In the demo, a copy can only link to this app. Remove the other link, or clear the address." };
+    }
+    const mail = rebookEmail({ clinic: book.clinic, subject, body, demoFor: fullName(facts.client) });
+    let failure: string | null = null;
+    try {
+      const { error } = await resend().emails.send(
+        { from: mail.from, to: copyTo, subject: mail.subject, text: mail.text, html: mail.html },
+        // One email per row and address, even if Send is pressed twice. The key stays short whatever the address.
+        { idempotencyKey: `${book.sandboxId}:${demoCopyKey(item.dedupeKey)}:${createHash("sha256").update(copyTo).digest("hex").slice(0, 16)}` },
+      );
+      if (error) failure = error.message;
+    } catch (e) {
+      failure = e instanceof Error ? e.message : "Couldn't reach Resend.";
+    }
+    if (failure) {
+      console.error(`Demo copy not sent: ${failure}`);
+      return { ok: false, error: `The copy couldn't be emailed. ${hintFor(failure) ?? "Please try again, or clear the address to log it without one."}` };
+    }
+  }
+
   const sentAt = book.now.toISOString();
   const message = await getStore().addMessage({
     clinicId: book.clinic.id,
@@ -108,7 +145,26 @@ export async function sendRebook(input: z.input<typeof draftInput>): Promise<Act
   revalidatePath("/dashboard", "layout");
   if (!message) return { ok: false, error: "This one has already been sent." };
   if (status === "failed") return { ok: false, error: "The email didn't go through. It's in the outbox to try again." };
-  const name = facts.client.firstName ?? "the client";
+  if (copyTo) {
+    // Counted against this browser's copies. The address itself isn't kept.
+    await getStore()
+      .addMessage({
+        clinicId: book.clinic.id,
+        clientId: item.clientId,
+        sandboxId: book.sandboxId,
+        type: DEMO_COPY_TYPE,
+        channel: "email",
+        subject,
+        body,
+        status: "sent",
+        dedupeKey: demoCopyKey(item.dedupeKey),
+        scheduledFor: null,
+        sentAt,
+        createdAt: sentAt,
+      })
+      .catch((e) => console.error(`Demo copy not recorded: ${e instanceof Error ? e.message : String(e)}`));
+    return { ok: true, message: `Logged for ${name}, and a real copy is on its way to ${copyTo}.` };
+  }
   return { ok: true, message: live ? `Sent to ${name}.` : `Sent to ${name}. Logged in the outbox, not emailed (demo).` };
 }
 

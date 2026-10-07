@@ -8,7 +8,7 @@ import { Visits } from "@/components/dashboard/Visits";
 import { IconArrowRight } from "@/components/ui/Icons";
 import { loadBook } from "@/lib/dashboard/load";
 import { fullName, visitsOn } from "@/lib/dashboard/view";
-import { env } from "@/lib/env";
+import { env, features } from "@/lib/env";
 import { nextOpenDay, shiftDate } from "@/lib/plan/build";
 import { TRIGGER_LABEL } from "@/lib/rebook/engine";
 
@@ -96,7 +96,7 @@ export default async function TodayPage() {
               <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
           </div>
-          <Queue rows={rows} demo={env.DEMO_MODE} empty="Nobody needs a message today. Move the clock forward to see who will." />
+          <Queue rows={rows} demo={env.DEMO_MODE} realCopy={env.DEMO_MODE && features.email} empty="Nobody needs a message today. Move the clock forward to see who will." />
         </section>
 
         <aside aria-label="Today" className="space-y-6 xl:pt-[4.6rem]">

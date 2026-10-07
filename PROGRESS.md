@@ -9,7 +9,10 @@ The independent review of the client journey (cut short last session) ran on pho
 - **Personal priorities (D-063).** Each of the three priorities shows its own score and a line built from that person's scan, answers and plan. No stock descriptions; level scores are said to be level, never nudged apart.
 - **The report gate keeps what was typed.** A mistyped email used to clear the whole form; now the name and email stay, the email is marked and takes focus. Tab stays inside the panel instead of reaching the dimmed page behind it.
 - **Small phones.** On the screening questions the pinned Continue is slimmer, so the first question shows in full at 375 × 667. At 320px the header keeps the clinic's name clear. The event line on the report puts the date under the name.
-- **Tests:** 329 unit tests (11 new) and all 14 browser tests pass, with lint, typecheck, the copy check and the production build. Run the browser tests with `--workers=1` in the cloud workspace: with two at once, cold compiles there time out at random.
+- **A real copy of the "real change" email for judges (D-064).** In the demo's send sheet, type your own address under the message and the email arrives in your inbox exactly as Sofia would get it, with a line on top saying it's a demo copy. Three per browser, links only to this app.
+- **"Open brief" on the brief itself is gone.** The flag card on a client's brief linked back to the same page; it now shows only "Mark as reviewed".
+- **The report's water** is bluer, reaches about twice as far down the page, and fades out over a longer run. The rest of the client journey keeps the paler light.
+- **Tests:** 333 unit tests (15 new) and all 15 browser tests pass (one new: the brief offers the review, not a link to itself), with lint, typecheck, the copy check and the production build. Run the browser tests with `--workers=1` in the cloud workspace: with two at once, cold compiles there time out at random.
 
 ### Why no email arrived, and what Joshua needs to do
 1. **Nothing sent one until now.** Deploy this, and the report email goes out whenever `RESEND_API_KEY` is set in Vercel.

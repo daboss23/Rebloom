@@ -29,10 +29,10 @@ export function senderAddress(from: string | undefined): string {
 /** The outbox key for one scan's report email, so it's sent and recorded once. */
 export const reportDedupeKey = (scanId: string) => `report_link:${scanId}`;
 
-const escapeHtml = (s: string) =>
+export const escapeHtml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 /** Typed by the client: one line, no control characters, so it can't reshape a header. */
-const oneLine = (s: string) => s.replace(/[\u0000-\u001f\u007f]+/g, " ").trim();
+export const oneLine = (s: string) => s.replace(/[\u0000-\u001f\u007f]+/g, " ").trim();
 
 export interface ReportEmail {
   from: string;

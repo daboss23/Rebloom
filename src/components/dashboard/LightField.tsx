@@ -75,6 +75,8 @@ const hex = (h: string) => {
 
 const PALETTES = {
   ice: { top: "#f1f8fb", bottom: "#bcd9e7", pool: "#ffd2bf", tint: "#ffffff", strength: 0.42, wash: "linear-gradient(180deg,#f6fbfd,#cfe3ed)" },
+  /** Ice with more water in it: the report's backdrop, where the light should read as blue, not white. */
+  shallows: { top: "#e3f2f9", bottom: "#82b9d5", pool: "#ffdccd", tint: "#d6eefb", strength: 0.44, wash: "linear-gradient(180deg,#eaf5fa,#a3cde1)" },
   sea: { top: "#163246", bottom: "#07131b", pool: "#1e5a78", tint: "#9fd0e6", strength: 0.38, wash: "linear-gradient(180deg,#163246,#07131b)" },
 } as const;
 

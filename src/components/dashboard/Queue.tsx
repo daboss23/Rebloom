@@ -10,7 +10,21 @@ import { KindChip, KindMark, Monogram } from "./Kind";
 import { LightField } from "./LightField";
 import type { QueueRow } from "./queue-row";
 
-export function Queue({ rows, demo, empty, hideNames }: { rows: QueueRow[]; demo: boolean; empty: string; hideNames?: boolean }) {
+/** `onBrief`: the queue is showing on this client's own brief, so it drops their name and the link back to it. */
+export function Queue({
+  rows,
+  demo,
+  realCopy = false,
+  empty,
+  onBrief = false,
+}: {
+  rows: QueueRow[];
+  demo: boolean;
+  /** Demo mode with Resend set up: the sheet offers to email a real copy to whoever is trying the demo. */
+  realCopy?: boolean;
+  empty: string;
+  onBrief?: boolean;
+}) {
   const [open, setOpen] = useState<QueueRow | null>(null);
   const [leaving, setLeaving] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ text: string; id: number; undo?: () => void; bloom?: boolean } | null>(null);
@@ -78,7 +92,7 @@ export function Queue({ rows, demo, empty, hideNames }: { rows: QueueRow[]; demo
               <div className="flex items-center gap-4 md:contents">
                 <Monogram row={row} />
                 <div className="min-w-0 md:hidden">
-                  {!hideNames && <p className="font-display text-[22px] leading-tight text-ink">{row.name}</p>}
+                  {!onBrief && <p className="font-display text-[22px] leading-tight text-ink">{row.name}</p>}
                   <div className="mt-1">
                     <KindChip row={row} />
                   </div>
@@ -87,7 +101,7 @@ export function Queue({ rows, demo, empty, hideNames }: { rows: QueueRow[]; demo
 
               <div className="min-w-0">
                 <div className="hidden flex-wrap items-center gap-x-3 gap-y-1.5 md:flex">
-                  {!hideNames && (
+                  {!onBrief && (
                     <Link
                       href={row.href}
                       className="font-display text-[24px] leading-tight text-ink decoration-[#9fc9dd] decoration-1 underline-offset-[6px] hover:underline"
@@ -129,17 +143,23 @@ export function Queue({ rows, demo, empty, hideNames }: { rows: QueueRow[]; demo
                     </button>
                   </>
                 )}
-                {row.action === "review" && (
-                  <>
-                    <Link href={row.href} className="btn-ghost">
-                      Open brief
-                      <IconArrowUpRight width={15} height={15} />
-                    </Link>
-                    <button type="button" disabled={pending} onClick={() => done(row)} className="text-[12.5px] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 hover:text-ink hover:decoration-ink">
+                {row.action === "review" &&
+                  (onBrief ? (
+                    // Already on the brief: reviewing it is the only thing left to do here.
+                    <button type="button" disabled={pending} onClick={() => done(row)} className="btn-ghost">
                       Mark as reviewed
                     </button>
-                  </>
-                )}
+                  ) : (
+                    <>
+                      <Link href={row.href} className="btn-ghost">
+                        Open brief
+                        <IconArrowUpRight width={15} height={15} />
+                      </Link>
+                      <button type="button" disabled={pending} onClick={() => done(row)} className="text-[12.5px] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 hover:text-ink hover:decoration-ink">
+                        Mark as reviewed
+                      </button>
+                    </>
+                  ))}
               </div>
             </li>
           );
@@ -150,6 +170,7 @@ export function Queue({ rows, demo, empty, hideNames }: { rows: QueueRow[]; demo
         <SendSheet
           row={open}
           demo={demo}
+          realCopy={realCopy}
           draft={drafts[key(open)] ?? null}
           onDraft={(d) => setDrafts((all) => ({ ...all, [key(open)]: d }))}
           onClose={() => setOpen(null)}
@@ -182,10 +203,13 @@ export function Queue({ rows, demo, empty, hideNames }: { rows: QueueRow[]; demo
   );
 }
 
+const COPY_KEY = "rb_demo_copy_to";
+
 /** The pre-written email, ready to edit. Nothing goes out until Dana presses Send. */
 function SendSheet({
   row,
   demo,
+  realCopy,
   draft,
   onDraft,
   onClose,
@@ -193,6 +217,7 @@ function SendSheet({
 }: {
   row: QueueRow;
   demo: boolean;
+  realCopy: boolean;
   draft: { subject: string; body: string } | null;
   onDraft: (d: { subject: string; body: string }) => void;
   onClose: () => void;
@@ -211,6 +236,16 @@ function SendSheet({
   };
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  // Whoever is trying the demo types their own address once; the next email in the queue remembers it.
+  // The sheet only ever mounts after a click, never on the server, so storage can be read straight away.
+  const [copyTo, setCopyTo] = useState(() => {
+    try {
+      return localStorage.getItem(COPY_KEY) ?? "";
+    } catch {
+      return ""; // Storage blocked: the field just starts empty.
+    }
+  });
+  const firstName = row.name.split(" ")[0];
 
   useEffect(() => {
     const dialog = ref.current;
@@ -223,8 +258,14 @@ function SendSheet({
   const send = () =>
     start(async () => {
       setError(null);
-      const result = await sendRebook({ clientId: row.clientId, dedupeKey: row.dedupeKey, subject, body });
+      const to = realCopy ? copyTo.trim() : "";
+      const result = await sendRebook({ clientId: row.clientId, dedupeKey: row.dedupeKey, subject, body, copyTo: to });
       if (result.ok) {
+        try {
+          if (to) localStorage.setItem(COPY_KEY, to);
+        } catch {
+          // Not remembered next time; nothing else depends on it.
+        }
         ref.current?.close();
         onSent(result.message ?? "Sent.");
       }
@@ -294,6 +335,24 @@ function SendSheet({
               className="mt-2 w-full resize-y rounded-[12px] border border-[#0c1a22]/10 bg-white/80 p-4 text-[15px] leading-relaxed text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-[#1e5a78]/50 focus:shadow-[0_0_0_4px_rgba(159,201,221,0.35)]"
             />
           </label>
+          {realCopy && (
+            <label className="mt-7 block">
+              <span className="t-label">Send a real copy to you</span>
+              <input
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={copyTo}
+                onChange={(e) => setCopyTo(e.target.value)}
+                placeholder="you@example.com"
+                aria-describedby={`${titleId}-copy`}
+                className="mt-2 h-12 w-full rounded-[12px] border border-[#0c1a22]/10 bg-white/80 px-4 text-[16px] text-ink outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-text-3 focus:border-[#1e5a78]/50 focus:shadow-[0_0_0_4px_rgba(159,201,221,0.35)]"
+              />
+              <span id={`${titleId}-copy`} className="t-caption mt-2 block !text-[12.5px]">
+                {firstName} is a sample client, so this message stays in the outbox. Add your address to receive the email exactly as {firstName} would.
+              </span>
+            </label>
+          )}
           {error && (
             <p role="alert" className="mt-3 text-[14px] text-ink">
               {error}
@@ -302,7 +361,13 @@ function SendSheet({
         </div>
 
         <footer className="border-t border-[#0c1a22]/[0.07] bg-white/50 px-7 py-5">
-          {demo && <p className="t-caption mb-4 !text-[12.5px]">Demo mode: this message is logged in the outbox, not emailed.</p>}
+          {demo && (
+            <p className="t-caption mb-4 !text-[12.5px]">
+              {realCopy && copyTo.trim()
+                ? `Demo mode: ${firstName}'s message is logged in the outbox. A real copy is emailed to you.`
+                : "Demo mode: this message is logged in the outbox, not emailed."}
+            </p>
+          )}
           <div className="flex items-center justify-end gap-5">
             <button type="button" onClick={dismiss} className="h-11 text-[14px] text-text-3 transition-colors duration-150 hover:text-ink">
               Cancel

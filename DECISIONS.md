@@ -346,3 +346,10 @@ Joshua asked that the three priorities each give their own score and something o
 - **No invented differences:** when two scores are the same number, the line says "level with" the other. A number is never nudged to look different.
 - **"The same sessions"** only follows a line that named that treatment (before, it could name a treatment the line above hadn't).
 - Tests check every demo profile with three different people: three distinct lines, none a stock description, all within the copy rules. "More even skin" in their own words now reads as uneven tone.
+
+## D-064 · A real copy of a rebook email for whoever is trying the demo (J + C, Oct 7). Refines D-053
+Joshua wants judges to see the "Real change on your latest scan" email arrive. The queue's clients are samples with made-up addresses, so in demo mode their messages stay in the outbox (D-053). Now the send sheet has one more field, **Send a real copy to you**, shown only in demo mode with `RESEND_API_KEY` set.
+- **What arrives:** exactly the words in the sheet, in the clinic's frame (wordmark, the report link as the gold button, address, "Powered by Rebloom"), from the clinic's name at `EMAIL_FROM`'s address. A dark line at the top says it's the email the sample client would receive, sent because they asked for a copy, so it can't pass for the clinic writing to them. Real (non-demo) rebook emails use the same frame without that line.
+- **Copy first, then the outbox:** if Resend says no, nothing is logged and the sheet stays open with what to change. Clear the address to log without a copy.
+- **Not an open relay:** three copies per demo browser; links only to this app; the copy rules still apply; the address isn't stored. Until a domain is verified in Resend, copies only reach the Resend account's own address (D-062).
+- **The brief's own flag drops "Open brief".** On a client's brief, the queue card linked to the page it was on. There it now shows only "Mark as reviewed", as its button.
