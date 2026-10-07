@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { createContext, use, useEffect, useRef, useState, type ReactNode } from "react";
 import { LightField } from "@/components/dashboard/LightField";
 import { Chip } from "@/components/ui/Chip";
@@ -42,8 +41,7 @@ export function FaceMapPriority({ concern, className, children }: { concern: str
 
 /**
  * The client's photo with tappable concern overlays (brief 3.3: lead with their face). Each button shows that
- * priority's marks and score on the photo. Demo clients' portraits were never scanned, so they carry no masks (D-030):
- * there only the score changes, and `scanHref` lets a judge take their own scan to see the marks (D-069).
+ * priority's marks and score on the photo. Demo clients' marks come from their portraits' landmarks (D-070).
  * If the photo can't load, it shows their initials over moving light, never a broken image.
  */
 export function FaceMap({
@@ -51,14 +49,11 @@ export function FaceMap({
   initials,
   layers,
   caption,
-  scanHref,
 }: {
   photoUrl: string;
   initials?: string;
   layers: FaceMapLayer[];
   caption: string;
-  /** Set for demo clients: where to take a real scan. */
-  scanHref?: string;
 }) {
   const focus = use(Shown);
   const [own, setOwn] = useState(layers[0]?.key ?? null);
@@ -122,20 +117,9 @@ export function FaceMap({
           {caption}
         </span>
       </div>
-      {scanHref && !marked ? (
-        <p className="mt-4 text-[13.5px] leading-relaxed text-text-2">
-          <span className="text-ink">Demo client.</span> This portrait is an AI-generated stand-in, not a scan, so nothing is
-          marked on it.{" "}
-          <Link href={scanHref} className="text-ink underline decoration-[#0c1a22]/30 underline-offset-4 hover:decoration-ink">
-            Take your own scan
-          </Link>{" "}
-          to see each priority marked on your face.
-        </p>
-      ) : (
-        <p className="mt-4 text-[13.5px] leading-snug text-text-2">
-          {marked ? "Choose a priority to see where it shows on your face." : "Choose a priority to see its score."}
-        </p>
-      )}
+      <p className="mt-4 text-[13.5px] leading-snug text-text-2">
+        {marked ? "Choose a priority to see where it shows on your face." : "Choose a priority to see its score."}
+      </p>
       <div role="group" aria-label="Show a priority on your photo" className="mt-2.5 grid grid-cols-3 gap-2">
         {layers.map((layer) => (
           <Chip key={layer.key} selected={layer.key === active} onClick={() => setActive(layer.key)} className="justify-center px-2 text-center">

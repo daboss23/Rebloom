@@ -382,3 +382,10 @@ Joshua asked for darker water on the booking page so the cards stand out. The wh
 
 ## D-069 · Demo reports say why the face has no marks (J + C, Oct 7). Refines D-030 and D-067
 The twelve demo clients' portraits are AI-generated stand-ins, never scanned, so their face maps have no marks, and a judge could read that as broken. On a demo client's report the line under the photo now reads: "Demo client. This portrait is an AI-generated stand-in, not a scan, so nothing is marked on it. Take your own scan to see each priority marked on your face." The link starts the clinic's scan. Only demo clients (those with a `demoKey`) see it; every scan taken in the app keeps "Choose a priority to see where it shows on your face."
+
+## D-070 · Demo clients' face maps carry marks (J + C, Oct 7). Supersedes D-069, refines D-020 and D-030
+Joshua wanted the demo clients to look as complete as a real scan, since judges mostly open them. The portraits were never scanned, but the face model finds an AI-generated face like any other, so `scripts/demo-landmarks.mjs` ran the capture page's own Face Landmarker over all twelve portraits once and committed the faces to `src/data/demo-landmarks.json` (one face found on each, 478 points).
+- **Drawn on request:** each demo scan's concerns point at a shared path (`demo/masks/<client>/scan-<n>/<concern>.png`), and the mask route draws that mask from the committed face, as demo mode does for a new scan (D-020). Nothing is stored, nothing is copied per sandbox, and deleting a sandbox never touches it.
+- **The same marks everywhere:** the path seeds the drawing, so every judge sees the same marks on a given demo client.
+- **D-069's note is gone:** with marks on every demo face it could never show. The "Demo analysis" notice above the face map still says the results are sample data.
+- **A replaced portrait** needs `node scripts/demo-landmarks.mjs` run again. A unit test checks that every demo scan has a face to draw on.

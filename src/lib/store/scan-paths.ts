@@ -15,6 +15,15 @@ export function bundledPortraitUrl(imagePath: string): string | null {
   return key ? `/demo-portraits/${key}.jpg` : null;
 }
 
+/**
+ * A demo client's mask (DECISIONS D-070). Shared like the portraits and never stored: the mask route draws it
+ * from the portrait's committed landmarks (src/lib/demo/landmarks.ts) on request. The path doubles as the drawing's seed, so every
+ * sandbox's copy of a demo client shows the same marks.
+ */
+export function demoMaskPath(key: string, scanNumber: number, concern: string): string {
+  return `${SHARED_DEMO_PREFIX}masks/${key}/scan-${scanNumber}/${concern}.png`;
+}
+
 /** Where a scan's simulated "what to expect" image is kept, next to its photo (DECISIONS D-047). */
 export function simulationPath(imagePath: string): string {
   return imagePath.replace(/\.jpg$/, "/simulation.jpg");
