@@ -375,3 +375,7 @@ Joshua clicked Dark circles, Pores and Pigmentation under the photo and expected
 - **One line above the buttons says what they do:** "Choose a priority to see where it shows on your face." Where nothing is drawn on the photo: "Choose a priority to see its score."
 - **The matching card is outlined** in sea in "Your three priorities", so the photo and the list read as one.
 - **Where the marks appear:** every scan taken in the app, by camera or upload, live or in demo mode (D-020). The twelve demo clients opened from the dashboard carry no marks (D-030), so on their reports only the score changes.
+
+## D-068 · Booking sits on deeper water (J, Oct 7). Refines D-061
+Joshua asked for darker water on the booking page so the cards stand out. The white day and time cards were close to the pale report water and its bright light lines. Booking (`/r/[token]/book` and its confirmation) now has its own water, `lagoon`: a step deeper than the report's, with softer light lines and a lighter white wash. The report keeps its own water.
+- **Labels stay readable:** on the deeper water the small grey labels ("Choose a day", "Morning", the deposit line, "Your report") measured 3.5 to 4.1:1. They now use text-2, at 6.4:1 or better. Labels inside the glass cards keep their lighter grey.

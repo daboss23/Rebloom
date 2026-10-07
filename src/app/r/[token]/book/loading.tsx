@@ -14,7 +14,7 @@ export default function Loading() {
           ))}
         </div>
       </div>
-      <p className="t-caption mt-8 text-center">Finding open times</p>
+      <p className="t-caption mt-8 text-center text-text-2">Finding open times</p>
     </div>
   );
 }

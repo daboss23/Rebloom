@@ -38,7 +38,7 @@ export default async function BookPage({ params, searchParams }: PageProps<"/r/[
 
   return (
     <article className="pb-4 pt-8">
-      <Link href={`/r/${token}`} className="t-caption inline-flex min-h-11 items-center gap-2 !text-[13.5px] hover:text-ink">
+      <Link href={`/r/${token}`} className="t-caption inline-flex min-h-11 items-center gap-2 !text-[13.5px] text-text-2 hover:text-ink">
         <IconArrowLeft width={16} height={16} />
         Your report
       </Link>
@@ -111,7 +111,7 @@ function BookTarget({ token, ctx }: { token: string; ctx: BookingContext }) {
         </div>
       )}
       {ctx.depositCents > 0 && (
-        <p className="t-caption focus-in mt-4 flex items-start gap-2 !text-[13.5px]" style={{ animationDelay: "180ms" }}>
+        <p className="t-caption focus-in mt-4 flex items-start gap-2 !text-[13.5px] text-text-2" style={{ animationDelay: "180ms" }}>
           <IconLock aria-hidden width={16} height={16} className="mt-[2px] shrink-0" />
           A {formatPrice(ctx.depositCents)} deposit holds your time and goes toward the visit. Free to cancel up to {NOTICE_HOURS} hours
           before. Paid securely through Stripe.

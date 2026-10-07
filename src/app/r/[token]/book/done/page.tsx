@@ -21,7 +21,7 @@ export default async function BookedPage({ params }: PageProps<"/r/[token]/book/
 
   return (
     <article className="pb-4 pt-8">
-      <Link href={`/r/${token}`} className="t-caption inline-flex min-h-11 items-center gap-2 !text-[13.5px] hover:text-ink">
+      <Link href={`/r/${token}`} className="t-caption inline-flex min-h-11 items-center gap-2 !text-[13.5px] text-text-2 hover:text-ink">
         <IconArrowLeft width={16} height={16} />
         Your report
       </Link>
