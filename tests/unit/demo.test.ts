@@ -9,6 +9,7 @@ import { SEED_STAFF } from "@/data/staff";
 import type { Clinic, Scan } from "@/lib/domain";
 import { isoDateInZone, zonedDateTime } from "@/lib/clock";
 import { checkCopy } from "@/lib/copy/check";
+import { demoLandmarksFor } from "@/lib/demo/landmarks";
 import { buildDemoBundle, type DemoBundle } from "@/lib/demo/seed";
 import { rankPriorities, shiftDate, statedConcerns } from "@/lib/plan/build";
 import {
@@ -251,6 +252,19 @@ describe("a demo copy", () => {
     for (const s of bundle.scans) expect(s.imagePath.startsWith(SHARED_DEMO_PREFIX)).toBe(true);
     // Deleting a sandbox's copy must not delete the portraits everyone shares.
     expect(scanStoragePaths(bundle.scans)).toEqual([]);
+  });
+
+  it("gives every demo face map marks, drawn from the face found on its portrait", () => {
+    const bundle = bundleFor("2026-12-29");
+    for (const s of bundle.scans) {
+      for (const c of s.result!.concerns) {
+        expect(c.maskPath).toMatch(new RegExp(`^${SHARED_DEMO_PREFIX}masks/[a-z]+/scan-${s.scanNumber}/${c.key}\\.png$`));
+        const face = demoLandmarksFor(c.maskPath!);
+        expect(face).toHaveLength(478);
+        for (const [x, y] of face!) expect(Math.min(x, y) >= 0 && Math.max(x, y) <= 1).toBe(true);
+      }
+    }
+    expect(demoLandmarksFor("clients/someone/scans/a/masks/pore.png")).toBeNull();
   });
 
   it("works for the second clinic, in its own time zone", () => {

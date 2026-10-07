@@ -3,6 +3,7 @@ import "server-only";
 // Pure apart from fresh ids and report tokens: the same cast, clinic and "today" give the same story.
 
 import { DEMO_CLIENTS, type DemoClient, type DemoVisit } from "@/data/demo-clients";
+import { hasDemoLandmarks } from "@/lib/demo/landmarks";
 import { CONSENT_VERSION } from "@/lib/flow/consent";
 import type {
   Appointment,
@@ -25,7 +26,7 @@ import { newId, newToken, stableId } from "@/lib/ids";
 import { nextOpenDay, shiftDate } from "@/lib/plan/build";
 import { SCORED_CONCERNS } from "@/lib/skin/concerns";
 import { normalizeResult } from "@/lib/skin/normalize";
-import { SHARED_DEMO_PREFIX } from "@/lib/store/scan-paths";
+import { SHARED_DEMO_PREFIX, demoMaskPath } from "@/lib/store/scan-paths";
 import { FIXTURE_PROFILES, rawFromUi } from "@/lib/youcam/fixture";
 import type { RawSkinResult } from "@/lib/youcam/types";
 
@@ -218,8 +219,12 @@ export function buildDemoBundle(input: DemoInput): DemoBundle {
       updatedAt: iso(joined + 6 * 60_000),
     });
 
+    // The face found on the portrait (scripts/demo-landmarks.mjs) gives demo face maps their marks (D-070).
+    const marked = hasDemoLandmarks(demo.key);
     const scans: Scan[] = demo.scans.map((_, i) => {
       const raw = scanResult(demo, i);
+      const result = normalizeResult(raw);
+      if (marked) for (const c of result.concerns) c.maskPath = demoMaskPath(demo.key, i + 1, c.key);
       return {
         id: newId(),
         clientId,
@@ -237,7 +242,7 @@ export function buildDemoBundle(input: DemoInput): DemoBundle {
         analysisStartedAt: iso(scanTimes[i] + 5_000),
         errorCode: null,
         youcamRaw: raw,
-        result: normalizeResult(raw),
+        result,
         comparisonConfidence: i === 0 ? null : "high",
         createdAt: iso(scanTimes[i]),
         completedAt: iso(scanTimes[i] + 45_000),

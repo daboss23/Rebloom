@@ -50,7 +50,7 @@ export function TimePicker({ token, days, depositCents }: { token: string; days:
 
   return (
     <div>
-      <h2 className="t-label mt-10" id="days-label">
+      <h2 className="t-label mt-10 text-text-2" id="days-label">
         Choose a day
       </h2>
       {/* Phones: bleeds to the screen's edges, so the next days peek in and say "swipe". Wider: wraps, so a mouse reaches every day. */}
@@ -90,12 +90,12 @@ export function TimePicker({ token, days, depositCents }: { token: string; days:
 
       {day && (
         <section aria-labelledby="times-label" className="mt-8">
-          <h2 id="times-label" className="t-label">
+          <h2 id="times-label" className="t-label text-text-2">
             Times on {part(day.date, { weekday: "long", month: "long", day: "numeric" })}
           </h2>
           {groups.map((g) => (
             <div key={g.label} className="mt-5">
-              <p className="t-caption">{g.label}</p>
+              <p className="t-caption text-text-2">{g.label}</p>
               <ul aria-label={`${g.label} times`} className="mt-2.5 grid grid-cols-3 gap-2 max-[359px]:grid-cols-2 sm:grid-cols-4">
                 {g.slots.map((s) => (
                   <li key={s.startsAt}>

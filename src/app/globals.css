@@ -96,6 +96,17 @@ html:has(.rebloom) body {
     -webkit-backdrop-filter: none;
   }
 }
+/* Booking: solid cards on its deeper water (D-068, D-071), so days, times and the visit read at a glance.
+   Unlayered, so it holds over the glass above and the buttons' translucent fills. */
+.booking .glass {
+  background: #fff;
+  border-color: rgb(12 26 34 / 0.08);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.booking button[aria-pressed="false"] {
+  background-color: #fff;
+}
 /* Deep sea: the menu, the plan, the sheet's header. */
 .sea {
   color: #f3f8fa;

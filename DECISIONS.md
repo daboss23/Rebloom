@@ -368,3 +368,27 @@ Booking is built into Rebloom: the brief rules out real booking-system integrati
 
 ## D-066 · The clinic owner switches deposits on or off (J, Oct 7)
 Joshua isn't a fan of the deposit, but it stays for now, as the owner's choice. **Settings, Booking** has one switch, "Take a $50 deposit at booking", on by default. Off: a client chooses a time and is booked at once, and no page or email mentions a deposit. It saves per clinic and per sandbox (table `clinic_settings`, migration `20261007120000_clinic_settings`), so in the demo each browser's switch is its own and a judge can't change it for everyone. With the switch on but no Stripe key, booking takes no deposit and Settings says why. The same section shows the hours, slot length and the 24-hour cancellation rule that booking runs on.
+
+## D-067 · The face map's buttons show each priority's score (J + C, Oct 7). Refines D-063
+Joshua clicked Dark circles, Pores and Pigmentation under the photo and expected the numbers to change. They never did: the buttons only switched the marks on the photo, and they sat just above "Your three priorities", so they read as tabs for that list.
+- **The photo shows the score:** its label reads "Pores 62", so every button changes a number the client can see.
+- **One line above the buttons says what they do:** "Choose a priority to see where it shows on your face." Where nothing is drawn on the photo: "Choose a priority to see its score."
+- **The matching card is outlined** in sea in "Your three priorities", so the photo and the list read as one.
+- **Where the marks appear:** every scan taken in the app, by camera or upload, live or in demo mode (D-020). The twelve demo clients opened from the dashboard carry no marks (D-030), so on their reports only the score changes.
+
+## D-068 · Booking sits on deeper water (J, Oct 7). Refines D-061
+Joshua asked for darker water on the booking page so the cards stand out. The white day and time cards were close to the pale report water and its bright light lines. Booking (`/r/[token]/book` and its confirmation) now has its own water, `lagoon`: a step deeper than the report's, with softer light lines and a lighter white wash. The report keeps its own water.
+- **Labels stay readable:** on the deeper water the small grey labels ("Choose a day", "Morning", the deposit line, "Your report") measured 3.5 to 4.1:1. They now use text-2, at 6.4:1 or better. Labels inside the glass cards keep their lighter grey.
+
+## D-069 · Demo reports say why the face has no marks (J + C, Oct 7). Refines D-030 and D-067
+The twelve demo clients' portraits are AI-generated stand-ins, never scanned, so their face maps have no marks, and a judge could read that as broken. On a demo client's report the line under the photo now reads: "Demo client. This portrait is an AI-generated stand-in, not a scan, so nothing is marked on it. Take your own scan to see each priority marked on your face." The link starts the clinic's scan. Only demo clients (those with a `demoKey`) see it; every scan taken in the app keeps "Choose a priority to see where it shows on your face."
+
+## D-070 · Demo clients' face maps carry marks (J + C, Oct 7). Supersedes D-069, refines D-020 and D-030
+Joshua wanted the demo clients to look as complete as a real scan, since judges mostly open them. The portraits were never scanned, but the face model finds an AI-generated face like any other, so `scripts/demo-landmarks.mjs` ran the capture page's own Face Landmarker over all twelve portraits once and committed the faces to `src/data/demo-landmarks.json` (one face found on each, 478 points).
+- **Drawn on request:** each demo scan's concerns point at a shared path (`demo/masks/<client>/scan-<n>/<concern>.png`), and the mask route draws that mask from the committed face, as demo mode does for a new scan (D-020). Nothing is stored, nothing is copied per sandbox, and deleting a sandbox never touches it.
+- **The same marks everywhere:** the path seeds the drawing, so every judge sees the same marks on a given demo client.
+- **D-069's note is gone:** with marks on every demo face it could never show. The "Demo analysis" notice above the face map still says the results are sample data.
+- **A replaced portrait** needs `node scripts/demo-landmarks.mjs` run again. A unit test checks that every demo scan has a face to draw on.
+
+## D-071 · Booking's cards are solid (J, Oct 7). Refines D-061 and D-068
+Joshua asked for the booking cards not to be see-through. On the booking pages (`/r/[token]/book` and its confirmation), the glass cards (the booked visit, notices, "no open times") and the unchosen day and time buttons are now solid white, with no blur. A chosen day or time stays deep sea. Everywhere else keeps its frosted glass.
