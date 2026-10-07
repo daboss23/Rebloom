@@ -96,6 +96,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
             photoUrl={`/r/${token}/photo/${latest.id}`}
             initials={`${client.firstName?.[0] ?? ""}${client.lastName?.[0] ?? ""}`}
             caption={`${scanLabel} · Face map`}
+            scanHref={client.demoKey ? `/c/${clinic.slug}` : undefined}
             layers={top.map((c) => ({
               key: c.key,
               label: CONCERNS[c.key].label,
