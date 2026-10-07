@@ -5,6 +5,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import { env } from "@/lib/env";
+import type { ScanResult } from "@/lib/domain";
 import type { ConcernKey } from "@/lib/skin/concerns";
 import type { RawSkinResult, SkinAnalysisProvider } from "./types";
 
@@ -74,6 +75,22 @@ export function fixtureResult(scanId: string, concerns: readonly ConcernKey[], p
     result.concerns[key] = { ui_score: ui, raw_score: rawFromUi(ui) };
   }
   // Like YouCam, one overall number on the ui scale.
+  const uis = Object.values(result.concerns).map((c) => c!.ui_score);
+  result.all = Math.round(uis.reduce((a, b) => a + b, 0) / Math.max(1, uis.length));
+  return result;
+}
+
+/**
+ * A demo-mode rescan (DECISIONS D-073): the person's own first scores, each moved a point at most. A rescan in demo
+ * mode is the same face minutes or days later, so it reads as holding steady, never as invented progress.
+ */
+export function fixtureRescanResult(scanId: string, first: ScanResult): RawSkinResult {
+  const rand = seeded(`rescan:${scanId}`);
+  const result: RawSkinResult = { concerns: {}, skin_age: first.skinAge ?? undefined, skin_type: first.skinType ?? undefined };
+  for (const c of first.concerns) {
+    const ui = Math.max(1, Math.min(100, c.ui + Math.round(rand() * 2 - 1)));
+    result.concerns[c.key] = { ui_score: ui, raw_score: Math.max(1, Math.min(100, c.raw + (ui - c.ui))) };
+  }
   const uis = Object.values(result.concerns).map((c) => c!.ui_score);
   result.all = Math.round(uis.reduce((a, b) => a + b, 0) / Math.max(1, uis.length));
   return result;

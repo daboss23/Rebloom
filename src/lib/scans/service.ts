@@ -14,6 +14,7 @@ import { getStorage, getStore } from "@/lib/store";
 import { YouCamError } from "@/lib/youcam/client";
 import { friendlyError } from "@/lib/youcam/errors";
 import { getProvider } from "@/lib/youcam";
+import { fixtureRescanResult } from "@/lib/youcam/fixture";
 import { withoutMaskUrls } from "@/lib/youcam/parse";
 import type { RawSkinResult } from "@/lib/youcam/types";
 import { unitCost } from "@/lib/youcam/units";
@@ -157,9 +158,12 @@ export async function advanceScan(scan: Scan): Promise<Scan> {
   }
 }
 
-async function finalize(scan: Scan, raw: RawSkinResult): Promise<Scan> {
+async function finalize(scan: Scan, analysed: RawSkinResult): Promise<Scan> {
   const store = getStore();
   const storage = getStorage();
+  const first = scan.scanNumber > 1 ? (await store.listScans(scan.clientId)).find((s) => s.scanNumber === 1) : undefined;
+  // A demo-mode rescan starts from this person's first scores, so it can't invent progress (D-073).
+  const raw = scan.source === "fixture" && first?.result ? fixtureRescanResult(scan.id, first.result) : analysed;
   const result = normalizeResult(raw);
 
   if (scan.source === "fixture" && scan.landmarks) {
@@ -199,8 +203,20 @@ async function finalize(scan: Scan, raw: RawSkinResult): Promise<Scan> {
     );
   }
 
+  // A rescan compares like with like: a different source (demo or live) or engine (HD or SD) scores on a different
+  // scale, so the comparison drops to lower confidence and earns no badges (DECISIONS D-011, D-073).
+  let comparisonConfidence = scan.comparisonConfidence;
+  if (scan.scanNumber > 1 && comparisonConfidence === "high") {
+    if (!first?.result || first.source !== scan.source || first.result.engine !== result.engine) comparisonConfidence = "lower";
+  }
   const now = await sandboxNow();
-  const done = await store.updateScan(scan.id, { status: "complete", result, completedAt: now.toISOString() });
+  const done = await store.updateScan(scan.id, {
+    status: "complete",
+    result,
+    completedAt: now.toISOString(),
+    comparisonConfidence,
+    ...(raw !== analysed ? { youcamRaw: raw } : {}),
+  });
   await store.getOrCreateReport(scan.clientId, now);
   // We hold the scores and masks now, so YouCam no longer needs this person's photo.
   if (scan.source === "live") await releaseTask(scan);

@@ -1,5 +1,27 @@
 # Progress
 
+## Session 8 · Wednesday October 7, 2026 · The face map, demo marks, booking polish, the rescan and progress view
+
+**The loop closes** (DECISIONS D-073). A client takes a progress scan from their report link, on any phone, and the same link then leads with what's changed since their first scan.
+
+### What's done
+- **Face map:** each button shows that priority's score on the photo and outlines its card (D-067). The twelve demo clients now carry marks, drawn from the face found on each portrait (D-070).
+- **Booking:** its own deeper water, kept to the top of the page, with solid cards for the days, times and visit (D-068, D-071, D-072).
+- **Rescan** (`/r/[token]/rescan`): the same camera and quality gate, a hint toward the first scan's light, never a block. Different light, source or engine makes it a lower-confidence comparison with no badges. Demo mode never invents progress. Demo clients can't be rescanned.
+- **Progress view:** the mockup's second screen. Scan 01 beside the latest, "Same light, same angle. Verified at capture.", and "What's changed" with first and latest scores, a trend line, and a badge only when the raw scores confirm the change.
+- **The scan-due email** links straight to the rescan, as a gold "Start your progress scan" button.
+- **Tests:** 364 unit tests (new: progress rules, demo stories, demo-mode rescans, demo marks, the email button) and two new browser tests (a rescan from a second browser with only the report link; a demo client can't be rescanned).
+
+### To try it
+1. **Progress view:** open Amelia's or Sofia's report from the dashboard ("your skin has moved"), or Grace's ("here's your progress", nothing confirmed).
+2. **Rescan:** take your own scan from the clinic page, then open your report's link and go to `/rescan` on the end of it (the "Take a progress scan" button shows from two weeks after a first scan, so use time travel in the dashboard to see it appear).
+
+### What's next
+1. **Replies from clients** (Joshua asked): Resend inbound, one reply address per client, replies shown on the brief.
+2. **Clinic login** by magic link.
+
+---
+
 ## Session 7 · Wednesday October 7, 2026 · Booking
 
 **Clients now book from their report** (DECISIONS D-065). The report's gold button opens the times for the exact visit that's next, a $50 Stripe test deposit holds the time, and the visit is confirmed on the report, by email with a calendar invite, and in the dashboard. The clinic owner can switch the deposit off in Settings (D-066).

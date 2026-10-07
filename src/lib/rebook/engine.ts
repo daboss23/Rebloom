@@ -511,7 +511,8 @@ export function buildQueue(input: EngineInput): Queue {
                 body: [
                   `Hi ${name},`,
                   `Your course has had time to settle, so this is the moment to see what's changed. The progress scan takes two minutes at home, with the same steps as your first.`,
-                  link ? `Open your report to start:\n\n${link}` : "",
+                  // Straight to the scan: the report link alone would make them look for it (D-073).
+                  link ? `Start it here:\n\n${link}/rescan` : "",
                   sign,
                 ]
                   .filter(Boolean)

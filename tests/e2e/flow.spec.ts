@@ -103,3 +103,64 @@ test("a scan runs end to end in fixture mode, and Delete my data removes it", as
   await expect(page.getByRole("heading", { name: "Deleted." })).toBeVisible();
   expect((await page.request.get(reportUrl)).status()).toBe(404);
 });
+
+test("a progress scan from the report link, on another device, turns the report into the progress view", async ({ page, browser }) => {
+  // Two full scans, one after the other.
+  test.setTimeout(150_000);
+  await completeIntake(page);
+  const photo = await sharp({ create: { width: 810, height: 1080, channels: 3, background: "#cbb8a6" } }).jpeg().toBuffer();
+  const first = await (
+    await page.request.post("/api/scans", {
+      data: { clinicSlug: "maison-verre", width: 810, height: 1080, quality: GOOD_QUALITY, landmarks: syntheticLandmarks() },
+    })
+  ).json();
+  await page.request.put(first.upload.url, { headers: first.upload.headers, data: photo });
+  await page.request.post(`/api/scans/${first.scanId}/analyze`);
+  await page.goto(`/c/maison-verre/processing?scan=${first.scanId}`);
+  const gate = page.getByRole("dialog", { name: "Your skin report is ready." });
+  await expect(gate).toBeVisible({ timeout: 30_000 });
+  await gate.getByLabel("First name").fill("Nora");
+  await gate.getByLabel("Email", { exact: true }).fill("nora@example.com");
+  await gate.getByRole("button", { name: "Send my results" }).click();
+  await page.getByRole("link", { name: "Open my report" }).click();
+  await expect(page.getByRole("heading", { name: "Your three priorities" })).toBeVisible();
+  const report = new URL(page.url()).pathname;
+  const token = report.split("/")[2];
+
+  // The emailed link on another phone: a fresh browser, no cookies. The report link is the only key (D-073).
+  const phone = await (await browser.newContext()).newPage();
+  await phone.goto(`${report}/rescan`);
+  await expect(phone.getByRole("heading", { name: "Same steps as your first scan." })).toBeVisible();
+  const created = await phone.request.post(`/api/reports/${token}/scans`, {
+    data: { width: 810, height: 1080, quality: GOOD_QUALITY, landmarks: syntheticLandmarks() },
+  });
+  expect(created.ok()).toBe(true);
+  const rescan = await created.json();
+  await phone.request.put(rescan.upload.url, { headers: rescan.upload.headers, data: photo });
+  expect((await phone.request.post(`/api/scans/${rescan.scanId}/analyze?report=${token}`)).ok()).toBe(true);
+  // Without the report link, someone else's browser can't reach the scan.
+  expect((await phone.request.get(`/api/scans/${rescan.scanId}/status`)).status()).toBe(404);
+
+  await phone.goto(`${report}/rescan?scan=${rescan.scanId}`);
+  await expect(phone).toHaveURL(new RegExp(`${report}$`), { timeout: 30_000 });
+  // The same face minutes later: demo mode holds steady rather than inventing progress.
+  await expect(phone.getByRole("heading", { name: "Nora, here's your progress." })).toBeVisible();
+  await expect(phone.getByRole("heading", { name: "What's changed" })).toBeVisible();
+  await expect(phone.getByText("Same light, same angle. Verified at capture.")).toBeVisible();
+  await expect(phone.getByRole("heading", { name: "Your three priorities" })).toHaveCount(0);
+});
+
+test("a demo client can't be rescanned: their portrait isn't a scan", async ({ page }) => {
+  await page.goto("/dashboard/enter");
+  await page.getByRole("button", { name: "Enter demo as Dana" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 30_000 });
+  await page.goto("/dashboard/clients");
+  await page.getByRole("link", { name: /Amelia/ }).first().click();
+  const href = await page.locator('a[href^="/r/"]').first().getAttribute("href");
+  const report = `/r/${href!.split("/")[2]}`;
+  await page.goto(report);
+  await expect(page.getByRole("heading", { name: "Amelia, your skin has moved." })).toBeVisible();
+  await page.goto(`${report}/rescan`);
+  await expect(page.getByRole("heading", { name: "This is a sample client." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Take your own scan" })).toHaveAttribute("href", "/c/maison-verre");
+});

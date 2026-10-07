@@ -38,7 +38,14 @@ const TIPS = [
   { icon: IconCamera, text: "Hold your phone at eye level, about an arm's length away." },
 ];
 
-export function CaptureFlow({ clinicSlug }: { clinicSlug: string }) {
+/** A progress scan from the report link (DECISIONS D-073): same steps, its own endpoints, back to the report. */
+export interface Rescan {
+  token: string;
+  /** Scan 01's light, to guide toward. Null when the first scan didn't record it. */
+  baseline: { luminance: number; warmth: number } | null;
+}
+
+export function CaptureFlow({ clinicSlug, rescan }: { clinicSlug: string; rescan?: Rescan }) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });
   const [inApp, setInApp] = useState(false);
@@ -101,7 +108,9 @@ export function CaptureFlow({ clinicSlug }: { clinicSlug: string }) {
   async function submit(shot: Shot) {
     setPhase({ kind: "submitting", shot });
     try {
-      const created = await fetch("/api/scans", {
+      // A rescan is keyed by the report link, so it works from the email on any device.
+      const report = rescan ? `?report=${encodeURIComponent(rescan.token)}` : "";
+      const created = await fetch(rescan ? `/api/reports/${rescan.token}/scans` : "/api/scans", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -119,9 +128,9 @@ export function CaptureFlow({ clinicSlug }: { clinicSlug: string }) {
       };
       const put = await fetch(upload.url, { method: upload.method, headers: upload.headers, body: shot.blob });
       if (!put.ok) throw new Error("upload");
-      const started = await fetch(`/api/scans/${scanId}/analyze`, { method: "POST" });
+      const started = await fetch(`/api/scans/${scanId}/analyze${report}`, { method: "POST" });
       if (!started.ok) throw new Error((await started.json().catch(() => null))?.error ?? "analyze");
-      router.push(`/c/${clinicSlug}/processing?scan=${scanId}`);
+      router.push(rescan ? `/r/${rescan.token}/rescan?scan=${scanId}` : `/c/${clinicSlug}/processing?scan=${scanId}`);
     } catch (e) {
       const message =
         e instanceof Error && e.message && !["create", "upload", "analyze"].includes(e.message)
@@ -151,11 +160,12 @@ export function CaptureFlow({ clinicSlug }: { clinicSlug: string }) {
 
       {phase.kind === "intro" && (
         <div className="focus-in">
-          <Label>Your photo</Label>
-          <h1 className="t-h1 mt-4">One good photo is all it takes.</h1>
+          <Label>{rescan ? "Progress scan" : "Your photo"}</Label>
+          <h1 className="t-h1 mt-4">{rescan ? "Same steps as your first scan." : "One good photo is all it takes."}</h1>
           <p className="t-body mt-5">
-            We&apos;ll guide you, one small step at a time. The photo is taken when everything looks right, so your
-            results are reliable.
+            {rescan
+              ? "The same light and the same angle make the comparison fair. If you can, stand where you took your first photo. We'll tell you if the light looks different."
+              : "We'll guide you, one small step at a time. The photo is taken when everything looks right, so your results are reliable."}
           </p>
           <ul className="glass mt-8 divide-y divide-[#0c1a22]/[0.07] px-5">
             {TIPS.map(({ icon: Icon, text }) => (
@@ -182,6 +192,7 @@ export function CaptureFlow({ clinicSlug }: { clinicSlug: string }) {
 
       {phase.kind === "camera" && (
         <LiveCamera
+          baseline={rescan?.baseline ?? null}
           onCapture={onCapture}
           onUploadInstead={chooseFile}
           onUnavailable={(message) => {
