@@ -1,24 +1,57 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, use, useEffect, useRef, useState, type ReactNode } from "react";
 import { LightField } from "@/components/dashboard/LightField";
 import { Chip } from "@/components/ui/Chip";
+import { cx } from "@/components/ui/cx";
 
 export interface FaceMapLayer {
   key: string;
   label: string;
   describes: string;
+  /** The concern's score, 1 to 100. */
+  score: number;
   maskUrl: string | null;
 }
 
+/** The priority the face map is showing, shared with the priority cards so the two read as one. */
+const Shown = createContext<{ shown: string | null; show: (key: string) => void } | null>(null);
+
+export function FaceMapFocus({ initial, children }: { initial: string | null; children: ReactNode }) {
+  const [shown, show] = useState(initial);
+  return <Shown value={{ shown, show }}>{children}</Shown>;
+}
+
+/** A priority card, outlined in sea while the face map shows it. Its parent sets the position. */
+export function FaceMapPriority({ concern, className, children }: { concern: string; className?: string; children: ReactNode }) {
+  const shown = use(Shown)?.shown === concern;
+  return (
+    <li className={className}>
+      <span
+        aria-hidden
+        className={cx(
+          "pointer-events-none absolute -inset-px rounded-[inherit] ring-1 ring-inset ring-[#1e5a78]/45 transition-opacity duration-500 ease-gentle",
+          shown ? "opacity-100" : "opacity-0",
+        )}
+      />
+      {children}
+    </li>
+  );
+}
+
 /**
- * The client's photo with tappable concern overlays (brief 3.3: lead with their face). If the photo can't load
- * (a demo client before their portrait exists, D-030), it shows their initials over moving light, never a broken image.
+ * The client's photo with tappable concern overlays (brief 3.3: lead with their face). Each button shows that
+ * priority's marks and score on the photo. Demo clients carry no masks (D-030), so there only the score changes.
+ * If the photo can't load, it shows their initials over moving light, never a broken image.
  */
 export function FaceMap({ photoUrl, initials, layers, caption }: { photoUrl: string; initials?: string; layers: FaceMapLayer[]; caption: string }) {
-  const [active, setActive] = useState(layers[0]?.key ?? null);
+  const focus = use(Shown);
+  const [own, setOwn] = useState(layers[0]?.key ?? null);
+  const active = focus ? focus.shown : own;
+  const setActive = focus ? focus.show : setOwn;
   const current = layers.find((l) => l.key === active) ?? null;
   const [failed, setFailed] = useState(false);
+  const marked = !failed && layers.some((l) => l.maskUrl);
   const img = useRef<HTMLImageElement>(null);
   // A photo that failed before the page hydrated never fires onError: check once on mount.
   useEffect(() => {
@@ -60,26 +93,40 @@ export function FaceMap({ photoUrl, initials, layers, caption }: { photoUrl: str
           ) : null,
         )}
         {current && (
-          <span className="absolute right-3 top-3 rounded-full bg-white/85 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-ink shadow-[0_6px_16px_-10px_rgba(12,26,34,0.6)] backdrop-blur-sm">
-            {current.label}
+          <span
+            aria-hidden
+            className="absolute right-3 top-3 rounded-full bg-white/85 py-1.5 pl-3 pr-3.5 shadow-[0_6px_16px_-10px_rgba(12,26,34,0.6)] backdrop-blur-sm"
+          >
+            <span key={current.key} className="fade flex items-baseline gap-2 text-ink">
+              <span className="text-[11px] uppercase tracking-[0.14em]">{current.label}</span>
+              <span className="font-display text-[20px] leading-none">{current.score}</span>
+            </span>
           </span>
         )}
         <span className="absolute bottom-3 left-3 text-[11px] uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
           {caption}
         </span>
       </div>
-      <div role="group" aria-label="Show a concern on your photo" className="mt-4 grid grid-cols-3 gap-2">
+      <p className="mt-4 text-[13.5px] leading-snug text-text-2">
+        {marked ? "Choose a priority to see where it shows on your face." : "Choose a priority to see its score."}
+      </p>
+      <div role="group" aria-label="Show a priority on your photo" className="mt-2.5 grid grid-cols-3 gap-2">
         {layers.map((layer) => (
           <Chip key={layer.key} selected={layer.key === active} onClick={() => setActive(layer.key)} className="justify-center px-2 text-center">
             {layer.label}
           </Chip>
         ))}
       </div>
-      {current && (
-        <p key={current.key} className="t-body mt-4 fade">
-          {current.describes}
-        </p>
-      )}
+      <div aria-live="polite">
+        {current && (
+          <p key={current.key} className="t-body mt-4 fade">
+            <span className="sr-only">
+              {current.label}, {current.score} out of 100.{" "}
+            </span>
+            {current.describes}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

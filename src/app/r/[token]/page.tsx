@@ -1,7 +1,7 @@
 import { Bloom } from "@/components/dashboard/Bloom";
 import { LightField } from "@/components/dashboard/LightField";
 import { DeleteData } from "@/components/report/DeleteData";
-import { FaceMap } from "@/components/report/FaceMap";
+import { FaceMap, FaceMapFocus, FaceMapPriority } from "@/components/report/FaceMap";
 import { BookingLine, HomeCare, Investment, PlanTimeline, ReadyWhenYouAre } from "@/components/report/PlanSections";
 import { WhatToExpect } from "@/components/report/WhatToExpect";
 import { IconPlus } from "@/components/ui/Icons";
@@ -89,49 +89,53 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
         </p>
       )}
 
-      <section className="focus-in mt-8" style={{ animationDelay: "240ms" }} aria-label="Your face map">
-        <FaceMap
-          photoUrl={`/r/${token}/photo/${latest.id}`}
-          initials={`${client.firstName?.[0] ?? ""}${client.lastName?.[0] ?? ""}`}
-          caption={`${scanLabel} · Face map`}
-          layers={top.map((c) => ({
-            key: c.key,
-            label: CONCERNS[c.key].label,
-            describes: CONCERNS[c.key].describes,
-            maskUrl: c.maskPath ? `/r/${token}/mask/${latest.id}/${c.key}` : null,
-          }))}
-        />
-      </section>
+      {/* Choosing a priority on the photo outlines its card below. */}
+      <FaceMapFocus initial={top[0]?.key ?? null}>
+        <section className="focus-in mt-8" style={{ animationDelay: "240ms" }} aria-label="Your face map">
+          <FaceMap
+            photoUrl={`/r/${token}/photo/${latest.id}`}
+            initials={`${client.firstName?.[0] ?? ""}${client.lastName?.[0] ?? ""}`}
+            caption={`${scanLabel} · Face map`}
+            layers={top.map((c) => ({
+              key: c.key,
+              label: CONCERNS[c.key].label,
+              describes: CONCERNS[c.key].describes,
+              score: Math.round(c.ui),
+              maskUrl: c.maskPath ? `/r/${token}/mask/${latest.id}/${c.key}` : null,
+            }))}
+          />
+        </section>
 
-      <section className="mt-16">
-        <h2 className="t-h2">Your three priorities</h2>
-        <p className="t-body mt-3">Scores run from 1 to 100. Higher means healthier-looking skin.</p>
-        <ol className="mt-7 space-y-3">
-          {top.map((c, i) => (
-            <li key={c.key} className="glass px-5 py-5">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <p className="t-label">{String(i + 1).padStart(2, "0")}</p>
-                  <h3 className="mt-1 font-display text-[26px] font-light leading-tight text-ink">{CONCERNS[c.key].label}</h3>
+        <section className="mt-16">
+          <h2 className="t-h2">Your three priorities</h2>
+          <p className="t-body mt-3">Scores run from 1 to 100. Higher means healthier-looking skin.</p>
+          <ol className="mt-7 space-y-3">
+            {top.map((c, i) => (
+              <FaceMapPriority key={c.key} concern={c.key} className="glass px-5 py-5">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="t-label">{String(i + 1).padStart(2, "0")}</p>
+                    <h3 className="mt-1 font-display text-[26px] font-light leading-tight text-ink">{CONCERNS[c.key].label}</h3>
+                  </div>
+                  <ScoreNumber value={c.ui} />
                 </div>
-                <ScoreNumber value={c.ui} />
-              </div>
-              <ScoreBar value={c.ui} className="mt-4" />
-              <p className="t-body mt-4">{priorityMeaning(i, c, top.slice(0, i), stated, plan, result.concerns)}</p>
-            </li>
-          ))}
-        </ol>
-        {asked.length > 0 && (
-          <div className="mt-3 rounded-[18px] bg-[radial-gradient(120%_90%_at_100%_0%,rgba(255,214,196,0.55)_0%,rgba(255,214,196,0)_60%),linear-gradient(180deg,rgba(255,255,255,0.75),rgba(255,255,255,0.55))] px-5 py-5 ring-1 ring-white/80">
-            <p className="t-label">What you asked about</p>
-            {asked.map((m) => (
-              <p key={m.phrase} className="t-body mt-2">
-                {m.text}
-              </p>
+                <ScoreBar value={c.ui} className="mt-4" />
+                <p className="t-body mt-4">{priorityMeaning(i, c, top.slice(0, i), stated, plan, result.concerns)}</p>
+              </FaceMapPriority>
             ))}
-          </div>
-        )}
-      </section>
+          </ol>
+          {asked.length > 0 && (
+            <div className="mt-3 rounded-[18px] bg-[radial-gradient(120%_90%_at_100%_0%,rgba(255,214,196,0.55)_0%,rgba(255,214,196,0)_60%),linear-gradient(180deg,rgba(255,255,255,0.75),rgba(255,255,255,0.55))] px-5 py-5 ring-1 ring-white/80">
+              <p className="t-label">What you asked about</p>
+              {asked.map((m) => (
+                <p key={m.phrase} className="t-body mt-2">
+                  {m.text}
+                </p>
+              ))}
+            </div>
+          )}
+        </section>
+      </FaceMapFocus>
 
       <details className="glass group mt-3 overflow-hidden">
         <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 text-[14.5px] text-ink [&::-webkit-details-marker]:hidden">

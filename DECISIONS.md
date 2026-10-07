@@ -368,3 +368,10 @@ Booking is built into Rebloom: the brief rules out real booking-system integrati
 
 ## D-066 · The clinic owner switches deposits on or off (J, Oct 7)
 Joshua isn't a fan of the deposit, but it stays for now, as the owner's choice. **Settings, Booking** has one switch, "Take a $50 deposit at booking", on by default. Off: a client chooses a time and is booked at once, and no page or email mentions a deposit. It saves per clinic and per sandbox (table `clinic_settings`, migration `20261007120000_clinic_settings`), so in the demo each browser's switch is its own and a judge can't change it for everyone. With the switch on but no Stripe key, booking takes no deposit and Settings says why. The same section shows the hours, slot length and the 24-hour cancellation rule that booking runs on.
+
+## D-067 · The face map's buttons show each priority's score (J + C, Oct 7). Refines D-063
+Joshua clicked Dark circles, Pores and Pigmentation under the photo and expected the numbers to change. They never did: the buttons only switched the marks on the photo, and they sat just above "Your three priorities", so they read as tabs for that list.
+- **The photo shows the score:** its label reads "Pores 62", so every button changes a number the client can see.
+- **One line above the buttons says what they do:** "Choose a priority to see where it shows on your face." Where nothing is drawn on the photo: "Choose a priority to see its score."
+- **The matching card is outlined** in sea in "Your three priorities", so the photo and the list read as one.
+- **Where the marks appear:** every scan taken in the app, by camera or upload, live or in demo mode (D-020). The twelve demo clients opened from the dashboard carry no marks (D-030), so on their reports only the score changes.
