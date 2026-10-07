@@ -389,3 +389,6 @@ Joshua wanted the demo clients to look as complete as a real scan, since judges 
 - **The same marks everywhere:** the path seeds the drawing, so every judge sees the same marks on a given demo client.
 - **D-069's note is gone:** with marks on every demo face it could never show. The "Demo analysis" notice above the face map still says the results are sample data.
 - **A replaced portrait** needs `node scripts/demo-landmarks.mjs` run again. A unit test checks that every demo scan has a face to draw on.
+
+## D-071 · Booking's cards are solid (J, Oct 7). Refines D-061 and D-068
+Joshua asked for the booking cards not to be see-through. On the booking pages (`/r/[token]/book` and its confirmation), the glass cards (the booked visit, notices, "no open times") and the unchosen day and time buttons are now solid white, with no blur. A chosen day or time stays deep sea. Everywhere else keeps its frosted glass.
