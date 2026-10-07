@@ -77,7 +77,7 @@ export default function RebloomHome() {
                 ["#questions", "Questions"],
               ].map(([href, label]) => (
                 <li key={href}>
-                  <a href={href} className="transition-colors duration-200 hover:text-ink">
+                  <a href={href} className="transition-colors duration-200 hover:text-white">
                     {label}
                   </a>
                 </li>
