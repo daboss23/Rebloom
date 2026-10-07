@@ -12,6 +12,7 @@
 - **The scan-due email** links straight to the rescan, as a gold "Start your progress scan" button.
 - **The scan comes alive** (D-074): the face model's own points drawn live over the face in the camera, with a line of light over the hold; and the report plays the analysis back once (points, then each priority's marks in its own colour with a callout and its score counting up), with Replay.
 - **Dots and rulers** (D-075): marks are now fine coral dots where the scan found each priority, with sparse green across the rest of the face, after Dermora. Score bars are now rulers, and on "What's changed" the marker slides from the first score to today's.
+- **Landing hero** (D-076): the first screen is now Amelia's face map, read and marked as her report shows it, with her score on a ruler and "+13 since scan 01". The live queue follows as the second section.
 - **Tests:** 364 unit tests (new: progress rules, demo stories, demo-mode rescans, demo marks, the email button) and two new browser tests (a rescan from a second browser with only the report link; a demo client can't be rescanned).
 
 ### To try it

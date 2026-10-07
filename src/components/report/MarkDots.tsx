@@ -195,7 +195,7 @@ function paint(el: HTMLCanvasElement, glow: HTMLCanvasElement, mask: HTMLImageEl
   if (t && g) {
     const img = t.createImageData(cols, rows);
     for (let k = 0; k < field.length; k++) {
-      img.data.set([255, 111, 94, field[k] >= 0.14 ? Math.round(field[k] * 210) : 0], k * 4);
+      img.data.set([255, 111, 94, field[k] >= 0.14 ? Math.round(field[k] * 170) : 0], k * 4);
     }
     t.putImageData(img, 0, 0);
     glow.width = Math.max(1, Math.round(W / 2));
