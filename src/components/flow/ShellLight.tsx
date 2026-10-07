@@ -19,7 +19,10 @@ export function ShellLight() {
     <div
       aria-hidden
       className={
-        report
+        booking
+          ? // Booking keeps the light to the top and fades it out before the days, so choosing happens on calm ground.
+            "pointer-events-none absolute inset-x-0 top-0 h-[440px] [mask-image:linear-gradient(180deg,#000_0%,#000_35%,transparent_100%)]"
+          : report
           ? "pointer-events-none absolute inset-x-0 top-0 h-[1100px] [mask-image:linear-gradient(180deg,#000_0%,#000_45%,rgba(0,0,0,0.6)_70%,transparent_100%)]"
           : "pointer-events-none absolute inset-x-0 top-0 h-[600px] [mask-image:linear-gradient(180deg,#000_0%,#000_40%,transparent_100%)]"
       }
