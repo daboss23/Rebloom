@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { LightField } from "@/components/dashboard/LightField";
 import { Chip } from "@/components/ui/Chip";
 
 export interface FaceMapLayer {
@@ -10,18 +11,34 @@ export interface FaceMapLayer {
   maskUrl: string | null;
 }
 
-/** The client's photo with tappable concern overlays (brief 3.3: lead with their face). */
-export function FaceMap({ photoUrl, layers, caption }: { photoUrl: string; layers: FaceMapLayer[]; caption: string }) {
+/**
+ * The client's photo with tappable concern overlays (brief 3.3: lead with their face). If the photo can't load
+ * (a demo client before their portrait exists, D-030), it shows their initials over moving light, never a broken image.
+ */
+export function FaceMap({ photoUrl, initials, layers, caption }: { photoUrl: string; initials?: string; layers: FaceMapLayer[]; caption: string }) {
   const [active, setActive] = useState(layers[0]?.key ?? null);
   const current = layers.find((l) => l.key === active) ?? null;
+  const [failed, setFailed] = useState(false);
+  const img = useRef<HTMLImageElement>(null);
+  // A photo that failed before the page hydrated never fires onError: check once on mount.
+  useEffect(() => {
+    if (img.current?.complete && img.current.naturalWidth === 0) setFailed(true);
+  }, []);
 
   return (
     <div>
       <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[24px] bg-mist shadow-[0_30px_60px_-32px_rgba(12,44,62,0.6)] ring-1 ring-white/70">
-        {/* eslint-disable-next-line @next/next/no-img-element -- private, token-scoped image */}
-        <img src={photoUrl} alt="Your scan photo" className="absolute inset-0 h-full w-full object-cover" />
+        {failed ? (
+          <div aria-hidden className="absolute inset-0 grid place-items-center">
+            <LightField variant="ice" />
+            {initials && <span className="relative font-display text-[clamp(88px,22vw,140px)] font-light tracking-[0.04em] text-[#1e5a78]/70">{initials}</span>}
+          </div>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element -- private, token-scoped image
+          <img ref={img} src={photoUrl} alt="Your scan photo" onError={() => setFailed(true)} className="absolute inset-0 h-full w-full object-cover" />
+        )}
         {layers.map((layer) =>
-          layer.maskUrl ? (
+          layer.maskUrl && !failed ? (
             // Ice-white marks with a hairline deep-sea edge read on every skin tone.
             <div
               key={layer.key}

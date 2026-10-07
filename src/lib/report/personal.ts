@@ -18,7 +18,9 @@ const isAre = (name: string) => (/[^s]s$/i.test(name) ? "are" : "is");
 export function subhead(result: ScanResult): string {
   const strengths = [...result.concerns].sort((a, b) => b.ui - a.ui).filter((c) => c.ui >= STRONG).slice(0, 2);
   if (strengths.length === 0) return "Here's what we see, and where we'd begin.";
-  return `${sentenceCase(joinLabels(strengths.map((s) => s.key)))} ${strengths.length === 1 ? "is" : "are"} already looking strong. Here's where we'd begin.`;
+  const named = sentenceCase(joinLabels(strengths.map((s) => s.key)));
+  // One strength takes its own verb: "Blemishes are", "Firmness is".
+  return `${named} ${strengths.length === 1 ? isAre(named) : "are"} already looking strong. Here's where we'd begin.`;
 }
 
 /** Where on the face, for HD's per-area wrinkle and pore scores. Unknown area names are never shown. */

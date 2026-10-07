@@ -88,6 +88,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
       <section className="focus-in mt-8" style={{ animationDelay: "240ms" }} aria-label="Your face map">
         <FaceMap
           photoUrl={`/r/${token}/photo/${latest.id}`}
+          initials={`${client.firstName?.[0] ?? ""}${client.lastName?.[0] ?? ""}`}
           caption={`${scanLabel} · Face map`}
           layers={top.map((c) => ({
             key: c.key,

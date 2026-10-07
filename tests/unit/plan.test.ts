@@ -373,3 +373,12 @@ describe("each priority speaks to this person (Joshua, Oct 7)", () => {
     expect(standing(r.concerns.find((c) => c.key === "texture")!, r.concerns)).toBe("your lowest score of the 15");
   });
 });
+
+describe("the report's subhead grammar", () => {
+  it("gives one strength its own verb", () => {
+    const low = { texture: 60, pore: 60, age_spot: 60, redness: 60, wrinkle: 60, firmness: 60, acne: 60, moisture: 60, radiance: 60, oiliness: 60, dark_circle_v2: 60, eye_bag: 60, droopy_upper_eyelid: 60, droopy_lower_eyelid: 60, tear_trough: 60 };
+    expect(subhead(result({ ...low, acne: 92 }))).toBe("Blemishes are already looking strong. Here's where we'd begin.");
+    expect(subhead(result({ ...low, firmness: 92 }))).toBe("Firmness is already looking strong. Here's where we'd begin.");
+    expect(subhead(result({ ...low, acne: 92, tear_trough: 90 }))).toMatch(/^Blemishes and under-eye hollows are already/);
+  });
+});

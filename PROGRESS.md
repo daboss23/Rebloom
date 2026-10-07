@@ -12,7 +12,9 @@ The independent review of the client journey (cut short last session) ran on pho
 - **A real copy of the "real change" email for judges (D-064).** In the demo's send sheet, type your own address under the message and the email arrives in your inbox exactly as Sofia would get it, with a line on top saying it's a demo copy. Three per browser, links only to this app.
 - **"Open brief" on the brief itself is gone.** The flag card on a client's brief linked back to the same page; it now shows only "Mark as reviewed".
 - **The report's water** is bluer, reaches about twice as far down the page, and fades out over a longer run. The rest of the client journey keeps the paler light.
-- **Tests:** 333 unit tests (15 new) and all 15 browser tests pass (one new: the brief offers the review, not a link to itself), with lint, typecheck, the copy check and the production build. Run the browser tests with `--workers=1` in the cloud workspace: with two at once, cold compiles there time out at random.
+- **"Blemishes are", not "Blemishes is".** The report's opening line now picks its verb from the concern's name when only one is strong.
+- **Portraits have a home (D-030).** Pictures go in `public/demo-portraits/<first name>.jpg`, made with `node scripts/portraits.mjs <picture> <name>` (crops to 3:4, 1080 × 1440, strips metadata). The photo route serves them for every demo client, so the brief, the report and the email link all show the face. A client without one shows their initials over moving light, on the report as well as the brief, never a broken image.
+- **Tests:** 335 unit tests (17 new) and all 15 browser tests pass (one new: the brief offers the review, not a link to itself), with lint, typecheck, the copy check and the production build. Run the browser tests with `--workers=1` in the cloud workspace: with two at once, cold compiles there time out at random.
 
 ### Why no email arrived, and what Joshua needs to do
 1. **Nothing sent one until now.** Deploy this, and the report email goes out whenever `RESEND_API_KEY` is set in Vercel.

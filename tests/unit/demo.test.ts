@@ -329,3 +329,12 @@ describe("the local store's demo copies", () => {
     expect(await store.listMessages(TIDEWATER.id, "race")).toEqual([]);
   });
 });
+
+describe("bundled demo portraits (DECISIONS D-030)", () => {
+  it("maps a demo portrait to the copy that ships with the app, and nothing else", async () => {
+    const { bundledPortraitUrl } = await import("@/lib/store/scan-paths");
+    expect(bundledPortraitUrl("demo/portraits/sofia.jpg")).toBe("/demo-portraits/sofia.jpg");
+    expect(bundledPortraitUrl("scans/abc/def.jpg")).toBeNull();
+    expect(bundledPortraitUrl("demo/portraits/../secret.jpg")).toBeNull();
+  });
+});
