@@ -6,7 +6,8 @@ import { BookingLine, HomeCare, Investment, PlanTimeline, ReadyWhenYouAre } from
 import { RescanInvite, ScanPair, WhatsChanged } from "@/components/report/ProgressSections";
 import { WhatToExpect } from "@/components/report/WhatToExpect";
 import { IconPlus } from "@/components/ui/Icons";
-import { ScoreBar, ScoreNumber } from "@/components/ui/Typography";
+import { ScoreNumber } from "@/components/ui/Typography";
+import { ScoreRuler } from "@/components/ui/ScoreRuler";
 import { addDays, formatLongDate } from "@/lib/clock";
 import { EVENT_OPTIONS } from "@/lib/flow/intake-options";
 import { rankPriorities, statedConcerns } from "@/lib/plan/build";
@@ -166,7 +167,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
                     </div>
                     <ScoreNumber value={c.ui} />
                   </div>
-                  <ScoreBar value={c.ui} className="mt-4" />
+                  <ScoreRuler value={c.ui} className="mt-4" />
                   <p className="t-body mt-4">{priorityMeaning(i, c, top.slice(0, i), stated, plan, result.concerns)}</p>
                 </FaceMapPriority>
               ))}

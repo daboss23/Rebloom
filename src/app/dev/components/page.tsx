@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Checkbox, FieldLabel, TextArea, TextInput } from "@/components/ui/Field";
 import { IconAlert, IconArrowLeft, IconArrowRight, IconCamera, IconCheckCircle, IconCopy, IconLock, IconSun, IconUpload } from "@/components/ui/Icons";
-import { Hairline, ImagePlaceholder, Label, ScoreBar, ScoreNumber } from "@/components/ui/Typography";
+import { Hairline, ImagePlaceholder, Label, ScoreNumber } from "@/components/ui/Typography";
+import { ScoreRuler } from "@/components/ui/ScoreRuler";
 import { ClinicWordmark, PoweredByRebloom, RebloomWordmark } from "@/components/ui/Wordmarks";
 import { SEED_CLINICS } from "@/data/clinics";
 import { clinicThemeStyle, contrastRatio, onAccent } from "@/lib/brand";
@@ -85,8 +86,8 @@ export default function ComponentGallery() {
       <section className="space-y-4">
         <h2 className="t-h2">Chips, bars and dividers</h2>
         <ChipDemo />
-        <ScoreBar value={58} />
-        <ScoreBar value={71} />
+        <ScoreRuler value={58} />
+        <ScoreRuler value={71} />
         <Hairline />
       </section>
 
@@ -121,7 +122,7 @@ export default function ComponentGallery() {
         {SEED_CLINICS.map((clinic) => (
           <div key={clinic.id} style={clinicThemeStyle(clinic.accentHex)} className="border border-mist p-5 space-y-4">
             <ClinicWordmark clinic={clinic} />
-            <ScoreBar value={64} />
+            <ScoreRuler value={64} />
             <div className="bg-ink p-4">
               <Button variant="onDark" block>
                 Book your first session

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { IconCheckCircle } from "@/components/ui/Icons";
+import { ScoreRuler } from "@/components/ui/ScoreRuler";
 import { cx } from "@/components/ui/cx";
 import { formatLongDate } from "@/lib/clock";
 import type { ConcernProgress, Progress } from "@/lib/report/progress";
@@ -78,6 +79,8 @@ export function WhatsChanged({ items }: { items: ConcernProgress[] }) {
               </p>
               <Sparkline values={i.series} tone={i.verdict === "improved" ? "growth" : "sea"} />
             </div>
+            {/* The marker slides from the first score to today's. Green only for a confirmed improvement (D-010). */}
+            <ScoreRuler value={i.to} from={i.from} tone={i.badge && i.verdict === "improved" ? "growth" : "sea"} className="mt-4" />
             <p className="t-body mt-4">{i.line}</p>
           </li>
         ))}
