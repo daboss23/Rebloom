@@ -186,7 +186,6 @@ function Hero({ p }: { p: LandingPreview }) {
                 from: c.from,
                 score: c.score,
                 anchor: c.anchor,
-                maskUrl: `/landing/mask/${c.key}`,
               }))}
             />
           </div>

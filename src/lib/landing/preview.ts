@@ -85,12 +85,8 @@ export interface LandingFace {
     /** ui scores, scan 01 and latest. */
     from: number;
     score: number;
+    /** Where it shows on the face (0 to 1 each way), as the report's target rests on it. */
     anchor: [number, number];
-    /** The demo mask's path: it seeds the drawing, so the marks match the client's own report (D-070). */
-    maskPath: string;
-    ui: number;
-    width: number;
-    height: number;
   }[];
 }
 
@@ -232,7 +228,7 @@ function faceOf(f: ClientFacts, featured: ConcernKey): LandingFace | null {
   const priorities = keys.flatMap((key) => {
     const now = last.result!.concerns.find((c) => c.key === key);
     const then = first.result?.concerns.find((c) => c.key === key);
-    if (!now?.maskPath) return [];
+    if (!now) return [];
     return [
       {
         key,
@@ -240,10 +236,6 @@ function faceOf(f: ClientFacts, featured: ConcernKey): LandingFace | null {
         from: Math.round(then?.ui ?? now.ui),
         score: Math.round(now.ui),
         anchor: concernAnchor(points, key),
-        maskPath: now.maskPath,
-        ui: now.ui,
-        width: last.imageWidth,
-        height: last.imageHeight,
       },
     ];
   });

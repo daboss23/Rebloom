@@ -14,6 +14,7 @@
 - **Dots and rulers** (D-075): marks are now fine coral dots where the scan found each priority, with sparse green across the rest of the face, after Dermora. Score bars are now rulers, and on "What's changed" the marker slides from the first score to today's.
 - **Landing hero** (D-076): the first screen is now Amelia's face map, read and marked as her report shows it, with her score on a ruler and "+13 since scan 01". The live queue follows as the second section.
 - **Reading your photo** (D-077): the gears are gone. While YouCam reads the photo, a fine grid of light that follows the client's own face sweeps across it, with focus brackets, a target on each feature, true readouts, the real stage on a progress bar, and "Analysis complete". Preview it at `/dev/scan` (`?who=priya`, or any other name for the face model on its own).
+- **One light everywhere** (D-078): the report's face map and the landing hero now use the scan's own light. A pass of the grid, then a target and a glass label on each priority, over a faint outline of the face. The dots are gone.
 - **Tests:** 364 unit tests (new: progress rules, demo stories, demo-mode rescans, demo marks, the email button) and two new browser tests (a rescan from a second browser with only the report link; a demo client can't be rescanned).
 
 ### To try it

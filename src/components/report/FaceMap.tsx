@@ -2,9 +2,11 @@
 
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LightField } from "@/components/dashboard/LightField";
+import { ScanLight } from "@/components/face/ScanLight";
 import { Chip } from "@/components/ui/Chip";
 import { cx } from "@/components/ui/cx";
-import { CLEAR, MARK, MarkDots, faceShape } from "./MarkDots";
+import { framing, onStage, photoBox } from "@/lib/face/frame";
+import { FACE_POINT_COUNT } from "@/lib/face/grid";
 
 export interface FaceMapLayer {
   key: string;
@@ -12,15 +14,19 @@ export interface FaceMapLayer {
   describes: string;
   /** The concern's score, 1 to 100. */
   score: number;
-  maskUrl: string | null;
-  /** Where on the photo the concern shows (0 to 1 each way), for the reveal's callout. */
+  /** Where on the photo the concern shows (0 to 1 each way), where the target settles. */
   anchor: [number, number] | null;
 }
 
-/** The reveal's timeline, in ms. About four seconds, once per scan. */
-const T = { scanFrom: 250, scan: 1100, firstMark: 1450, markGap: 650, hold: 950, settle: 600 };
+/** The reveal's timeline, in ms: one pass of light, then the target visits each priority in turn. */
+const T = { pass: 3000, visit: 1100, settle: 500 };
+/** The map is 3:4; with a face found, the photo is framed so the face fills a little over half its width. */
+const MAP_RATIO = 4 / 3;
+const FACE_SHARE = 0.58;
+/** At rest the light stays as a faint outline of the face and its features. */
+const REST = { oval: 0.42, features: 0.34 };
 
-type Phase = "waiting" | "playing" | "settling" | "done";
+type Phase = "waiting" | "playing" | "done";
 
 /** The priority the face map is showing, shared with the priority cards so the two read as one. */
 const Shown = createContext<{ shown: string | null; show: (key: string) => void } | null>(null);
@@ -48,15 +54,14 @@ export function FaceMapPriority({ concern, className, children }: { concern: str
 }
 
 /**
- * The client's photo with tappable concern overlays (brief 3.3: lead with their face). Each button shows that
- * priority's marks and score on the photo. Demo clients' marks come from their portraits' landmarks (D-070).
+ * The client's photo, read in the scan's own light (brief 3.3: lead with their face; DECISIONS D-078). At rest a
+ * faint outline of the face and its features, and a target on the chosen priority with its name and score; each
+ * button moves the target to where that priority shows. Nothing is painted on the skin.
  *
- * Marks are fine dots (D-075): coral where the scan found the priority, sparse green across the rest of the face.
- *
- * The first time a scan's map comes into view it plays the analysis back (D-074): the face model's own points appear
- * as a line of light crosses the face, then each priority's dots spread out in turn with a callout and its score.
- * Every dot and number is this scan's own. Tapping a priority skips it, "Replay" plays it again, and with reduced motion it
- * never plays. If the photo can't load, it shows their initials over moving light, never a broken image.
+ * The first time a scan's map comes into view it plays the reading back: the light grid crosses the face once, then
+ * the target visits each priority in turn while its score counts up. Every point and number is this scan's own.
+ * Tapping a priority skips it, "Replay" plays it again, and with reduced motion it never plays. If the photo can't
+ * load, it shows their initials over moving light, never a broken image.
  */
 export function FaceMap({
   photoUrl,
@@ -69,7 +74,7 @@ export function FaceMap({
   initials?: string;
   layers: FaceMapLayer[];
   caption: string;
-  /** The face model's points on this photo (0 to 1 each way), for the reveal. */
+  /** The face model's points on this photo (0 to 1 each way). */
   landmarks?: [number, number][] | null;
 }) {
   const focus = use(Shown);
@@ -78,18 +83,23 @@ export function FaceMap({
   const choose = focus ? focus.show : setOwn;
   const current = layers.find((l) => l.key === active) ?? null;
   const [failed, setFailed] = useState(false);
-  const marked = !failed && layers.some((l) => l.maskUrl);
   const img = useRef<HTMLImageElement>(null);
-  const shape = useMemo(() => faceShape(landmarks), [landmarks]);
   const box = useRef<HTMLDivElement>(null);
+  const face = landmarks && landmarks.length >= FACE_POINT_COUNT ? landmarks : null;
+  const located = Boolean(face) && layers.some((l) => l.anchor);
+  const [aspect, setAspect] = useState(0.75);
+  const plane = useMemo(
+    () => (face ? framing(face, aspect, FACE_SHARE, MAP_RATIO) : { left: 0, top: 0, width: 1, height: MAP_RATIO, ratio: MAP_RATIO }),
+    [face, aspect],
+  );
 
   const [phase, setPhase] = useState<Phase>("waiting");
-  const [lit, setLit] = useState(0);
+  const [visit, setVisit] = useState(-1);
+  const [run, setRun] = useState(0);
   const [inView, setInView] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const allowed = useRef(false);
   const timers = useRef<number[]>([]);
-  const canReveal = marked || Boolean(landmarks);
   const storageKey = `rebloom:reveal:${photoUrl}`;
 
   const clear = () => {
@@ -98,13 +108,13 @@ export function FaceMap({
   };
   const play = useCallback(() => {
     clear();
-    setLit(0);
+    setVisit(-1);
+    setRun((r) => r + 1);
     setPhase("playing");
     const at = (ms: number, fn: () => void) => timers.current.push(window.setTimeout(fn, ms));
-    layers.forEach((_, i) => at(T.firstMark + i * T.markGap, () => setLit(i + 1)));
-    const end = T.firstMark + (layers.length - 1) * T.markGap + T.hold;
-    at(end, () => setPhase("settling"));
-    at(end + T.settle, () => setPhase("done"));
+    const shown = layers.filter((l) => l.anchor);
+    shown.forEach((_, i) => at(T.pass + i * T.visit, () => setVisit(i)));
+    at(T.pass + shown.length * T.visit + T.settle, () => setPhase("done"));
     try {
       window.localStorage.setItem(storageKey, "1");
     } catch {
@@ -133,7 +143,7 @@ export function FaceMap({
       played = false;
     }
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    allowed.current = canReveal && !played && !still;
+    allowed.current = located && !played && !still;
     // Browser-only facts, known after hydration.
     if (!allowed.current) setPhase("done");
     const io = new IntersectionObserver(
@@ -149,7 +159,7 @@ export function FaceMap({
       io.disconnect();
       clear();
     };
-  }, [canReveal, storageKey]);
+  }, [located, storageKey]);
 
   useEffect(() => {
     if (!failed && phase === "waiting" && allowed.current && inView && loaded) play();
@@ -157,9 +167,10 @@ export function FaceMap({
 
   // A photo that can't load has nothing to reveal.
   const stage: Phase = failed ? "done" : phase;
-  const revealing = stage === "playing" || stage === "settling";
-  const face = landmarks ? bounds(landmarks) : null;
-  const callouts = revealing ? place(layers) : [];
+  const playing = stage === "playing";
+  const visiting = playing && visit >= 0 ? layers.filter((l) => l.anchor)[visit] : null;
+  // The target: on the priority being visited, or at rest on the chosen one.
+  const target = playing ? visiting : stage === "done" ? current : null;
 
   return (
     <div>
@@ -178,133 +189,52 @@ export function FaceMap({
             ref={img}
             src={photoUrl}
             alt="Your scan photo"
-            onLoad={() => setLoaded(true)}
+            onLoad={(e) => {
+              setLoaded(true);
+              if (e.currentTarget.naturalWidth) setAspect(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight);
+            }}
             onError={() => setFailed(true)}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute max-w-none object-cover"
+            style={photoBox(plane)}
           />
         )}
 
-        {/* Deep sea over the photo while the analysis plays back, so the light and the marks carry. */}
+        {/* Cool light over the photo while it's read, as on the scan. */}
         <div
           aria-hidden
           className={cx(
-            "pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(12,26,34,0.5)_0%,rgba(12,26,34,0.3)_60%,rgba(12,26,34,0.42)_100%)] transition-opacity duration-500 ease-gentle",
-            stage === "playing" ? "opacity-100" : "opacity-0",
+            "pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(206,236,248,0.2),rgba(12,44,62,0.22))] transition-opacity duration-700 ease-gentle",
+            playing ? "opacity-100" : "opacity-0",
           )}
         />
 
-        {!failed &&
-          layers.map((layer, i) =>
-            layer.maskUrl ? (
-              <MarkDots
-                key={layer.key}
-                maskUrl={layer.maskUrl}
-                face={shape}
-                // While the analysis plays back, each priority takes its turn; after, the one chosen.
-                shown={stage === "playing" ? i === lit - 1 : stage !== "waiting" && layer.key === active}
-                origin={layer.anchor}
-              />
-            ) : null,
-          )}
+        {face && !failed && stage !== "waiting" && (
+          <ScanLight key={run} points={face} frame={plane} passes={run > 0 ? 1 : 0} rest={REST} />
+        )}
 
-        {revealing && landmarks && face && (
-          // Once the marks start to spread, the points hand over to them.
+        {target?.anchor && (
           <div
             aria-hidden
-            className={cx(
-              "pointer-events-none absolute inset-0 transition-opacity duration-500",
-              stage === "settling" || lit > 0 ? "opacity-0" : "opacity-100",
-            )}
+            className="pointer-events-none absolute transition-[left,top] duration-700 ease-gentle"
+            style={{ left: `${onStage(target.anchor, plane)[0] * 100}%`, top: `${onStage(target.anchor, plane)[1] * 100}%` }}
           >
-            <svg viewBox="0 0 300 400" className="absolute inset-0 h-full w-full">
-              {landmarks.map(([x, y], i) => (
-                <circle
-                  key={i}
-                  cx={x * 300}
-                  cy={y * 400}
-                  r={1.15}
-                  fill="rgba(232,246,252,0.92)"
-                  style={{
-                    transformBox: "fill-box",
-                    transformOrigin: "center",
-                    animation: `reveal-dot 420ms var(--ease-gentle) ${Math.round(T.scanFrom + ((y - face.top) / face.height) * T.scan)}ms both`,
-                  }}
-                />
-              ))}
-            </svg>
-            <div
-              className="absolute inset-0"
-              style={
-                {
-                  "--scan-from": `${face.top * 100}%`,
-                  "--scan-to": `${(face.top + face.height) * 100}%`,
-                  animation: `reveal-scan ${T.scan}ms linear ${T.scanFrom}ms both`,
-                } as React.CSSProperties
-              }
+            <span className="scan-target absolute -translate-x-1/2 -translate-y-1/2" />
+            <span
+              key={target.key}
+              className={cx(
+                "fade absolute top-0 flex -translate-y-1/2 items-baseline gap-2 whitespace-nowrap rounded-full border border-white/85 bg-white/75 py-1.5 pl-3 pr-3.5 text-ink shadow-[0_10px_24px_-14px_rgba(12,26,34,0.7)] backdrop-blur-md",
+                onStage(target.anchor, plane)[0] < 0.62 ? "left-6" : "right-6",
+              )}
             >
-              <span className="absolute top-0 h-[2px] bg-[linear-gradient(90deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.95)_50%,rgba(255,255,255,0)_100%)] shadow-[0_0_16px_rgba(223,243,251,0.8)]" style={{ left: `${(face.left - 0.08) * 100}%`, width: `${(face.width + 0.16) * 100}%` }} />
-            </div>
+              <span className="text-[10.5px] uppercase tracking-[0.14em]">{target.label}</span>
+              <span className="font-display text-[20px] leading-none">{playing ? <CountUp to={target.score} /> : target.score}</span>
+            </span>
           </div>
         )}
 
-        {callouts.length > 0 && (
-          <div aria-hidden className={cx("pointer-events-none absolute inset-0 transition-opacity duration-500", stage === "settling" && "opacity-0")}>
-            <svg viewBox="0 0 100 133.333" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
-              {callouts.map((c) => (
-                <line
-                  key={c.layer.key}
-                  x1={c.layer.anchor![0] * 100}
-                  y1={c.layer.anchor![1] * 133.333}
-                  x2={c.side === "left" ? 34 : 66}
-                  y2={c.y * 133.333}
-                  stroke="rgba(255,255,255,0.85)"
-                  strokeWidth="1"
-                  vectorEffect="non-scaling-stroke"
-                  pathLength={1}
-                  strokeDasharray={1}
-                  strokeDashoffset={c.index < lit ? 0 : 1}
-                  // A non-scaling stroke can leave a sliver of an undrawn line showing, so it stays hidden until drawn.
-                  opacity={c.index < lit ? 1 : 0}
-                  style={{ transition: "stroke-dashoffset 450ms cubic-bezier(0.23, 1, 0.32, 1)" }}
-                />
-              ))}
-            </svg>
-            {callouts.map((c) => {
-              const on = c.index < lit;
-              return (
-                <div key={c.layer.key}>
-                  <span
-                    className={cx("absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white transition-opacity duration-300", on ? "opacity-100" : "opacity-0")}
-                    style={{ left: `${c.layer.anchor![0] * 100}%`, top: `${c.layer.anchor![1] * 100}%`, background: MARK }}
-                  />
-                  <div
-                    className={cx(
-                      "absolute w-[30%] -translate-y-1/2 rounded-[12px] bg-white/90 px-2.5 py-2 shadow-[0_10px_24px_-14px_rgba(12,26,34,0.7)] transition-[opacity,transform] duration-[400ms] ease-[cubic-bezier(0.23,1,0.32,1)]",
-                      c.side === "left" ? "left-[4%]" : "right-[4%]",
-                      on ? "opacity-100" : c.side === "left" ? "-translate-x-1 opacity-0" : "translate-x-1 opacity-0",
-                    )}
-                    style={{ top: `${c.y * 100}%`, transitionDelay: on ? "220ms" : "0ms" }}
-                  >
-                    {/* Long names ("Upper eyelid firmness") wrap rather than cut off. */}
-                    <span className="block text-[9.5px] uppercase leading-tight tracking-[0.07em] text-ink [overflow-wrap:anywhere]">{c.layer.label}</span>
-                    <span className="mt-1 block font-display text-[24px] leading-none text-ink">
-                      {on ? <CountUp to={c.layer.score} /> : 0}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {current && (
-          <span
-            aria-hidden
-            className={cx(
-              "absolute right-3 top-3 rounded-full bg-white/85 py-1.5 pl-3 pr-3.5 shadow-[0_6px_16px_-10px_rgba(12,26,34,0.6)] backdrop-blur-sm transition-opacity duration-300",
-              revealing && "opacity-0",
-            )}
-          >
+        {/* Without a place on the face to point to, the score sits in the corner. */}
+        {current && !located && (
+          <span aria-hidden className="absolute right-3 top-3 rounded-full bg-white/85 py-1.5 pl-3 pr-3.5 shadow-[0_6px_16px_-10px_rgba(12,26,34,0.6)] backdrop-blur-sm">
             <span key={current.key} className="fade flex items-baseline gap-2 text-ink">
               <span className="text-[11px] uppercase tracking-[0.14em]">{current.label}</span>
               <span className="font-display text-[20px] leading-none">{current.score}</span>
@@ -314,7 +244,7 @@ export function FaceMap({
         <span className="absolute bottom-3 left-3 text-[11px] uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
           {caption}
         </span>
-        {stage === "done" && canReveal && !failed && (
+        {stage === "done" && located && !failed && (
           <button
             type="button"
             onClick={play}
@@ -325,20 +255,8 @@ export function FaceMap({
         )}
       </div>
       <p className="mt-4 text-[13.5px] leading-snug text-text-2">
-        {marked ? "Choose a priority to see where it shows on your face." : "Choose a priority to see its score."}
+        {located ? "Choose a priority to see where it shows on your face." : "Choose a priority to see its score."}
       </p>
-      {marked && shape && (
-        <p className="mt-1.5 flex items-center gap-4 text-[12.5px] text-text-2">
-          <span className="flex items-center gap-1.5">
-            <span aria-hidden className="h-2 w-2 rounded-full ring-1 ring-[#0c1a22]/25" style={{ background: MARK }} />
-            Where it shows
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span aria-hidden className="h-2 w-2 rounded-full ring-1 ring-[#0c1a22]/25" style={{ background: CLEAR }} />
-            Not found here
-          </span>
-        </p>
-      )}
       <div role="group" aria-label="Show a priority on your photo" className="mt-2.5 grid grid-cols-3 gap-2">
         {layers.map((layer) => (
           <Chip
@@ -384,30 +302,4 @@ function CountUp({ to }: { to: number }) {
     return () => cancelAnimationFrame(raf);
   }, [to]);
   return <>{n}</>;
-}
-
-function bounds(points: [number, number][]) {
-  let [left, top, right, bottom] = [1, 1, 0, 0];
-  for (const [x, y] of points) {
-    left = Math.min(left, x);
-    right = Math.max(right, x);
-    top = Math.min(top, y);
-    bottom = Math.max(bottom, y);
-  }
-  return { left, top, width: Math.max(0.01, right - left), height: Math.max(0.01, bottom - top) };
-}
-
-/** Callout labels beside the face, on the side nearer their mark, kept from overlapping one another. */
-function place(layers: FaceMapLayer[]) {
-  const items = layers
-    .map((layer, index) => ({ layer, index, side: (layer.anchor && layer.anchor[0] < 0.5 ? "left" : "right") as "left" | "right", y: 0 }))
-    .filter((c) => c.layer.anchor);
-  for (const side of ["left", "right"] as const) {
-    let last = -Infinity;
-    for (const c of items.filter((i) => i.side === side).sort((a, b) => a.layer.anchor![1] - b.layer.anchor![1])) {
-      c.y = Math.min(0.84, Math.max(0.12, c.layer.anchor![1], last + 0.14));
-      last = c.y;
-    }
-  }
-  return items;
 }

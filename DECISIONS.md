@@ -439,3 +439,11 @@ Joshua wanted the wait while YouCam reads the photo to look like the scan in a s
 - **Smooth on phones:** the grid is drawn once per size and each frame shows it through a moving gradient mask, with the glow done by the compositor's blur, so a dense grid costs about the same as a sparse one.
 - **Progress scans** use the same screen. With reduced motion the grid holds still at low light and the target doesn't move.
 - **Tested:** unit tests hold the grid to the face (every line on it, moving with it), the outlines, the target's stops, and the face model fallback.
+
+## D-078 · The report and the landing page speak the scan's language (J + C, Oct 8). Supersedes D-075's dots, refines D-074 and D-076
+Joshua turned down every way of painting marks on the face: stripes, dots, coral outlines, lit patches of grid. What he liked was the scan itself, "smooth but subtle". So the report and the landing hero now use the same light as "Reading your photo" (D-077), one shared engine (`ScanLight`), and nothing is painted on the skin.
+- **The report's face map:** the photo is framed on the face. The first time it comes into view, the light grid crosses the face once, then the scan's target visits each priority in turn as its score counts up, and settles on the chosen one. At rest: a faint outline of the face and its features, and the target with a small glass label (name and score) where the priority shows. Each button moves the target there. "Replay" plays it again; with reduced motion it rests from the start. Without face points, the photo shows whole with the score in the corner, as before.
+- **Where it shows** is the priority's facial region from the face model's points (`concernAnchor`), not YouCam's mask. That also retires the trouble live masks caused (a faint layer that lit the whole face, D-075).
+- **The landing hero:** Amelia's face with the same light crossing it every few seconds (stopped off screen), the target on the priority being shown, its card with the ruler, and "+13, Texture since scan 01".
+- **Gone:** the coral and green dots, their legend and glow (`MarkDots`), the per-priority colours, and the landing page's mask route. Masks are still copied and kept with each scan; the report simply doesn't draw them.
+- **Scores keep their rulers** (D-075).

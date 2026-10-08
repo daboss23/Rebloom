@@ -143,7 +143,6 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
               label: CONCERNS[c.key].label,
               describes: CONCERNS[c.key].describes,
               score: Math.round(c.ui),
-              maskUrl: c.maskPath ? `/r/${token}/mask/${latest.id}/${c.key}` : null,
               anchor: face ? concernAnchor(face, c.key) : null,
             }))}
             landmarks={facePoints}
