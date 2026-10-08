@@ -41,6 +41,20 @@ describe("the landing preview", () => {
     });
   });
 
+  it("leads with that client's own face map, every number from her scans (D-076)", () => {
+    const p = landingPreview(new Date("2026-10-06T17:00:00Z"));
+    const face = p.face!;
+    expect(face).toMatchObject({ firstName: "Amelia", photo: "/demo-portraits/amelia.jpg", scanNumber: 4 });
+    expect(face.points).toHaveLength(468);
+    expect(face.priorities).toHaveLength(3);
+    // The change the hero shows is the story's own: the same priority, from scan 01 to now.
+    const [first] = face.priorities;
+    expect(first).toMatchObject({ key: "texture", label: "Texture", from: p.story!.series[0], score: p.story!.series.at(-1) });
+    expect(first.score - first.from).toBe(p.story!.delta);
+    // The target rests where each priority shows, on her face.
+    for (const c of face.priorities) expect(c.anchor.every((v) => v > 0 && v < 1)).toBe(true);
+  });
+
   it("never puts a client's private report link on a public page", () => {
     const p = landingPreview(new Date("2026-10-06T17:00:00Z"));
     expect(p.moment?.paragraphs.length).toBeGreaterThan(1);

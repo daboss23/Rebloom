@@ -693,6 +693,74 @@ html:has(.landing) {
   }
 }
 
+/* The landing hero's cards (DECISIONS D-076): in once, then a slow drift, so the scan reads as alive. */
+.hero-card-in {
+  animation: hero-card-in 700ms var(--ease-gentle) var(--d, 0ms) both;
+}
+.hero-card-in.hero-float {
+  animation:
+    hero-card-in 700ms var(--ease-gentle) var(--d, 0ms) both,
+    hero-drift 6s ease-in-out calc(var(--d, 0ms) + 700ms) infinite alternate;
+}
+@keyframes hero-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes hero-drift {
+  from {
+    transform: none;
+  }
+  to {
+    transform: translateY(-6px);
+  }
+}
+
+/* The scan while a photo is read (DECISIONS D-077): brackets close on the face, a target settles on each feature. */
+.scan-brackets {
+  animation: scan-brackets 900ms var(--ease-gentle) 150ms both;
+}
+@keyframes scan-brackets {
+  from {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.scan-target {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.95);
+  box-shadow:
+    0 0 10px rgb(120 210 255 / 0.85),
+    inset 0 0 8px rgb(120 210 255 / 0.5);
+  background:
+    linear-gradient(#fff, #fff) 50% 0 / 1px 6px no-repeat,
+    linear-gradient(#fff, #fff) 50% 100% / 1px 6px no-repeat,
+    linear-gradient(#fff, #fff) 0 50% / 6px 1px no-repeat,
+    linear-gradient(#fff, #fff) 100% 50% / 6px 1px no-repeat;
+  animation: scan-target 6s linear infinite;
+}
+@keyframes scan-target {
+  to {
+    rotate: 1turn;
+  }
+}
+.scan-hex {
+  animation:
+    hero-card-in 700ms var(--ease-gentle) 1.6s both,
+    hero-drift 5s ease-in-out 2.3s infinite alternate;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

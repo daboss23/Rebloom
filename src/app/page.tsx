@@ -8,6 +8,7 @@ import { LightField } from "@/components/dashboard/LightField";
 import { ClientPagePreview } from "@/components/flow/ClientPagePreview";
 import { Calculator } from "@/components/landing/Calculator";
 import { EnterDemo } from "@/components/landing/EnterDemo";
+import { HeroFace } from "@/components/landing/HeroFace";
 import { MiniBars } from "@/components/landing/MiniBars";
 import { ScoreLine } from "@/components/landing/ScoreLine";
 import { cx } from "@/components/ui/cx";
@@ -31,9 +32,10 @@ import { SCORED_CONCERNS } from "@/lib/skin/concerns";
  * STORY: a clinic owner or judge sees what Rebloom does at a glance, feels what one-and-done costs, trusts
  * the honest mechanism, does the arithmetic on their own clinic, and enters the demo.
  * FIRST VIEWPORT: full-bleed light; the positioning line across two lines at display scale, "the result"
- * in gold; the promise and the gold "Enter the clinic dashboard" on the left; the live queue on the right.
- * FORM: a direct-response page in the dashboard's grammar: proof, problem, mechanism, honesty, arithmetic,
- * white label, objections, close.
+ * in gold; the promise and the gold "Enter the clinic dashboard" on the left; on the right, the result itself:
+ * a sample client's face read and marked as her report shows it, with her measured change (D-076).
+ * FORM: a direct-response page in the dashboard's grammar: the result, then the live queue it feeds, problem,
+ * mechanism, honesty, arithmetic, white label, objections, close.
  */
 
 export const metadata: Metadata = {
@@ -92,6 +94,7 @@ export default function RebloomHome() {
 
       <main id="main" tabIndex={-1}>
         <Hero p={p} />
+        <Today p={p} />
         <Problem p={p} />
         <How p={p} />
         <Honest />
@@ -130,6 +133,71 @@ export default function RebloomHome() {
 /* ---------- The first viewport: the promise, and the product keeping it ---------- */
 
 function Hero({ p }: { p: LandingPreview }) {
+  const face = p.face;
+  return (
+    <section aria-labelledby="hero-title" className="relative">
+      {/* The light runs up behind the glass bar and fades into the page below. */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-16 bottom-0 [mask-image:linear-gradient(180deg,#000_0%,#000_70%,transparent_100%)] lg:-top-[72px]">
+        <LightField variant="ice" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_75%_55%_at_22%_28%,rgba(246,251,253,0.82)_0%,rgba(246,251,253,0.35)_60%,rgba(246,251,253,0)_100%)]" />
+      </div>
+
+      <div className={`${wrap} relative grid gap-12 pb-20 pt-12 sm:pt-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center lg:gap-14 lg:pb-28 lg:pt-14 xl:gap-20`}>
+        <div className="min-w-0">
+          <p className="focus-in flex items-center gap-2.5 text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">
+            <Bloom size={16} unfurl className="text-[#9e4a5d]" />
+            The retention engine for skin clinics
+          </p>
+          <h1
+            id="hero-title"
+            className="focus-in mt-6 font-display text-[37px] font-light leading-[1.04] tracking-[-0.025em] text-ink min-[400px]:text-[40px] sm:text-[54px] lg:text-[clamp(44px,4.3vw,62px)]"
+            style={{ animationDelay: "80ms" }}
+          >
+            <span className="block">Everyone sells the scan.</span>{" "}
+            <span className="block">
+              Rebloom sells <span className="gold-foil">the result.</span>
+            </span>
+          </h1>
+          <div className="focus-in mt-8" style={{ animationDelay: "180ms" }}>
+            <p className="max-w-[31rem] text-[18px] leading-relaxed text-text-2 sm:text-[19px]">
+              Rebloom measures each client&apos;s skin with YouCam&apos;s AI, shows them what changed, and tells your team
+              who to rebook today.
+            </p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <EnterDemo buttonClassName="!h-14 px-6 text-[15.5px]" />
+              <a href="#try" className="btn-ghost !h-14 w-full px-6 text-[15px] sm:w-auto">
+                Try the client experience
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {face && (
+          <div className="focus-in min-w-0" style={{ animationDelay: "240ms" }}>
+            <HeroFace
+              firstName={face.firstName}
+              photo={face.photo}
+              aspect={face.aspect}
+              points={face.points}
+              scanNumber={face.scanNumber}
+              priorities={face.priorities.map((c) => ({
+                key: c.key,
+                label: c.label,
+                from: c.from,
+                score: c.score,
+                anchor: c.anchor,
+              }))}
+            />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ---------- What the result feeds: the clinic's morning, live ---------- */
+
+function Today({ p }: { p: LandingPreview }) {
   const shown = p.rows.slice(0, 3);
   const more = p.rows.length - shown.length;
   const date = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(
@@ -142,70 +210,39 @@ function Hero({ p }: { p: LandingPreview }) {
   ];
 
   return (
-    <section aria-labelledby="hero-title" className="relative">
-      {/* The light runs up behind the glass bar and fades into the page below. */}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-16 bottom-0 [mask-image:linear-gradient(180deg,#000_0%,#000_70%,transparent_100%)] lg:-top-[72px]">
-        <LightField variant="ice" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_75%_55%_at_22%_28%,rgba(246,251,253,0.82)_0%,rgba(246,251,253,0.35)_60%,rgba(246,251,253,0)_100%)]" />
-      </div>
+    <section aria-labelledby="today-title" className={`${wrap} pb-28 lg:pb-40`}>
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-16 xl:gap-20">
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          <h2 id="today-title" className="font-display text-[clamp(34px,4vw,52px)] font-light leading-[1.05] tracking-[-0.02em] text-ink [text-wrap:balance]">
+            Then it tells the clinic who to rebook, and why.
+          </h2>
+          <p className="mt-5 max-w-[31rem] text-[16.5px] leading-relaxed text-text-2">
+            Every morning the same engine reads each client&apos;s scans and visits, and puts the people worth a call at
+            the top, each with one plain reason.
+          </p>
+          <p className="mt-5 text-[13px] text-text-3">{date}</p>
+        </div>
 
-      <div className={`${wrap} relative pb-24 pt-12 sm:pt-16 lg:pb-32 lg:pt-20`}>
-        <p className="focus-in flex items-center gap-2.5 text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">
-          <Bloom size={16} unfurl className="text-[#9e4a5d]" />
-          The retention engine for skin clinics
-        </p>
-        <h1
-          id="hero-title"
-          className="focus-in mt-6 font-display text-[clamp(44px,6.5vw,96px)] font-light leading-[1] tracking-[-0.025em] text-ink [text-wrap:balance]"
-          style={{ animationDelay: "80ms" }}
-        >
-          <span className="block">Everyone sells the scan.</span>{" "}
-          <span className="block">
-            Rebloom sells <span className="gold-foil">the result.</span>
-          </span>
-        </h1>
-
-        <div className="mt-10 grid gap-14 lg:mt-14 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-16 xl:gap-20">
-          <div className="focus-in lg:sticky lg:top-28 lg:self-start" style={{ animationDelay: "180ms" }}>
-            <p className="max-w-[31rem] text-[18px] leading-relaxed text-text-2 sm:text-[19px]">
-              Rebloom measures each client&apos;s skin with YouCam&apos;s AI, shows them what changed, and tells your team
-              who to rebook today.
-            </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
-              <EnterDemo buttonClassName="!h-14 px-6 text-[15.5px]" />
-              <a href="#try" className="btn-ghost !h-14 w-full px-6 text-[15px] sm:w-auto lg:w-full xl:w-auto">
-                Try the client experience
-              </a>
-            </div>
-          </div>
-
-          <section aria-labelledby="today-title" className="min-w-0">
-            <div className="focus-in flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1" style={{ animationDelay: "240ms" }}>
-              <h2 id="today-title" className="font-display text-[28px] font-light leading-tight text-ink sm:text-[32px]">
-                Who to contact, and why
-              </h2>
-              <p className="text-[12.5px] text-text-3">{date}</p>
-            </div>
-            <ul className="focus-in mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-[18px] bg-white/80 ring-1 ring-white/80 pointer-fine:bg-white/60 pointer-fine:backdrop-blur-xl" style={{ animationDelay: "300ms" }}>
-              {figures.map((f, i) => (
-                <li key={f.words} className="bg-white/70 px-4 py-4 pointer-fine:bg-white/45 sm:px-5">
-                  <span className={cx("block font-display text-[clamp(32px,3.4vw,44px)] font-light leading-none tracking-[-0.02em]", f.gold ? "gold-foil" : "text-ink")}>
-                    <CountUp value={f.value} format={f.gold ? "money" : "int"} delay={500 + i * 120} />
-                  </span>
-                  <span className="mt-2 block text-[12.5px] leading-snug text-text-2 sm:text-[13.5px]">{f.words}</span>
-                </li>
-              ))}
-            </ul>
-            <ol className="mt-3 space-y-3">
-              {shown.map((row, i) => (
-                <QueuePreviewRow key={row.name} row={row} delay={380 + i * 90} />
-              ))}
-            </ol>
-            <p className="focus-in mt-5 text-[13px] font-normal leading-relaxed text-text-3" style={{ animationDelay: "700ms" }}>
-              {more > 0 && `${more} more in the queue. `}
-              {capital(words(p.clientCount))} sample clients at {p.clinicName}, run through the same engine as the dashboard.
-            </p>
-          </section>
+        <div className="min-w-0">
+          <ul className="grid grid-cols-3 gap-px overflow-hidden rounded-[18px] bg-white/80 ring-1 ring-white/80 pointer-fine:bg-white/60 pointer-fine:backdrop-blur-xl">
+            {figures.map((f, i) => (
+              <li key={f.words} className="bg-white/70 px-4 py-4 pointer-fine:bg-white/45 sm:px-5">
+                <span className={cx("block font-display text-[clamp(32px,3.4vw,44px)] font-light leading-none tracking-[-0.02em]", f.gold ? "gold-foil" : "text-ink")}>
+                  <CountUp value={f.value} format={f.gold ? "money" : "int"} delay={200 + i * 120} />
+                </span>
+                <span className="mt-2 block text-[12.5px] leading-snug text-text-2 sm:text-[13.5px]">{f.words}</span>
+              </li>
+            ))}
+          </ul>
+          <ol className="mt-3 space-y-3">
+            {shown.map((row, i) => (
+              <QueuePreviewRow key={row.name} row={row} delay={120 + i * 90} />
+            ))}
+          </ol>
+          <p className="mt-5 text-[13px] font-normal leading-relaxed text-text-3">
+            {more > 0 && `${more} more in the queue. `}
+            {capital(words(p.clientCount))} sample clients at {p.clinicName}, run through the same engine as the dashboard.
+          </p>
         </div>
       </div>
     </section>

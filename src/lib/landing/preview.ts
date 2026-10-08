@@ -15,7 +15,10 @@ import { env } from "@/lib/env";
 import { stableId } from "@/lib/ids";
 import { nextOpenDay, shiftDate } from "@/lib/plan/build";
 import { bestChange, buildQueue, clientFacts, priorityKeys, TRIGGER_LABEL, type ClientFacts, type EngineInput, type TriggerKind } from "@/lib/rebook/engine";
-import { concernLabel } from "@/lib/skin/concerns";
+import { demoFace } from "@/lib/demo/landmarks";
+import { concernAnchor } from "@/lib/skin/fixture-masks";
+import { concernLabel, type ConcernKey } from "@/lib/skin/concerns";
+import { bundledPortraitUrl } from "@/lib/store/scan-paths";
 
 export interface PreviewRow {
   name: string;
@@ -56,12 +59,35 @@ export interface LandingPreview {
     raw: { from: number; to: number };
     weeks: number;
   } | null;
+  /** That client's latest scan, as the hero shows it: their face, and their priorities as their report maps them. */
+  face: LandingFace | null;
   /** What that client's first report put first, and the treatments it suggested. */
   report: { firstName: string; priorities: { label: string; score: number }[]; treatments: { name: string; sessions: number }[]; totalCents: number } | null;
   /** The first progress moment's drafted email, without its link. */
   moment: { name: string; subject: string; paragraphs: string[] } | null;
   /** The menu's signature course, for the cost of a client who stops after one session. */
   course: { name: string; sessions: number; priceCents: number };
+}
+
+export interface LandingFace {
+  firstName: string;
+  /** The bundled demo portrait, public. */
+  photo: string;
+  /** The photo's width over its height. */
+  aspect: number;
+  /** The face model's points on the portrait (0 to 1 each way). */
+  points: [number, number][];
+  scanNumber: number;
+  /** Their three priorities, the one with the most measured change first. */
+  priorities: {
+    key: ConcernKey;
+    label: string;
+    /** ui scores, scan 01 and latest. */
+    from: number;
+    score: number;
+    /** Where it shows on the face (0 to 1 each way), as the report's target rests on it. */
+    anchor: [number, number];
+  }[];
 }
 
 /** A fresh sandbox's view of the demo clinic, as of `now` (the demo clock, unmoved, by default). */
@@ -153,13 +179,13 @@ export function landingPreview(now: Date = virtualNow({ demoToday: env.DEMO_TODA
 }
 
 /** The client with the most measured change over the most scans, and the first report they were given. */
-function storyOf(facts: ClientFacts[], treatments: EngineInput["treatments"]): Pick<LandingPreview, "story" | "report"> {
+function storyOf(facts: ClientFacts[], treatments: EngineInput["treatments"]): Pick<LandingPreview, "story" | "report" | "face"> {
   const candidates = facts
     .map((f) => ({ f, best: bestChange(f) }))
     .filter((c): c is { f: ClientFacts; best: NonNullable<ReturnType<typeof bestChange>> } => c.best !== null && c.best.uiDelta > 0)
     .sort((a, b) => b.f.scans.length - a.f.scans.length || b.best.uiDelta - a.best.uiDelta);
   const top = candidates[0];
-  if (!top) return { story: null, report: null };
+  if (!top) return { story: null, report: null, face: null };
   const { f, best } = top;
   const trend = leadTrend(f, best.key)!;
   const first = f.scans[0];
@@ -171,6 +197,7 @@ function storyOf(facts: ClientFacts[], treatments: EngineInput["treatments"]): P
     return t ? [{ name: t.name, sessions: item.quantity, cents: item.quantity * item.unitPriceCents }] : [];
   });
   return {
+    face: faceOf(f, best.key),
     story: {
       name: fullName(f.client),
       firstName: f.client.firstName!,
@@ -188,5 +215,37 @@ function storyOf(facts: ClientFacts[], treatments: EngineInput["treatments"]): P
       treatments: lines.map(({ name, sessions }) => ({ name, sessions })),
       totalCents: lines.reduce((n, l) => n + l.cents, 0),
     },
+  };
+}
+
+/** The story client's latest scan, mapped: only for a demo client, whose portrait and face ship with the app. */
+function faceOf(f: ClientFacts, featured: ConcernKey): LandingFace | null {
+  const points = f.client.demoKey ? demoFace(f.client.demoKey) : null;
+  const [first, last] = [f.scans[0], f.scans[f.scans.length - 1]];
+  const photo = bundledPortraitUrl(last.imagePath);
+  if (!points || !photo || !last.result) return null;
+  const keys = [featured, ...priorityKeys(f).filter((k) => k !== featured)].slice(0, 3);
+  const priorities = keys.flatMap((key) => {
+    const now = last.result!.concerns.find((c) => c.key === key);
+    const then = first.result?.concerns.find((c) => c.key === key);
+    if (!now) return [];
+    return [
+      {
+        key,
+        label: concernLabel(key),
+        from: Math.round(then?.ui ?? now.ui),
+        score: Math.round(now.ui),
+        anchor: concernAnchor(points, key),
+      },
+    ];
+  });
+  if (priorities.length === 0) return null;
+  return {
+    firstName: f.client.firstName!,
+    photo,
+    aspect: last.imageWidth / last.imageHeight,
+    points: points.slice(0, 468).map(([x, y]) => [Math.round(x * 1000) / 1000, Math.round(y * 1000) / 1000]),
+    scanNumber: last.scanNumber,
+    priorities,
   };
 }
