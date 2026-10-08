@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import type { SentResults } from "@/app/c/[clinicSlug]/actions";
+import { FaceScan } from "@/components/flow/FaceScan";
 import { ReportGate } from "@/components/flow/ReportGate";
-import { ThinkingCogs } from "@/components/flow/ThinkingCogs";
 import { ButtonLink } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Typography";
+import { dropShot, readShot, type Shot } from "@/lib/capture/handoff";
 import type { ScanView } from "@/lib/scans/service";
 
 const STAGES = ["Reading texture", "Mapping tone", "Measuring pores and lines", "Writing your report"];
@@ -38,6 +39,12 @@ export function ProcessingView({
   const [view, setView] = useState<ScanView | null>(null);
   const [connectionIssue, setConnectionIssue] = useState(false);
   const [assembleStep, setAssembleStep] = useState(0);
+  // The photo just taken, from this tab (D-077). Read after hydration: storage only exists in the browser.
+  const [shot, setShot] = useState<Shot | null>(null);
+  useEffect(() => {
+    const t = window.setTimeout(() => setShot(readShot(scanId)), 0);
+    return () => window.clearTimeout(t);
+  }, [scanId]);
 
   useEffect(() => {
     let stopped = false;
@@ -80,6 +87,12 @@ export function ProcessingView({
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [locked]);
 
+  // The gate shows a blurred copy from the server; the sharp one leaves the tab here.
+  const gated = complete && !assembling;
+  useEffect(() => {
+    if (gated) dropShot(scanId);
+  }, [gated, scanId]);
+
   if (complete && !assembling) {
     const sent: SentResults | null = view.reportPath && contact ? { ...contact, reportPath: view.reportPath } : null;
     return <ReportGate clinicSlug={clinicSlug} clinicName={clinicName} scanId={scanId} demo={view.demo} sent={sent} />;
@@ -99,49 +112,30 @@ export function ProcessingView({
   }
 
   const current = assembling ? STAGES.length - 1 : (view?.stageIndex ?? 0);
+  const stage = assembling ? ASSEMBLE_STEPS[Math.min(assembleStep, ASSEMBLE_STEPS.length - 1)] : STAGES[current];
+  // Real progress: the analysis's stage, then the steps of putting the report together.
+  const progress = assembling ? 0.75 + 0.25 * (assembleStep / ASSEMBLE_STEPS.length) : (current + 0.5) / STAGES.length;
   return (
-    <div className="pt-10 pb-8" role="status" aria-live="polite">
-      <span className="glass grid h-[112px] w-[112px] place-items-center !rounded-[28px]">
-        <ThinkingCogs className="h-auto w-[78px]" />
-      </span>
-      <div className="mt-6">
+    <div className="pt-6 pb-8">
+      <FaceScan
+        photo={shot?.photo ?? null}
+        points={shot?.points ?? null}
+        stage={stage}
+        step={current + 1}
+        steps={STAGES.length}
+        progress={progress}
+        done={complete}
+      />
+      <div className="mt-8" role="status" aria-live="polite">
         <Label>Your scan</Label>
+        <h1 className="t-h1 mt-4">{assembling ? "Putting your report together." : "Reading your photo."}</h1>
+        <p className="t-body mt-5">
+          {assembling
+            ? "Almost there. We're turning 15 measurements into your personal skin report."
+            : "This usually takes under a minute. Please keep this page open."}
+        </p>
+        <p className="sr-only">{stage}</p>
       </div>
-      <h1 className="t-h1 mt-4">{assembling ? "Putting your report together." : "Reading your photo."}</h1>
-      <p className="t-body mt-5">
-        {assembling
-          ? "Almost there. We're turning 15 measurements into your personal skin report."
-          : "This usually takes under a minute. Please keep this page open."}
-      </p>
-      <ol className="glass mt-8 divide-y divide-[#0c1a22]/[0.07] px-5">
-        {STAGES.map((stage, i) => {
-          const state = i < current ? "done" : i === current ? "active" : "waiting";
-          return (
-            <li key={stage} className="py-5">
-              <div className="flex items-center gap-4">
-                <span
-                  aria-hidden
-                  className={`block h-[11px] w-[11px] shrink-0 rounded-full transition-colors duration-500 ${
-                    state === "done"
-                      ? "bg-[var(--growth)]"
-                      : state === "active"
-                        ? "border-2 border-[#1e5a78] bg-white"
-                        : "border border-[#0c1a22]/20"
-                  }`}
-                  style={state === "active" ? { animation: "breathe 2.4s ease-in-out infinite" } : undefined}
-                />
-                <span className={state === "waiting" ? "text-text-3" : "text-ink"}>{stage}</span>
-                <span className="sr-only">{state === "done" ? "done" : state === "active" ? "in progress" : "waiting"}</span>
-              </div>
-              {assembling && state === "active" && (
-                <p key={assembleStep} className="fade t-caption mt-2 pl-[27px]">
-                  {ASSEMBLE_STEPS[Math.min(assembleStep, ASSEMBLE_STEPS.length - 1)]}
-                </p>
-              )}
-            </li>
-          );
-        })}
-      </ol>
       {connectionIssue && <p className="t-caption mt-6">Reconnecting. Your scan is safe.</p>}
     </div>
   );

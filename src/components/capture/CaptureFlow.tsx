@@ -13,6 +13,7 @@ import type { CaptureQuality } from "@/lib/domain";
 import { getLandmarker } from "./landmarker";
 import { LiveCamera } from "./LiveCamera";
 import { isInAppBrowser, measure, packLandmarks, renderShot } from "./measure";
+import { stashShot } from "@/lib/capture/handoff";
 
 export interface Shot {
   blob: Blob;
@@ -130,6 +131,8 @@ export function CaptureFlow({ clinicSlug, rescan }: { clinicSlug: string; rescan
       if (!put.ok) throw new Error("upload");
       const started = await fetch(`/api/scans/${scanId}/analyze${report}`, { method: "POST" });
       if (!started.ok) throw new Error((await started.json().catch(() => null))?.error ?? "analyze");
+      // The next screen scans this photo while it's read; it stays in this tab (D-077).
+      await stashShot(scanId, shot.blob, shot.landmarks);
       router.push(rescan ? `/r/${rescan.token}/rescan?scan=${scanId}` : `/c/${clinicSlug}/processing?scan=${scanId}`);
     } catch (e) {
       const message =
