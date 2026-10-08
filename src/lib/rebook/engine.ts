@@ -19,6 +19,7 @@ import type {
 import { isoDateInZone } from "@/lib/clock";
 import { buildPlan, rankPriorities, shiftDate, statedConcerns } from "@/lib/plan/build";
 import { concernLabel, type ConcernKey } from "@/lib/skin/concerns";
+import { TEXT_OPT_OUT, toUsE164 } from "@/lib/sms/text";
 import type { PlanWithItems } from "@/lib/store/types";
 import {
   LAPSED_AFTER_DAYS,
@@ -64,8 +65,11 @@ export const TRIGGER_LABEL: Record<TriggerKind, string> = {
   maintenance_due: "Maintenance",
 };
 
-/** Email: a pre-written message to review. Call: no email consent. Review: a decision for the practitioner. */
-export type QueueAction = "email" | "call" | "review";
+/**
+ * Email: a pre-written message to review, with a text beside it when they agreed to texts. Text: texts only, no
+ * email consent (D-080). Call: no consent to either. Review: a decision for the practitioner.
+ */
+export type QueueAction = "email" | "text" | "call" | "review";
 
 export interface QueueItem {
   clientId: string;
@@ -83,8 +87,10 @@ export interface QueueItem {
   atRisk: boolean;
   /** Idempotency key for the outbox: once a message carries it, the item is done. */
   dedupeKey: string;
-  /** The pre-written email. Null for calls and reviews. */
+  /** The pre-written email. Null for calls, reviews, and clients who only agreed to texts. */
   draft: { subject: string; body: string } | null;
+  /** The pre-written text, for a client who agreed to texts (D-080). Null otherwise. */
+  text: string | null;
 }
 
 export interface HandledItem {
@@ -134,6 +140,8 @@ export interface ClientFacts {
   appointments: Appointment[];
   messages: Message[];
   canEmail: boolean;
+  /** A US mobile number and a yes to texts (D-080). */
+  canText: boolean;
 }
 
 export interface Course {
@@ -174,6 +182,7 @@ export function clientFacts(input: EngineInput): ClientFacts[] {
       appointments: (appointments.get(client.id) ?? []).sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
       messages: messages.get(client.id) ?? [],
       canEmail: Boolean(client.email) && (consents.get(client.id) ?? []).some((c) => c.type === "reminders"),
+      canText: Boolean(toUsE164(client.phone)) && (consents.get(client.id) ?? []).some((c) => c.type === "texts"),
     };
   });
 }
@@ -291,19 +300,27 @@ export function buildQueue(input: EngineInput): Queue {
     const lastScan = facts.scans[facts.scans.length - 1];
     const candidates: QueueItem[] = [];
 
-    const make = (kind: TriggerKind, rest: Omit<QueueItem, "clientId" | "kind" | "action" | "draft" | "atRisk"> & {
+    // Texts open with who's writing and end with the way out (D-080). Written to fit in two parts.
+    const texted = (...parts: (string | null | false)[]) =>
+      [`Hi ${name}, it's ${input.practitionerName} at ${input.clinic.name}.`, ...parts.filter(Boolean), TEXT_OPT_OUT].join(" ");
+
+    const make = (kind: TriggerKind, rest: Omit<QueueItem, "clientId" | "kind" | "action" | "draft" | "text" | "atRisk"> & {
       draft: QueueItem["draft"];
+      text?: string;
       action?: QueueAction;
       atRisk?: boolean;
     }): QueueItem => {
-      const action = rest.action ?? (rest.draft ? (facts.canEmail ? "email" : "call") : "review");
+      const action =
+        rest.action ?? (rest.draft ? (facts.canEmail ? "email" : facts.canText && rest.text ? "text" : "call") : "review");
+      const message = action === "email" || action === "text";
       return {
         ...rest,
         clientId: client.id,
         kind,
         action,
         atRisk: rest.atRisk ?? false,
-        draft: action === "email" ? rest.draft : null,
+        draft: message && facts.canEmail ? rest.draft : null,
+        text: message && facts.canText ? (rest.text ?? null) : null,
       };
     };
 
@@ -333,6 +350,11 @@ export function buildQueue(input: EngineInput): Queue {
           reason: `${label} improved ${change.uiDelta} points since the first scan. ${tail}`,
           dueDate: local(lastScan.createdAt),
           dedupeKey: `progress_moment:${lastScan.id}`,
+          text: texted(
+            `Your latest scan shows your ${label.toLowerCase()} up ${change.uiDelta} points since your first.`,
+            next ? `It's the best moment for your next ${sessionNoun(next.course.treatment)}.` : "A maintenance visit now keeps it there.",
+            link ? `Book here: ${link}` : "Reply and I'll hold a time for you.",
+          ),
           ...(next ? value : { valueCents: maintenance?.item.unitPriceCents ?? null, valueNote: maintenance ? "1 session" : null }),
           draft: {
             subject: `Real change on your latest scan, ${name}`,
@@ -385,9 +407,15 @@ export function buildQueue(input: EngineInput): Queue {
         const lastVisit = local(next.course.done[next.course.done.length - 1].startsAt);
         candidates.push(
           make("lapsed", {
-            reason: `Last visit ${ago(daysBetween(lastVisit, today))}. ${facts.canEmail ? "A personal note may bring them back." : "No email consent, so a call."}`,
+            reason: `Last visit ${ago(daysBetween(lastVisit, today))}. ${
+              facts.canEmail || facts.canText ? "A personal note may bring them back." : "No consent to email or text, so a call."
+            }`,
             dueDate: next.latest,
             dedupeKey: `lapsed:${next.course.item.id}`,
+            text: texted(
+              "It's been a while since your last visit, and I wanted to check in.",
+              "Whenever you'd like to pick up where you left off, reply and I'll find a time.",
+            ),
             ...value,
             atRisk: true,
             draft: {
@@ -407,6 +435,7 @@ export function buildQueue(input: EngineInput): Queue {
             reason: `The ${session} was due ${ago(overdue)} and never booked.`,
             dueDate: next.latest,
             dedupeKey: `missed:${next.course.item.id}:${next.course.done.length + 1}`,
+            text: texted(`Your ${session} isn't booked yet, and I didn't want it to slip by.`, link ? `Book here: ${link}` : "Reply and I'll hold a time."),
             ...value,
             atRisk: true,
             draft: {
@@ -430,6 +459,7 @@ export function buildQueue(input: EngineInput): Queue {
             reason: `The ${session} ${until(left, next.soonest)}. Not booked yet.`,
             dueDate: next.soonest,
             dedupeKey: `next_session_due:${next.course.item.id}:${next.course.done.length + 1}`,
+            text: texted(`Your ${session} is coming up.`, link ? `Book here: ${link}` : "Reply and I'll hold a time."),
             ...value,
             draft: {
               subject: `Your ${session}, ${name}`,
@@ -470,6 +500,9 @@ export function buildQueue(input: EngineInput): Queue {
             reason: `Report sent ${ago(age)}. Nothing booked yet.`,
             dueDate: shiftDate(sent, REPORT_FOLLOW_UP_DAYS),
             dedupeKey: "report_follow_up",
+            text: link
+              ? texted(`Your skin report is here whenever you're ready: ${link}`, "Questions? Just reply.")
+              : texted("Any questions about your skin report? Just reply."),
             valueCents: suggested?.recommended.totalCents || null,
             valueNote: suggested?.recommended.totalCents ? "Suggested plan" : null,
             draft: {
@@ -504,6 +537,10 @@ export function buildQueue(input: EngineInput): Queue {
               reason: `Course finished ${ago(daysBetween(ended, today))}. Time for a progress scan.`,
               dueDate: shiftDate(ended, PROGRESS_SCAN_AFTER_DAYS),
               dedupeKey: `progress_scan_due:${lastSession.id}`,
+              text: texted(
+                "Your course has had time to settle, so it's time to see what's changed.",
+                link ? `Your two-minute progress scan: ${link}/rescan` : "Reply and I'll send your progress scan link.",
+              ),
               valueCents: null,
               valueNote: "Scan included",
               draft: {
@@ -532,6 +569,7 @@ export function buildQueue(input: EngineInput): Queue {
               reason: `${due.c.treatment.name} finished ${ago(daysBetween(local(due.c.done[due.c.done.length - 1].startsAt), today))}. A maintenance ${noun} is due.`,
               dueDate: due.date,
               dedupeKey: `maintenance_due:${due.c.item.id}:${due.date}`,
+              text: texted(`One maintenance ${noun} now keeps the change you worked for.`, "Reply and I'll find a time that suits you."),
               valueCents: due.c.item.unitPriceCents,
               valueNote: "1 session",
               draft: {

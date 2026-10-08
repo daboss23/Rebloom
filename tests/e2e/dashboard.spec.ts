@@ -38,6 +38,34 @@ test("Today says who to contact and why, and a reviewed email moves to the outbo
   await expect(sent).toContainText("Shall I hold a time next week?");
 });
 
+test("Sofia said yes to texts, so Dana can text her instead, and the way out stays in", async ({ page }) => {
+  const sofia = page.getByRole("listitem").filter({ hasText: "Sofia Morales" });
+  await sofia.getByRole("button", { name: "Review & send" }).click();
+  const sheet = page.getByRole("dialog", { name: "Review & send" });
+  await expect(sheet.getByRole("radio", { name: "Email" })).toBeChecked();
+  await sheet.getByRole("radio", { name: "Text" }).click();
+
+  const text = sheet.getByRole("textbox", { name: "Text" });
+  await expect(text).toHaveValue(/^Hi Sofia, it's Dana at Maison Verre\. .* Reply STOP to opt out\.$/);
+  await expect(sheet.getByText("On Sofia's phone")).toBeVisible();
+  await expect(sheet).toContainText(/To Sofia Morales · \(\d{3}\) 555-\d{4}/);
+  await expect(sheet).toContainText(/characters, sent as (one text|2 parts)\./);
+
+  await text.fill("Hi Sofia, shall I hold a time next week?");
+  await expect(sheet.getByText("Hi Sofia, shall I hold a time next week?", { exact: true })).toBeVisible();
+  await sheet.getByRole("button", { name: "Send text" }).click();
+  await expect(sheet.getByRole("alert")).toHaveText('Keep "Reply STOP to opt out." at the end of the text.');
+
+  await text.fill("Hi Sofia, shall I hold a time next week? Reply STOP to opt out.");
+  await sheet.getByRole("button", { name: "Send text" }).click();
+  await expect(page.getByText("Texted Sofia. Logged in the outbox, not sent (demo).")).toBeVisible();
+  await expect(sheet).toBeHidden();
+
+  await page.goto("/dashboard/rebook");
+  const sent = page.locator("details").filter({ hasText: "Sofia Morales" });
+  await expect(sent).toContainText("Text · Hi Sofia, shall I hold a time next week?");
+});
+
 test("Chloe has no email consent, so the queue offers a call instead", async ({ page }) => {
   const chloe = page.getByRole("listitem").filter({ hasText: "Chloe Bennett" });
   await expect(chloe.getByRole("link", { name: /Call/ })).toHaveAttribute("href", /^tel:/);

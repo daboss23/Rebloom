@@ -526,6 +526,17 @@ body {
     opacity: 1;
   }
 }
+/* Switching between email and text: the new draft comes into focus where the old one was (D-080). */
+.sheet-swap {
+  animation: sheet-swap 340ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+@keyframes sheet-swap {
+  from {
+    transform: translateY(6px);
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
 /* Toasts rise a little and settle. */
 .toast {
   animation: toast-in 260ms cubic-bezier(0.23, 1, 0.32, 1) both;

@@ -20,9 +20,13 @@ export interface QueueRow {
   valueNote: string | null;
   atRisk: boolean;
   draft: { subject: string; body: string } | null;
+  /** The pre-written text, when they agreed to texts (D-080). */
+  text: string | null;
+  /** Who a text shows as coming from: the clinic's name. */
+  sender: string;
 }
 
-export function toQueueRow(item: QueueItem, facts: ClientFacts): QueueRow {
+export function toQueueRow(item: QueueItem, facts: ClientFacts, clinicName: string): QueueRow {
   return {
     clientId: item.clientId,
     dedupeKey: item.dedupeKey,
@@ -38,5 +42,7 @@ export function toQueueRow(item: QueueItem, facts: ClientFacts): QueueRow {
     valueNote: item.valueNote,
     atRisk: item.atRisk,
     draft: item.draft,
+    text: item.text,
+    sender: clinicName,
   };
 }

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, useTransition } from "react";
-import { markDone, sendRebook, undoDone } from "@/app/dashboard/actions";
+import { markDone, sendRebook, sendRebookText, undoDone } from "@/app/dashboard/actions";
 import { cx } from "@/components/ui/cx";
-import { IconArrowUpRight, IconClose, IconMail, IconPhone } from "@/components/ui/Icons";
+import { IconArrowUpRight, IconClose, IconMail, IconMessage, IconPhone } from "@/components/ui/Icons";
+import { formatUsPhone, TEXT_MAX_CHARS, textParts, toUsE164 } from "@/lib/sms/text";
 import { Bloom } from "./Bloom";
 import { KindChip, KindMark, Monogram } from "./Kind";
 import { LightField } from "./LightField";
@@ -31,7 +32,7 @@ export function Queue({
   const [pending, start] = useTransition();
   const toastCount = useRef(0);
   // Edits survive closing the sheet, so a stray Escape never costs Dana her words.
-  const [drafts, setDrafts] = useState<Record<string, { subject: string; body: string }>>({});
+  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const say = (text: string, undo?: () => void, bloom?: boolean) => setToast({ text, id: ++toastCount.current, undo, bloom });
 
   useEffect(() => {
@@ -126,9 +127,9 @@ export function Queue({
               </div>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 md:flex-col md:items-end">
-                {row.action === "email" && (
+                {(row.action === "email" || row.action === "text") && (
                   <button type="button" onClick={() => setOpen(row)} className="btn-sea">
-                    <IconMail width={16} height={16} />
+                    {row.action === "text" ? <IconMessage width={16} height={16} /> : <IconMail width={16} height={16} />}
                     Review &amp; send
                   </button>
                 )}
@@ -205,7 +206,18 @@ export function Queue({
 
 const COPY_KEY = "rb_demo_copy_to";
 
-/** The pre-written email, ready to edit. Nothing goes out until Dana presses Send. */
+/** Dana's edits to one row, kept when the sheet closes. */
+export interface Draft {
+  channel: "email" | "text";
+  subject: string;
+  body: string;
+  text: string;
+}
+
+const field =
+  "w-full rounded-[12px] border border-[#0c1a22]/10 bg-white/80 text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-[#1e5a78]/50 focus:shadow-[0_0_0_4px_rgba(159,201,221,0.35)]";
+
+/** The pre-written email, or text (D-080), ready to edit. Nothing goes out until Dana presses Send. */
 function SendSheet({
   row,
   demo,
@@ -218,19 +230,25 @@ function SendSheet({
   row: QueueRow;
   demo: boolean;
   realCopy: boolean;
-  draft: { subject: string; body: string } | null;
-  onDraft: (d: { subject: string; body: string }) => void;
+  draft: Draft | null;
+  onDraft: (d: Draft) => void;
   onClose: () => void;
   onSent: (text: string) => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const [channel, setChannel] = useState<Draft["channel"]>(draft?.channel ?? (row.draft ? "email" : "text"));
   const [subject, setSubject] = useState(draft?.subject ?? row.draft?.subject ?? "");
   const [body, setBody] = useState(draft?.body ?? row.draft?.body ?? "");
-  const edited = subject !== (row.draft?.subject ?? "") || body !== (row.draft?.body ?? "");
+  const [text, setText] = useState(draft?.text ?? row.text ?? "");
+  const edited = subject !== (row.draft?.subject ?? "") || body !== (row.draft?.body ?? "") || text !== (row.text ?? "");
+  const both = Boolean(row.draft && row.text);
+  // Only a switch animates; opening the sheet has its own slide.
+  const [switched, setSwitched] = useState(false);
+  const isText = channel === "text";
   // Close through the dialog, so the browser hands focus back to the button that opened it.
   const dismiss = () => {
-    onDraft({ subject, body });
+    onDraft({ channel, subject, body, text });
     ref.current?.close();
     onClose();
   };
@@ -246,6 +264,7 @@ function SendSheet({
     }
   });
   const firstName = row.name.split(" ")[0];
+  const mobile = toUsE164(row.phone);
 
   useEffect(() => {
     const dialog = ref.current;
@@ -258,8 +277,10 @@ function SendSheet({
   const send = () =>
     start(async () => {
       setError(null);
-      const to = realCopy ? copyTo.trim() : "";
-      const result = await sendRebook({ clientId: row.clientId, dedupeKey: row.dedupeKey, subject, body, copyTo: to });
+      const to = !isText && realCopy ? copyTo.trim() : "";
+      const result = isText
+        ? await sendRebookText({ clientId: row.clientId, dedupeKey: row.dedupeKey, body: text })
+        : await sendRebook({ clientId: row.clientId, dedupeKey: row.dedupeKey, subject, body, copyTo: to });
       if (result.ok) {
         try {
           if (to) localStorage.setItem(COPY_KEY, to);
@@ -304,7 +325,7 @@ function SendSheet({
                 Review &amp; send
               </h2>
               <p className="mt-3 text-[14px] text-ink-soft">
-                To <span className="text-white">{row.name}</span> · {row.email}
+                To <span className="text-white">{row.name}</span> · {isText ? (mobile ? formatUsPhone(mobile) : row.phone) : row.email}
               </p>
             </div>
             <button type="button" onClick={dismiss} aria-label="Close" className="-mr-2 grid h-10 w-10 place-items-center rounded-full text-ink-soft transition-colors duration-150 hover:bg-white/10 hover:text-white">
@@ -315,43 +336,56 @@ function SendSheet({
         </header>
 
         <div className="flex-1 overflow-y-auto px-7 py-6">
-
-          <label className="mt-7 block">
-            <span className="t-label">Subject</span>
-            <input
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              className="mt-2 h-12 w-full rounded-[12px] border border-[#0c1a22]/10 bg-white/80 px-4 text-[16px] text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-[#1e5a78]/50 focus:shadow-[0_0_0_4px_rgba(159,201,221,0.35)]"
+          {both && (
+            <ChannelSwitch
+              value={channel}
+              onChange={(c) => {
+                setChannel(c);
+                setSwitched(true);
+                setError(null);
+              }}
             />
-          </label>
+          )}
 
-          <label className="mt-7 block">
-            <span className="t-label">Message</span>
-            <textarea
-              autoFocus
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              rows={15}
-              className="mt-2 w-full resize-y rounded-[12px] border border-[#0c1a22]/10 bg-white/80 p-4 text-[15px] leading-relaxed text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-[#1e5a78]/50 focus:shadow-[0_0_0_4px_rgba(159,201,221,0.35)]"
-            />
-          </label>
-          {realCopy && (
-            <label className="mt-7 block">
-              <span className="t-label">Send a real copy to you</span>
-              <input
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                value={copyTo}
-                onChange={(e) => setCopyTo(e.target.value)}
-                placeholder="you@example.com"
-                aria-describedby={`${titleId}-copy`}
-                className="mt-2 h-12 w-full rounded-[12px] border border-[#0c1a22]/10 bg-white/80 px-4 text-[16px] text-ink outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-text-3 focus:border-[#1e5a78]/50 focus:shadow-[0_0_0_4px_rgba(159,201,221,0.35)]"
-              />
-              <span id={`${titleId}-copy`} className="t-caption mt-2 block !text-[12.5px]">
-                {firstName} is a sample client, so this message stays in the outbox. Add your address to receive the email exactly as {firstName} would.
-              </span>
-            </label>
+          {isText ? (
+            <TextDraft key="text" animate={switched} firstName={firstName} sender={row.sender} text={text} onText={setText} />
+          ) : (
+            <div key="email" className={cx(switched && "sheet-swap")}>
+              <label className="mt-7 block">
+                <span className="t-label">Subject</span>
+                <input value={subject} onChange={(e) => setSubject(e.target.value)} className={cx(field, "mt-2 h-12 px-4 text-[16px]")} />
+              </label>
+
+              <label className="mt-7 block">
+                <span className="t-label">Message</span>
+                <textarea
+                  // Focus lands here when the sheet opens; after a switch it stays on the switch.
+                  autoFocus={!switched}
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  rows={15}
+                  className={cx(field, "mt-2 resize-y p-4 text-[15px] leading-relaxed")}
+                />
+              </label>
+              {realCopy && (
+                <label className="mt-7 block">
+                  <span className="t-label">Send a real copy to you</span>
+                  <input
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    value={copyTo}
+                    onChange={(e) => setCopyTo(e.target.value)}
+                    placeholder="you@example.com"
+                    aria-describedby={`${titleId}-copy`}
+                    className={cx(field, "mt-2 h-12 px-4 text-[16px] placeholder:text-text-3")}
+                  />
+                  <span id={`${titleId}-copy`} className="t-caption mt-2 block !text-[12.5px]">
+                    {firstName} is a sample client, so this message stays in the outbox. Add your address to receive the email exactly as {firstName} would.
+                  </span>
+                </label>
+              )}
+            </div>
           )}
           {error && (
             <p role="alert" className="mt-3 text-[14px] text-ink">
@@ -363,9 +397,11 @@ function SendSheet({
         <footer className="border-t border-[#0c1a22]/[0.07] bg-white/50 px-7 py-5">
           {demo && (
             <p className="t-caption mb-4 !text-[12.5px]">
-              {realCopy && copyTo.trim()
-                ? `Demo mode: ${firstName}'s message is logged in the outbox. A real copy is emailed to you.`
-                : "Demo mode: this message is logged in the outbox, not emailed."}
+              {isText
+                ? "Demo mode: this text is logged in the outbox, not sent."
+                : realCopy && copyTo.trim()
+                  ? `Demo mode: ${firstName}'s message is logged in the outbox. A real copy is emailed to you.`
+                  : "Demo mode: this message is logged in the outbox, not emailed."}
             </p>
           )}
           <div className="flex items-center justify-end gap-5">
@@ -377,11 +413,121 @@ function SendSheet({
               disabled={pending}
               className="btn-gold min-w-40 px-7 disabled:opacity-60"
             >
-              {pending ? "Sending" : "Send email"}
+              {pending ? "Sending" : isText ? "Send text" : "Send email"}
             </button>
           </div>
         </footer>
       </form>
     </dialog>
+  );
+}
+
+/** Email or text, for a client who said yes to both. Arrow keys move between them, as radios do. */
+function ChannelSwitch({ value, onChange }: { value: Draft["channel"]; onChange: (c: Draft["channel"]) => void }) {
+  const options = [
+    { id: "email", label: "Email", Icon: IconMail },
+    { id: "text", label: "Text", Icon: IconMessage },
+  ] as const;
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Send as"
+      className="relative grid grid-cols-2 rounded-[14px] bg-[#0c1a22]/[0.05] p-1 ring-1 ring-inset ring-[#0c1a22]/[0.06]"
+      onKeyDown={(e) => {
+        if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
+        e.preventDefault();
+        const next = value === "email" ? "text" : "email";
+        onChange(next);
+        (e.currentTarget.querySelector(`[data-channel="${next}"]`) as HTMLElement | null)?.focus();
+      }}
+    >
+      {/* The selected pill slides between the two, so the switch reads as one control. */}
+      <span
+        aria-hidden
+        className={cx(
+          "absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-[11px] bg-white shadow-[0_6px_16px_-10px_rgba(12,26,34,0.45)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
+          value === "text" && "translate-x-full",
+        )}
+      />
+      {options.map(({ id, label, Icon }) => (
+        <button
+          key={id}
+          type="button"
+          role="radio"
+          aria-checked={value === id}
+          tabIndex={value === id ? 0 : -1}
+          data-channel={id}
+          onClick={() => onChange(id)}
+          className={cx(
+            "relative flex h-10 items-center justify-center gap-2 rounded-[11px] text-[14px] transition-colors duration-200",
+            value === id ? "text-ink" : "text-text-3 hover:text-ink",
+          )}
+        >
+          <Icon width={16} height={16} />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const LINK = /(https?:\/\/\S+)/g;
+
+/** The text as it will land on their phone, above the field that writes it. */
+function TextDraft({
+  animate,
+  firstName,
+  sender,
+  text,
+  onText,
+}: {
+  animate: boolean;
+  firstName: string;
+  sender: string;
+  text: string;
+  onText: (t: string) => void;
+}) {
+  const countId = useId();
+  const { parts, unicode } = textParts(text);
+  const tooLong = text.trim().length > TEXT_MAX_CHARS;
+  return (
+    <div className={cx(animate && "sheet-swap")}>
+      <figure className="mt-7">
+        <figcaption className="t-label">On {firstName}&apos;s phone</figcaption>
+        <div className="mt-2 rounded-[18px] bg-[linear-gradient(180deg,#ffffff_0%,#f3f7f9_100%)] px-4 pb-5 pt-4 shadow-[0_18px_40px_-28px_rgba(12,26,34,0.5)] ring-1 ring-inset ring-[#0c1a22]/[0.06]">
+          <p className="text-center text-[11.5px] text-text-3">{sender}</p>
+          <p className="mt-3 w-fit max-w-[86%] whitespace-pre-wrap break-words rounded-[18px] rounded-bl-[6px] bg-[#e9eef1] px-4 py-2.5 text-[15px] leading-[1.45] text-ink">
+            {text.trim()
+              ? text.split(LINK).map((part, i) =>
+                  i % 2 === 1 ? (
+                    <span key={i} className="text-[#1e5a78] underline decoration-[#1e5a78]/40 underline-offset-2">
+                      {part}
+                    </span>
+                  ) : (
+                    part
+                  ),
+                )
+              : <span className="text-text-3">Write a message below.</span>}
+          </p>
+        </div>
+      </figure>
+
+      <label className="mt-7 block">
+        <span className="t-label">Text</span>
+        <textarea
+          autoFocus={!animate}
+          value={text}
+          onChange={(e) => onText(e.target.value)}
+          rows={7}
+          aria-describedby={countId}
+          className={cx(field, "mt-2 resize-y p-4 text-[15px] leading-relaxed")}
+        />
+      </label>
+      <p id={countId} aria-live="polite" className={cx("t-caption mt-2 !text-[12.5px]", tooLong && "!text-ink")}>
+        {tooLong
+          ? `${text.trim().length} characters. Keep it under ${TEXT_MAX_CHARS}.`
+          : `${text.trim().length} characters, sent as ${parts === 1 ? "one text" : `${parts} parts`}${unicode ? ". An emoji or curly quote makes each part shorter" : ""}.`}
+      </p>
+    </div>
   );
 }

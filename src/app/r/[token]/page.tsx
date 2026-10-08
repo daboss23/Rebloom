@@ -25,7 +25,7 @@ import { demoFace } from "@/lib/demo/landmarks";
 
 /**
  * The living report: real scores and masks, wording and a plan built from this client's own scan,
- * answers and the clinic's menu (DECISIONS D-045). The Claude-written report layers on top in Week 2.
+ * answers and the clinic's menu (DECISIONS D-045). Claude reads their own words; code writes every sentence (D-079).
  */
 export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
   const { token } = await params;

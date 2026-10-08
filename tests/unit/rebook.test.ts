@@ -91,7 +91,7 @@ describe("the rebook queue over time", () => {
     expect(reasons.sofia).toMatch(/^Wrinkles improved \d+ points since the first scan\. The third microneedling session isn't booked\.$/);
     expect(reasons.priya).toBe("Report sent 4 days ago. Nothing booked yet.");
     expect(reasons.daniel).toMatch(/^The second peel was due .+ and never booked\.$/);
-    expect(reasons.chloe).toMatch(/No email consent, so a call\.$/);
+    expect(reasons.chloe).toMatch(/No consent to email or text, so a call\.$/);
   });
 
   it("brings Isabel's follow-up two days on", () => {

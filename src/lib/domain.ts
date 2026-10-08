@@ -96,7 +96,7 @@ export interface Client {
   createdAt: ISODateTime;
 }
 
-export type ConsentType = "biometric" | "reminders";
+export type ConsentType = "biometric" | "reminders" | "texts";
 
 export interface Consent {
   id: string;
@@ -142,6 +142,16 @@ export type ScreeningKey =
 
 export type ScreeningAnswer = "yes" | "no" | "unsure";
 
+/**
+ * What Claude read in the client's own words (DECISIONS D-079): the concerns they meant, each with a short
+ * phrase to say back to them. Only trusted while `text` still matches what they wrote.
+ */
+export interface GoalReading {
+  text: string;
+  concerns: { key: ConcernKey; phrase: string }[];
+  readAt: ISODateTime;
+}
+
 export interface Intake {
   clientId: string;
   concerns: IntakeConcern[];
@@ -154,6 +164,8 @@ export interface Intake {
   budgetBand: BudgetBand | null;
   screening: Partial<Record<ScreeningKey, ScreeningAnswer>>;
   sensitivitiesNote: string | null;
+  /** Absent until Claude has read their words, and on scans from before D-079. */
+  goalReading?: GoalReading | null;
   completedAt: ISODateTime | null;
   updatedAt: ISODateTime;
 }

@@ -15,6 +15,7 @@ import { briefFacts, lowestScores, suggestedPlan } from "@/lib/dashboard/brief";
 import { loadBook } from "@/lib/dashboard/load";
 import { monthDay, shortDay, shortName, statusOf } from "@/lib/dashboard/view";
 import { env, features } from "@/lib/env";
+import { currentReading } from "@/lib/intake/goal-reading";
 import { formatPrice } from "@/lib/plan/build";
 import { courses } from "@/lib/rebook/engine";
 import { concernLabel } from "@/lib/skin/concerns";
@@ -40,6 +41,8 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
   if (!facts || !facts.client.firstName) notFound();
 
   const { client, intake, report } = facts;
+  // What Claude understood from their own words, which the report answers (D-079).
+  const read = intake ? currentReading(intake) : null;
   const tz = book.clinic.timezone;
   const local = (instant: string) => new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date(instant));
   const time = (instant: string) =>
@@ -165,7 +168,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
 
       {item && (
         <section aria-label="In the queue" className="mt-10">
-          <Queue rows={[toQueueRow(item, facts)]} demo={env.DEMO_MODE} realCopy={env.DEMO_MODE && features.email} empty="" onBrief />
+          <Queue rows={[toQueueRow(item, facts, book.clinic.name)]} demo={env.DEMO_MODE} realCopy={env.DEMO_MODE && features.email} empty="" onBrief />
         </section>
       )}
 
@@ -210,6 +213,9 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
                 </span>
                 <span className="relative">{intake.goalText}</span>
               </blockquote>
+              {read && read.length > 0 && (
+                <p className="t-caption mt-4">Read as {read.map((r) => concernLabel(r.key).toLowerCase()).join(", ")}.</p>
+              )}
             </figure>
           )}
           <dl className={cx("grid grid-cols-2 gap-x-6", intake?.goalText && "mt-8")}>

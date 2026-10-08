@@ -75,6 +75,11 @@ export const IconMail = (p: SVGProps<SVGSVGElement>) => (
     <path d="M4 6.5l8 6.2 8-6.2" />
   </Icon>
 );
+export const IconMessage = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5h-8.5l-4.5 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5z" />
+  </Icon>
+);
 export const IconPhone = (p: SVGProps<SVGSVGElement>) => (
   <Icon {...p}>
     <path d="M6.5 4h3l1.5 4-2 1.3a10 10 0 005.7 5.7L16 13l4 1.5v3A2 2 0 0118 19.5 15.5 15.5 0 014.5 6 2 2 0 016.5 4z" />

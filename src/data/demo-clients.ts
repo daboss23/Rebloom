@@ -39,6 +39,8 @@ export interface DemoClient {
   role: string;
   /** Said yes to reminders. Without it the rebook engine may not email them. */
   reminders: boolean;
+  /** Said yes to texts too (D-080): the queue offers a text beside the email. */
+  texts?: boolean;
   intake: {
     concerns: IntakeConcern[];
     goalText: string | null;
@@ -125,6 +127,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     look: "29, South Asian, medium brown skin, long dark hair tied back",
     role: "New lead. Got her report four days ago and hasn't booked: the follow-up is due.",
     reminders: true,
+    texts: true,
     intake: {
       concerns: ["breakouts", "pores"],
       goalText: "Fewer breakouts and smaller looking pores.",
@@ -177,6 +180,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     look: "45, Latina, medium olive skin, dark brown hair",
     role: "Mid-course. Her rescan shows real change, and her next session isn't booked: a great moment to rebook.",
     reminders: true,
+    texts: true,
     intake: {
       concerns: ["fine_lines", "firmness"],
       goalText: "Soften the lines around my eyes and mouth.",
@@ -323,6 +327,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     look: "41, white, fair skin, short brown hair, clean-shaven",
     role: "Missed. His second peel was due over two weeks ago and never booked.",
     reminders: true,
+    texts: true,
     intake: {
       concerns: ["texture", "pores"],
       goalText: null,

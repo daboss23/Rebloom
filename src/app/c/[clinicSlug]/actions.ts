@@ -1,12 +1,14 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
-import { CONSENT_VERSION } from "@/lib/flow/consent";
+import { CONSENT_VERSION, TEXTS_CONSENT_VERSION } from "@/lib/flow/consent";
 import { INTAKE_STEPS, stepSchemas, unlockSchema, type IntakeStep } from "@/lib/flow/intake-schema";
 import { getOwnScan } from "@/lib/scans/access";
 import { hasBiometricConsent, loadFlow } from "@/lib/flow/load";
 import { sendReportEmail, type ReportDelivery } from "@/lib/email/report";
+import { ensureGoalReading } from "@/lib/intake/read-goal";
 import { appOrigin } from "@/lib/origin";
 import {
   ensureSandboxId,
@@ -15,6 +17,7 @@ import {
   sandboxNow,
   setVisitClientId,
 } from "@/lib/sandbox";
+import { toUsE164 } from "@/lib/sms/text";
 import { getStore } from "@/lib/store";
 
 export interface ActionResult {
@@ -34,7 +37,7 @@ export interface SentResults {
 export interface UnlockResult extends ActionResult {
   sent?: SentResults;
   /** What was typed, sent back with an error so the form never makes them type it again. */
-  values?: { firstName: string; email: string; phone: string; reminders: boolean };
+  values?: { firstName: string; email: string; phone: string; reminders: boolean; texts: boolean };
   /** The field the error is about, so the form can mark it and move focus there. */
   field?: "firstName" | "email" | "phone";
 }
@@ -63,6 +66,9 @@ export async function giveConsent(slug: string, _prev: ActionResult | null, form
   redirect(`/c/${slug}/intake`);
 }
 
+/** How long the report gate waits for Claude's reading of the client's words before carrying on without it. */
+const GOAL_READING_WAIT_MS = 5000;
+
 const stepInput = z.object({ step: z.enum(INTAKE_STEPS), data: z.unknown() });
 
 /** Saves one intake screen. Called as you go, so a refresh never loses answers. */
@@ -83,6 +89,10 @@ export async function saveIntakeStep(slug: string, input: { step: IntakeStep; da
     const about = stepSchemas.about.parse(data);
     await store.updateClient(state.client.id, { ageRange: about.ageRange });
     await store.saveIntake(state.client.id, { completedAt: now.toISOString() }, now);
+    // Claude reads their own words while they take their photo, so the report is ready to use it (D-079).
+    const client = state.client;
+    const ipHash = await requestIpHash();
+    after(() => ensureGoalReading({ clientId: client.id, sandboxId: client.sandboxId, ipHash, now }));
   } else if (step === "event") {
     const event = stepSchemas.event.parse(data);
     if (event.hasEvent && event.eventDate && event.eventDate <= now.toISOString().slice(0, 10)) {
@@ -112,7 +122,13 @@ export async function unlockReport(
   form: FormData,
 ): Promise<UnlockResult> {
   const text = (key: string) => String(form.get(key) ?? "");
-  const values = { firstName: text("firstName"), email: text("email"), phone: text("phone"), reminders: form.get("reminders") === "on" };
+  const values = {
+    firstName: text("firstName"),
+    email: text("email"),
+    phone: text("phone"),
+    reminders: form.get("reminders") === "on",
+    texts: form.get("texts") === "on",
+  };
   const parsed = unlockSchema.safeParse(values);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -122,6 +138,15 @@ export async function unlockReport(
       error: issue?.message ?? "Please check your details.",
       values,
       field: field === "firstName" || field === "email" || field === "phone" ? field : undefined,
+    };
+  }
+  // Texts need a number they can reach (D-080).
+  if (values.texts && !toUsE164(parsed.data.phone)) {
+    return {
+      ok: false,
+      error: parsed.data.phone ? "Please check your phone number. Texts go to US mobile numbers." : "Please add your mobile number for texts, or untick the box.",
+      values,
+      field: "phone",
     };
   }
 
@@ -134,20 +159,27 @@ export async function unlockReport(
   const store = getStore();
   const now = await sandboxNow();
   const client = state.client;
+  // Normally read during the intake already. If not (or they changed their words), give Claude a few seconds
+  // before the report link goes out, and let it finish after the response either way (D-079).
+  const reading = ensureGoalReading({ clientId: client.id, sandboxId: client.sandboxId, ipHash: await requestIpHash(), now });
+  after(() => reading);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([reading, new Promise((resolve) => (timer = setTimeout(resolve, GOAL_READING_WAIT_MS)))]);
+  clearTimeout(timer);
   await store.updateClient(client.id, {
     ...parsed.data,
     status: client.status === "started" ? "lead" : client.status,
   });
-  if (form.get("reminders") === "on" && !state.consents.some((c) => c.type === "reminders")) {
+  // Each yes is its own record, with the wording version they saw.
+  const asked = [
+    ...(values.reminders ? [{ type: "reminders", textVersion: CONSENT_VERSION } as const] : []),
+    ...(values.texts ? [{ type: "texts", textVersion: TEXTS_CONSENT_VERSION } as const] : []),
+  ].filter((c) => !state.consents.some((existing) => existing.type === c.type));
+  if (asked.length > 0) {
     const [ipHash, userAgent] = await Promise.all([requestIpHash(), requestUserAgent()]);
-    await store.addConsent({
-      clientId: client.id,
-      type: "reminders",
-      grantedAt: new Date().toISOString(),
-      textVersion: CONSENT_VERSION,
-      ipHash,
-      userAgent,
-    });
+    for (const consent of asked) {
+      await store.addConsent({ clientId: client.id, ...consent, grantedAt: new Date().toISOString(), ipHash, userAgent });
+    }
   }
   const report = await store.getOrCreateReport(client.id, now);
   const reportPath = `/r/${report.token}`;

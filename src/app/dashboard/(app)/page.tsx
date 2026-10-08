@@ -25,7 +25,7 @@ export default async function TodayPage() {
   const book = await loadBook();
   const { clinic, queue, facts, today, now } = book;
   const byId = new Map(facts.map((f) => [f.client.id, f]));
-  const rows = queue.items.map((item) => toQueueRow(item, byId.get(item.clientId)!));
+  const rows = queue.items.map((item) => toQueueRow(item, byId.get(item.clientId)!, clinic.name));
   const visits = visitsOn(today, facts, book.input.treatments, clinic.timezone);
   const ready = queue.items.reduce((n, i) => n + (i.valueCents ?? 0), 0);
   const date = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(
@@ -129,7 +129,7 @@ export default async function TodayPage() {
                     <p className="text-ink">
                       {fullName(byId.get(item.clientId)!.client)} <span className="text-text-3">· {TRIGGER_LABEL[item.kind]}</span>
                     </p>
-                    <p className="t-caption !text-[12.5px]">{message.status === "sent" ? `Email sent: ${message.subject}` : message.body}</p>
+                    <p className="t-caption !text-[12.5px]">{message.status !== "sent" ? message.body : message.channel === "sms" ? `Texted: ${message.body}` : `Email sent: ${message.subject}`}</p>
                   </li>
                 ))}
               </ul>

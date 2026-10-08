@@ -23,11 +23,12 @@ import {
 
 export const metadata: Metadata = { title: "Rebook" };
 
-const VIEWS: { key: string; label: string; action: QueueAction | null }[] = [
-  { key: "all", label: "Everyone", action: null },
-  { key: "email", label: "To email", action: "email" },
-  { key: "call", label: "To call", action: "call" },
-  { key: "review", label: "To review", action: "review" },
+const VIEWS: { key: string; label: string; actions: QueueAction[] | null }[] = [
+  { key: "all", label: "Everyone", actions: null },
+  // Email and text both send a pre-written message (D-080). The key stays "email" so old links still work.
+  { key: "email", label: "To message", actions: ["email", "text"] },
+  { key: "call", label: "To call", actions: ["call"] },
+  { key: "review", label: "To review", actions: ["review"] },
 ];
 
 /** The whole queue, and the outbox: every rebook message sent from this sandbox. */
@@ -36,8 +37,8 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
   const book = await loadBook();
   const byId = new Map(book.facts.map((f) => [f.client.id, f]));
   const view = VIEWS.find((v) => v.key === show) ?? VIEWS[0];
-  const items = view.action ? book.queue.items.filter((i) => i.action === view.action) : book.queue.items;
-  const rows = items.map((i) => toQueueRow(i, byId.get(i.clientId)!));
+  const items = view.actions ? book.queue.items.filter((i) => view.actions!.includes(i.action)) : book.queue.items;
+  const rows = items.map((i) => toQueueRow(i, byId.get(i.clientId)!, book.clinic.name));
   const rebookTypes = new Set<string>(TRIGGER_ORDER);
   const outbox = book.input.messages.filter((m) => rebookTypes.has(m.type)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const ready = book.queue.items.reduce((n, i) => n + (i.valueCents ?? 0), 0);
@@ -53,7 +54,7 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
             <ul className="flex flex-wrap gap-2">
               {VIEWS.map((v) => {
                 const active = v.key === view.key;
-                const n = v.action ? book.queue.items.filter((i) => i.action === v.action).length : book.queue.items.length;
+                const n = v.actions ? book.queue.items.filter((i) => v.actions!.includes(i.action)).length : book.queue.items.length;
                 return (
                   <li key={v.key}>
                     <Link href={v.key === "all" ? "/dashboard/rebook" : `/dashboard/rebook?show=${v.key}`} aria-current={active ? "page" : undefined} scroll={false} className={pill(active)}>
@@ -79,7 +80,7 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
           <h2 id="outbox" className="font-display text-[34px] font-light text-ink">
             Outbox
           </h2>
-          {env.DEMO_MODE && <p className="t-caption !text-[12.5px]">Demo mode: messages are logged here, never emailed.</p>}
+          {env.DEMO_MODE && <p className="t-caption !text-[12.5px]">Demo mode: messages are logged here, never emailed or texted.</p>}
         </div>
         {outbox.length === 0 ? (
           <p className="t-caption mt-4 pt-1">Nothing sent yet. Messages you send from the queue land here, word for word.</p>
@@ -93,6 +94,7 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
                     <summary className="grid cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto_1rem] items-baseline gap-x-6 gap-y-1 py-4 md:grid-cols-[11rem_minmax(0,1fr)_9rem_6rem_1rem] [&::-webkit-details-marker]:hidden">
                       <span className="text-[15px] text-ink">{client ? fullName(client) : "Removed client"}</span>
                       <span className="col-span-2 row-start-2 min-w-0 truncate text-[14px] text-text-2 md:col-span-1 md:row-start-auto">
+                        {m.channel === "sms" && <span className="text-text-3">Text · </span>}
                         {m.subject ?? m.body}
                       </span>
                       <span className="t-label hidden items-center gap-2 !text-[10.5px] md:flex">
@@ -109,8 +111,20 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
                     </summary>
                     {m.status !== "skipped" && (
                       <div className="pb-6 md:pl-[11rem]">
-                        <p className="t-caption !text-[12.5px]">To {client?.email}</p>
-                        <pre className="mt-3 max-w-2xl whitespace-pre-wrap rounded-[14px] bg-white/70 p-5 font-sans text-[14.5px] leading-relaxed text-text-2 ring-1 ring-inset ring-white">{m.body}</pre>
+                        {m.channel === "sms" ? (
+                          <>
+                            <p className="t-caption !text-[12.5px]">Text to {client?.phone}</p>
+                            {/* As it reads on their phone. */}
+                            <p className="mt-3 w-fit max-w-md whitespace-pre-wrap break-words rounded-[18px] rounded-bl-[6px] bg-white/80 px-4 py-2.5 text-[14.5px] leading-[1.45] text-ink ring-1 ring-inset ring-white">
+                              {m.body}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="t-caption !text-[12.5px]">To {client?.email}</p>
+                            <pre className="mt-3 max-w-2xl whitespace-pre-wrap rounded-[14px] bg-white/70 p-5 font-sans text-[14.5px] leading-relaxed text-text-2 ring-1 ring-inset ring-white">{m.body}</pre>
+                          </>
+                        )}
                       </div>
                     )}
                   </details>

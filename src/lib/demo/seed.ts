@@ -4,13 +4,14 @@ import "server-only";
 
 import { DEMO_CLIENTS, type DemoClient, type DemoVisit } from "@/data/demo-clients";
 import { hasDemoLandmarks } from "@/lib/demo/landmarks";
-import { CONSENT_VERSION } from "@/lib/flow/consent";
+import { CONSENT_VERSION, TEXTS_CONSENT_VERSION } from "@/lib/flow/consent";
 import type {
   Appointment,
   Client,
   ClientPlan,
   Clinic,
   Consent,
+  ConsentType,
   ISODate,
   Intake,
   Message,
@@ -190,13 +191,14 @@ export function buildDemoBundle(input: DemoInput): DemoBundle {
     };
     bundle.clients.push(client);
 
-    for (const type of demo.reminders ? (["biometric", "reminders"] as const) : (["biometric"] as const)) {
+    const types: ConsentType[] = ["biometric", ...(demo.reminders ? (["reminders"] as const) : []), ...(demo.texts ? (["texts"] as const) : [])];
+    for (const type of types) {
       bundle.consents.push({
         id: newId(),
         clientId,
         type,
         grantedAt: iso(joined + 60_000),
-        textVersion: CONSENT_VERSION,
+        textVersion: type === "texts" ? TEXTS_CONSENT_VERSION : CONSENT_VERSION,
         ipHash: null,
         userAgent: null,
       });

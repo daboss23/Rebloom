@@ -8,6 +8,7 @@ import { LightField } from "@/components/dashboard/LightField";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Checkbox, FieldLabel, TextInput } from "@/components/ui/Field";
 import { FormAlert } from "@/components/ui/FormAlert";
+import { TEXTS_CONSENT } from "@/lib/flow/consent";
 import { IconLock } from "@/components/ui/Icons";
 import { Label, ScoreNumber } from "@/components/ui/Typography";
 import { ScoreRuler } from "@/components/ui/ScoreRuler";
@@ -166,6 +167,11 @@ export function ReportGate({
                     </div>
                     <Checkbox id="reminders" name="reminders" defaultChecked={state?.values?.reminders}>
                       Remind me when it&apos;s time for a progress scan.
+                    </Checkbox>
+                    {/* Its own box, unticked, as US texting rules expect (D-080). */}
+                    <Checkbox id="texts" name="texts" defaultChecked={state?.values?.texts}>
+                      {TEXTS_CONSENT.ask(clinicName)}
+                      <span className="t-caption mt-1 block">{TEXTS_CONSENT.terms}</span>
                     </Checkbox>
 
                     {state?.error && <FormAlert id="gate-error">{state.error}</FormAlert>}

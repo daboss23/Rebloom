@@ -69,6 +69,11 @@ test("a scan runs end to end in fixture mode, and Delete my data removes it", as
   expect(preview.headers()["content-type"]).toBe("image/jpeg");
   await gate.getByLabel("First name").fill("Amelia");
   await gate.getByLabel("Email", { exact: true }).fill("amelia@example.com");
+  // Texts are their own yes, and need a number to reach (D-080).
+  await gate.getByRole("checkbox", { name: /Text me reminders and progress updates from Maison Verre/ }).check();
+  await gate.getByRole("button", { name: "Send my results" }).click();
+  await expect(gate.getByText("Please add your mobile number for texts, or untick the box.")).toBeVisible();
+  await gate.getByLabel(/^Phone/).fill("(310) 555-0199");
   await gate.getByRole("button", { name: "Send my results" }).click();
 
   // Confirmation, in place. Email isn't live yet, so it must not claim anything was sent.

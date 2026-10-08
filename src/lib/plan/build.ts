@@ -4,6 +4,7 @@
 
 import type { BudgetBand, Clinic, ConcernScore, Intake, Product, ScanResult, Treatment } from "@/lib/domain";
 import { CONCERN_OPTIONS } from "@/lib/flow/intake-options";
+import { currentReading, goalWords } from "@/lib/intake/goal-reading";
 import { PROGRESS_SCAN_AFTER_DAYS } from "@/lib/rebook/thresholds";
 import { CONCERNS, INTAKE_TO_CONCERNS, type ConcernKey } from "@/lib/skin/concerns";
 
@@ -70,15 +71,21 @@ export interface Stated {
 
 /**
  * Concerns the client asked about, in their own words or ticked in the intake. Their own words win:
- * "sun spots" says more than the "uneven tone" box ticked beside it.
+ * "sun spots" says more than the "uneven tone" box ticked beside it. Claude's reading of their words is used
+ * when there is one for what they wrote (D-079); the word list above stands in when there isn't.
  */
 export function statedConcerns(intake: Intake | null): Map<ConcernKey, Stated> {
   const stated = new Map<ConcernKey, Stated>();
   if (!intake) return stated;
-  const words = [intake.goalText, intake.concernsOther].filter(Boolean).join(" ");
-  for (const [re, key, phrase] of GOAL_WORDS) {
-    const m = words.match(re);
-    if (m && !stated.has(key)) stated.set(key, { phrase: typeof phrase === "string" ? phrase : phrase(m[0]), ownWords: true });
+  const read = currentReading(intake);
+  if (read) {
+    for (const { key, phrase } of read) stated.set(key, { phrase, ownWords: true });
+  } else {
+    const words = goalWords(intake);
+    for (const [re, key, phrase] of GOAL_WORDS) {
+      const m = words.match(re);
+      if (m && !stated.has(key)) stated.set(key, { phrase: typeof phrase === "string" ? phrase : phrase(m[0]), ownWords: true });
+    }
   }
   for (const c of intake.concerns) {
     const phrase = (CONCERN_OPTIONS.find(([v]) => v === c)?.[1] ?? c).toLowerCase();

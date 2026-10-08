@@ -13,6 +13,8 @@ import { env, features } from "@/lib/env";
 import { hintFor } from "@/lib/email/hints";
 import { DEMO_COPY_LIMIT, DEMO_COPY_TYPE, demoCopyKey, foreignLinks, rebookEmail } from "@/lib/email/rebook";
 import { resend } from "@/lib/email/resend";
+import { TEXT_MAX_CHARS, TEXT_OPT_OUT, toUsE164 } from "@/lib/sms/text";
+import { sendText } from "@/lib/sms/twilio";
 import { appOrigin } from "@/lib/origin";
 import { ensureSandboxId, sandboxNow } from "@/lib/sandbox";
 import { getStore } from "@/lib/store";
@@ -165,6 +167,73 @@ export async function sendRebook(input: z.input<typeof draftInput>): Promise<Act
     return { ok: true, message: `Logged for ${name}, and a real copy is on its way to ${copyTo}.` };
   }
   return { ok: true, message: live ? `Sent to ${name}.` : `Sent to ${name}. Logged in the outbox, not emailed (demo).` };
+}
+
+const textInput = z.object({
+  clientId: z.string().min(1),
+  dedupeKey: z.string().min(1),
+  body: z.string().trim().min(1, "Write a message first.").max(TEXT_MAX_CHARS, `Keep it under ${TEXT_MAX_CHARS} characters.`),
+});
+
+/**
+ * Sends one rebook message as a text, exactly as Dana edited it (DECISIONS D-080). The same guarantees as an
+ * email: the queue is worked out again here, only a client who said yes to texts can get one, and the outbox's
+ * dedupe key means it goes once. In demo mode it is logged in the outbox, never sent.
+ */
+export async function sendRebookText(input: z.input<typeof textInput>): Promise<ActionResult> {
+  const parsed = textInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Please check the message." };
+  if (!(await readSession())) return { ok: false, error: "Please sign in again." };
+  const book = await loadBook();
+  const item = book.queue.items.find((i) => i.clientId === parsed.data.clientId && i.dedupeKey === parsed.data.dedupeKey);
+  if (!item || !item.text) return { ok: false, error: "This one has already been handled." };
+  const facts = book.facts.find((f) => f.client.id === item.clientId)!;
+  const to = toUsE164(facts.client.phone);
+  if (!to) return { ok: false, error: "There's no mobile number to text." };
+  const { body } = parsed.data;
+  const issues = checkCopy(body);
+  if (issues.length > 0) return { ok: false, error: `Please reword "${issues[0].match}". It isn't in the clinic's voice.` };
+  // Every text carries the way out, so it stays in however the rest is edited.
+  if (!/\bSTOP\b/.test(body)) return { ok: false, error: `Keep "${TEXT_OPT_OUT}" at the end of the text.` };
+
+  const name = facts.client.firstName ?? "the client";
+  // Real texts only for a real client, outside demo mode, with Twilio set up.
+  const live = !env.DEMO_MODE && features.sms && !facts.client.isDemo;
+  const sentAt = book.now.toISOString();
+  const record = (status: "sent" | "failed") =>
+    getStore().addMessage({
+      clinicId: book.clinic.id,
+      clientId: item.clientId,
+      sandboxId: book.sandboxId,
+      type: item.kind,
+      channel: "sms",
+      subject: null,
+      body,
+      status,
+      // A failed text keeps no dedupe key, so the item stays in the queue to email, call or try again.
+      dedupeKey: status === "sent" ? item.dedupeKey : null,
+      scheduledFor: null,
+      sentAt: status === "sent" ? sentAt : null,
+      createdAt: sentAt,
+    });
+
+  if (live) {
+    const result = await sendText({ to, body });
+    if (!result.ok) {
+      await record("failed");
+      revalidatePath("/dashboard", "layout");
+      return {
+        ok: false,
+        error: result.optedOut
+          ? `${name} replied STOP to the clinic's texts, so it can't reach them. Try email or a call.`
+          : "The text didn't go through. Please try again.",
+      };
+    }
+  }
+  const message = await record("sent");
+  revalidatePath("/dashboard", "layout");
+  if (!message) return { ok: false, error: "This one has already been sent." };
+  return { ok: true, message: live ? `Texted ${name}.` : `Texted ${name}. Logged in the outbox, not sent (demo).` };
 }
 
 const doneInput = z.object({ clientId: z.string().min(1), dedupeKey: z.string().min(1) });

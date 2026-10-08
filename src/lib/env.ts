@@ -76,6 +76,17 @@ export const envSchema = z.object({
   /** Only changed for browser tests against a local stand-in for Stripe. */
   STRIPE_API_BASE: z.preprocess((v) => (v === "" ? undefined : v), z.url({ protocol: /^https?$/ }).optional()),
 
+  /** Texts through Twilio (D-080). Live texts also need DEMO_MODE=false: the demo logs them instead. */
+  TWILIO_ACCOUNT_SID: optional,
+  TWILIO_AUTH_TOKEN: optional,
+  /** The sending number, "+13105550100", or a Messaging Service SID, "MG…". */
+  TWILIO_FROM: optional,
+  /** Only changed for tests against a local stand-in for Twilio. */
+  TWILIO_API_BASE: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.url({ protocol: /^https?$/ }).default("https://api.twilio.com"),
+  ),
+
   CRON_SECRET: optional,
   IP_HASH_SALT: optional,
 });
@@ -97,6 +108,10 @@ if (env.VERCEL_ENV === "production" && env.STRIPE_API_BASE) {
   throw new Error("STRIPE_API_BASE is for local tests only. Remove it from the production environment.");
 }
 
+if (env.VERCEL_ENV === "production" && !env.TWILIO_API_BASE.startsWith("https://")) {
+  throw new Error("TWILIO_API_BASE must use HTTPS in production. Leave it unset to use Twilio's own address.");
+}
+
 if (env.VERCEL_ENV === "production" && !env.YOUCAM_API_BASE.startsWith("https://")) {
   throw new Error("YOUCAM_API_BASE must use HTTPS in production. Leave it unset to use YouCam's own address.");
 }
@@ -111,6 +126,9 @@ export const features = {
   supabase: env.REBLOOM_STORE !== "local" && Boolean(env.NEXT_PUBLIC_SUPABASE_URL && supabaseSecretKey()),
   youcamLive: env.YOUCAM_MODE === "live" && Boolean(env.YOUCAM_API_KEY),
   email: Boolean(env.RESEND_API_KEY),
+  /** Claude reads the client's own words (D-079). Without a key, the word list does it. */
+  claude: Boolean(env.ANTHROPIC_API_KEY),
+  sms: Boolean(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_FROM),
   isProductionDeploy: env.VERCEL_ENV === "production",
 } as const;
 

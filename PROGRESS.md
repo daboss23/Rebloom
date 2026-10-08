@@ -1,5 +1,27 @@
 # Progress
 
+## Session 9 · Thursday October 8, 2026 · Claude reads the client's words, and texts
+
+**The report now answers what the client actually said, and Dana can text as well as email** (DECISIONS D-079, D-080).
+
+### What's done
+- **Claude reads the client's own words** (D-079). What they write in the goal question ("I look tired in every photo") is read by Claude once the intake is finished, while they take their photo. It returns which of the 15 measurements they mean and a short phrase to say back ("tired look"). Code still ranks, plans and prices everything. Without a key, or if Claude is slow or fails, the old word list does it. The brief shows "Read as dark circles, radiance." under the client's quote.
+- **What it fixes:** "I look tired" used to match nothing; "I don't have any redness, it's mostly texture" used to match redness; "I want to glow for my sister's wedding" used to count as a radiance concern.
+- **Texts** (D-080). A new, unticked "Text me reminders" box under the phone number at the report gate, saved as its own consent. Every rebook trigger now writes a short text beside the email. In the send sheet, an Email / Text switch shows the text as it will land on the client's phone, with a character count. In demo mode texts are logged in the outbox; live texts go through Twilio outside demo mode. Sofia, Priya and Daniel said yes to texts in the demo.
+- **Tests:** 399 unit tests (new: Claude's reading, kept and trusted only for the words read, the safety valves; phone numbers, text length, every trigger's text, the Twilio request) and two new browser checks (texting Sofia from the queue, and the gate asking for a number when texts are ticked).
+
+### What Joshua needs to do
+1. **Two database changes** (`20261008120000_goal_reading`, `20261008130000_texts`): run `pnpm db:migrate`, or ask me to. Until then, live readings and text consents can't be saved (the app carries on without them).
+2. **Anthropic key:** console.anthropic.com, **API Keys**, **Create Key**, then add it in Vercel as `ANTHROPIC_API_KEY` (Production and Preview) and Redeploy. It costs about a cent per client, capped at 400 readings a day.
+3. **To see it:** take a scan, write something like "I look tired in every photo" in the goal question, finish, then open that client's brief in the dashboard: "Read as …" appears under the quote, and the report says it back.
+4. **Texts in the demo need nothing.** Open Sofia in the queue, choose Text. For real texts later: a Twilio account, a US number registered for business texting (A2P 10DLC or toll-free verification, which takes days to weeks), then `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` in Vercel and `DEMO_MODE=false`.
+
+### What's next
+1. **Replies from clients**, by email and text, landing together on the brief.
+2. **Clinic login** by magic link.
+
+---
+
 ## Session 8 · Wednesday October 7, 2026 · The face map, demo marks, booking polish, the rescan and progress view
 
 **The loop closes** (DECISIONS D-073). A client takes a progress scan from their report link, on any phone, and the same link then leads with what's changed since their first scan.
