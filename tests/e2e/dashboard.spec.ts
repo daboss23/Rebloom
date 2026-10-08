@@ -52,7 +52,8 @@ test("Sofia said yes to texts, so Dana can text her instead, and the way out sta
   await expect(sheet).toContainText(/characters, sent as (one text|2 parts)\./);
 
   await text.fill("Hi Sofia, shall I hold a time next week?");
-  await expect(sheet.getByText("Hi Sofia, shall I hold a time next week?", { exact: true })).toBeVisible();
+  // The preview follows the edit, as it will land on her phone.
+  await expect(sheet.getByRole("figure")).toContainText("Hi Sofia, shall I hold a time next week?");
   await sheet.getByRole("button", { name: "Send text" }).click();
   await expect(sheet.getByRole("alert")).toHaveText('Keep "Reply STOP to opt out." at the end of the text.');
 

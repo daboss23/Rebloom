@@ -351,7 +351,7 @@ export function buildQueue(input: EngineInput): Queue {
           dueDate: local(lastScan.createdAt),
           dedupeKey: `progress_moment:${lastScan.id}`,
           text: texted(
-            `Your latest scan shows your ${label.toLowerCase()} up ${change.uiDelta} points since your first.`,
+            `Your latest scan shows real change: your ${label.toLowerCase()} score has improved ${change.uiDelta} points since your first.`,
             next ? `It's the best moment for your next ${sessionNoun(next.course.treatment)}.` : "A maintenance visit now keeps it there.",
             link ? `Book here: ${link}` : "Reply and I'll hold a time for you.",
           ),
