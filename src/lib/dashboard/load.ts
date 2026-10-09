@@ -4,6 +4,7 @@ import "server-only";
 import { cache } from "react";
 import { isoDateInZone } from "@/lib/clock";
 import { ensureDemoClients } from "@/lib/demo/ensure";
+import { syncEmailReplies } from "@/lib/replies/email";
 import { buildQueue, clientFacts, type ClientFacts, type EngineInput, type Queue } from "@/lib/rebook/engine";
 import { sandboxNow } from "@/lib/sandbox";
 import { appOrigin } from "@/lib/origin";
@@ -26,8 +27,9 @@ export const loadBook = cache(async (): Promise<Book> => {
   const { clinic, sandboxId, staff } = session;
   const store = getStore();
   const now = await sandboxNow();
-  // First visit from this browser: give it its own copy of the demo clients (DECISIONS D-014).
-  await ensureDemoClients(clinic, sandboxId, now);
+  // First visit from this browser: give it its own copy of the demo clients (DECISIONS D-014). Meanwhile, any reply
+  // Resend received that its webhook didn't bring (D-084), given three seconds at most.
+  await Promise.all([ensureDemoClients(clinic, sandboxId, now), Promise.race([syncEmailReplies(), new Promise((r) => setTimeout(r, 3000))])]);
   const [records, treatments, products, sandbox, origin] = await Promise.all([
     store.listClinicRecords(clinic.id, sandboxId),
     store.listTreatments(clinic.id),
