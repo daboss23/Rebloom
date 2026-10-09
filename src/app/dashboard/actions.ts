@@ -19,7 +19,7 @@ import { setEmailPreference, unsubscribeLinks } from "@/lib/email/unsubscribe";
 import { replyTo } from "@/lib/replies/address";
 import { addressOf } from "@/lib/replies/parse";
 import { ANSWER_TYPE, HANDLED_TYPE, canAnswerByText, handledKey, replySubject, threadSubject } from "@/lib/replies/thread";
-import { TEXT_MAX_CHARS, TEXT_OPT_OUT, toUsE164 } from "@/lib/sms/text";
+import { TEXT_MAX_CHARS, TEXT_OPT_OUT, formatUsPhone, toUsE164 } from "@/lib/sms/text";
 import { sendText } from "@/lib/sms/twilio";
 import { appOrigin } from "@/lib/origin";
 import { ensureSandboxId, sandboxNow } from "@/lib/sandbox";
@@ -544,6 +544,34 @@ export async function confirmPlan(input: { clientId: string }): Promise<ActionRe
   const saved = await store.createPlan(kept.plan, kept.items);
   revalidatePath("/dashboard", "layout");
   return saved ? { ok: true, message: "Plan confirmed." } : { ok: false, error: "This client already has a plan." };
+}
+
+const alertsInput = z.object({
+  email: z.union([z.literal(""), z.email("That email address doesn't look right.").max(254)]),
+  phone: z.string().trim().max(30),
+});
+
+/**
+ * Where reply alerts go (DECISIONS D-087): an email address, a US mobile, either or both. Empty turns that one off.
+ * In the demo it holds for this browser's sandbox only, as the deposit switch does.
+ */
+export async function setReplyAlerts(input: z.input<typeof alertsInput>): Promise<ActionResult> {
+  const parsed = alertsInput.safeParse({ email: String(input?.email ?? "").trim(), phone: String(input?.phone ?? "") });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Please check the details." };
+  const session = await readSession();
+  if (!session) return { ok: false, error: "Please sign in again." };
+  const phone = parsed.data.phone ? toUsE164(parsed.data.phone) : null;
+  if (parsed.data.phone && !phone) return { ok: false, error: "Please check the mobile number. Alerts go to US mobiles." };
+  const email = parsed.data.email ? parsed.data.email.toLowerCase() : null;
+  try {
+    await getStore().setClinicSettings(session.clinic.id, session.sandboxId, { alertEmail: email, alertPhone: phone }, await sandboxNow());
+  } catch (e) {
+    console.error(`Reply alerts not saved: ${e instanceof Error ? e.message : String(e)}`);
+    return { ok: false, error: "That didn't save. If the database was just updated, run its latest change (pnpm db:migrate)." };
+  }
+  revalidatePath("/dashboard/settings");
+  if (!email && !phone) return { ok: true, message: "Reply alerts are off." };
+  return { ok: true, message: `Saved. Replies are sent to ${[email, phone && formatUsPhone(phone)].filter(Boolean).join(" and ")} as they land.` };
 }
 
 /** The owner's switch for deposits at booking (DECISIONS D-066). In the demo it holds for this browser's sandbox only. */

@@ -35,9 +35,13 @@ export interface Clinic {
 export interface ClinicSettings {
   /** Booking takes the clinic's deposit (depositCents) through Stripe. Off: a time is booked with no payment. */
   depositRequired: boolean;
+  /** Where a client's reply is announced as it lands (DECISIONS D-087). Null: no alert by email. */
+  alertEmail: string | null;
+  /** A US mobile for the same alert by text, "+13105550100". Null: none. */
+  alertPhone: string | null;
 }
 
-export const DEFAULT_CLINIC_SETTINGS: ClinicSettings = { depositRequired: true };
+export const DEFAULT_CLINIC_SETTINGS: ClinicSettings = { depositRequired: true, alertEmail: null, alertPhone: null };
 
 export interface Treatment {
   id: string;

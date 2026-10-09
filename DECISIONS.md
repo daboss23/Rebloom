@@ -517,3 +517,14 @@ Since D-083, clients get email updates without ticking a box, so stopping them c
 - **When a client asks Dana** (a reply, a call): "Stop emails" on the brief, two steps, recorded as "Emails stopped by Dana, at their request." Only the client can take it back, from any email's link. Undo can't remove an unsubscribe.
 - **The gate's notice** now reads "Unsubscribe at any time from the link in each one." (`reminders` version `2026-10-09.2`).
 - **Not done:** an automatic unsubscribe when a reply just says "unsubscribe" (Dana sees it waiting, and has the button); a suppression list shared across clinics.
+
+## D-087 · Reply alerts: the clinic hears the moment a client writes back (J + C, Oct 9). Completes D-081
+A client who writes "Can I come Thursday?" and waits two days is a booking lost. Replies landed on the brief (D-081), but only someone opening the dashboard saw them.
+- **Where they go:** Settings, Replies: an email address, a US mobile, either or both, kept with the clinic's other settings (per sandbox in the demo, as the deposit switch is, D-066). Empty turns one off. Migration `20261010120000_reply_alerts` adds two columns; reading settings selects every column, so the app runs before it's applied, and only saving an alert address needs it.
+- **What arrives:** from Rebloom, "Priya Shah wrote back": how and when, their words (cut at 600 characters, the rest on the brief), and a gold "Answer Priya" to their brief's conversation. By text, their first words and the link, written to fit two parts. A sample client's alert says whose reply it really was (someone trying the demo).
+- **One place:** every reply passes through `saveReply` (Resend's webhook, the dashboard's catch-up fetch, Twilio's webhook), which alerts once the reply is kept. A webhook delivered twice keeps one row, so one alert; Resend's idempotency key backs it up.
+- **Not every line is news:** no alert for STOP or START, for a reply fetched more than a day after it arrived (the catch-up's older mail), or for a second line within an hour while the first still waits: one alert covers a burst. Once Dana answers, the next reply alerts again.
+- **Never in the way:** an alert that can't be sent is logged and the reply is kept as always. A safety valve pauses alerts past 25 replies a day in one clinic's book.
+- **Sent for real, demo or not:** the alert goes to the clinic's own address, which it asked for, as answers to real clients do (D-085). Texts need Twilio set up; a number saved before is used once it is.
+- **Needs the webhook:** alerts are as fast as replies arrive. With Resend's webhook on `https://www.rebloom.skin/api/resend/inbound`, that's seconds; otherwise only when someone opens the dashboard, which defeats the point.
+- **Not yet:** the link opens the brief in the browser that holds the demo; on another device, the demo starts a new sandbox. Clinic login fixes that.

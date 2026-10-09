@@ -7,6 +7,7 @@ import type { Client, Message } from "@/lib/domain";
 import { env } from "@/lib/env";
 import { getStore } from "@/lib/store";
 import { clientIdFromAddress } from "./address";
+import { alertClinic } from "./alert";
 import { addressOf } from "./parse";
 import { REPLY_TYPE, at, inboundKey, isReply } from "./thread";
 
@@ -100,5 +101,8 @@ export async function saveReply(client: Client, inbound: Inbound): Promise<Recei
     createdAt: receivedAt,
     sender: inbound.sender,
   });
-  return message ? { status: "saved", clientId: client.id, messageId: message.id } : { status: "duplicate", clientId: client.id };
+  if (!message) return { status: "duplicate", clientId: client.id };
+  // The clinic hears about it now, wherever Settings says (D-087). Never stops the reply being kept.
+  await alertClinic({ client, reply: message, before: messages, receivedAt: inbound.receivedAt ?? new Date() });
+  return { status: "saved", clientId: client.id, messageId: message.id };
 }

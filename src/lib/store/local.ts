@@ -63,6 +63,13 @@ function dropClients(db: Db, ids: Set<string>): void {
   db.messages = db.messages.filter((m) => !ids.has(m.clientId));
 }
 
+/** A saved settings row, with the defaults for anything saved before it existed. */
+const settingsOf = (row: Partial<ClinicSettings>): ClinicSettings => ({
+  depositRequired: row.depositRequired ?? DEFAULT_CLINIC_SETTINGS.depositRequired,
+  alertEmail: row.alertEmail ?? null,
+  alertPhone: row.alertPhone ?? null,
+});
+
 export const LOCAL_DIR =
   process.env.REBLOOM_DATA_DIR ?? (process.env.VERCEL ? path.join(os.tmpdir(), "rebloom") : path.join(process.cwd(), ".data"));
 const DB_FILE = path.join(LOCAL_DIR, "db.json");
@@ -142,14 +149,14 @@ export const localStore: Store = {
   getClinicSettings: (clinicId, sandboxId) =>
     tx((db) => {
       const row = db.settings.find((r) => r.clinicId === clinicId && r.sandboxId === sandboxId);
-      return { ...DEFAULT_CLINIC_SETTINGS, ...(row ? { depositRequired: row.depositRequired } : {}) };
+      return row ? settingsOf(row) : { ...DEFAULT_CLINIC_SETTINGS };
     }),
   setClinicSettings: (clinicId, sandboxId, patch, now) =>
     tx((db) => {
       let row = db.settings.find((r) => r.clinicId === clinicId && r.sandboxId === sandboxId);
       if (!row) db.settings.push((row = { ...DEFAULT_CLINIC_SETTINGS, clinicId, sandboxId, updatedAt: now.toISOString() }));
       Object.assign(row, patch, { updatedAt: now.toISOString() });
-      return { depositRequired: row.depositRequired };
+      return settingsOf(row);
     }, true),
 
   getSandbox: (id) => tx((db) => db.sandboxes.find((s) => s.id === id) ?? null),

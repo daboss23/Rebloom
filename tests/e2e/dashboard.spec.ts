@@ -181,6 +181,31 @@ test("Amelia asked to stop emails: Dana records it on her brief", async ({ page 
   await expect(page.getByRole("region", { name: "Conversation" })).toContainText("Emails stopped by Dana, at their request.");
 });
 
+test("Settings says where reply alerts go, and checks the address", async ({ page }) => {
+  await page.goto("/dashboard/settings#replies");
+  const replies = page.getByRole("region", { name: "Replies" });
+  const email = replies.getByLabel("Email alerts to");
+  const phone = replies.getByLabel("Text alerts to");
+  const save = replies.getByRole("button", { name: "Save" });
+  await expect(save).toBeDisabled();
+
+  await email.fill("dana@maisonverre");
+  await save.click();
+  await expect(replies.getByRole("status")).toHaveText("That email address doesn't look right.");
+  await email.fill("Dana@MaisonVerre.test");
+  await phone.fill("310 555 0142");
+  await save.click();
+  await expect(replies.getByRole("status")).toHaveText("Saved. Replies are sent to dana@maisonverre.test and (310) 555-0142 as they land.");
+
+  await page.reload();
+  await expect(email).toHaveValue("dana@maisonverre.test");
+  await expect(phone).toHaveValue("(310) 555-0142");
+  await email.fill("");
+  await phone.fill("");
+  await save.click();
+  await expect(replies.getByRole("status")).toHaveText("Reply alerts are off.");
+});
+
 test("closing the sheet keeps Dana's edits, and focus goes back to the row", async ({ page }) => {
   const priya = page.getByRole("listitem").filter({ hasText: "Priya Shah" });
   const open = priya.getByRole("button", { name: "Review & send" });

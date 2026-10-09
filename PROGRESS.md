@@ -1,8 +1,8 @@
 # Progress
 
-## Session 11 · Friday October 9, 2026 · The way out of emails
+## Session 11 · Friday October 9, 2026 · The way out of emails, and reply alerts
 
-**Every reminder and progress email now carries a working unsubscribe, and the clinic honours it everywhere** (DECISIONS D-086).
+**Every reminder and progress email now carries a working unsubscribe, and the clinic honours it everywhere** (DECISIONS D-086). **And the clinic hears the moment a client writes back** (D-087).
 
 ### What's done
 - **In the email:** "Rather not get reminders and updates? Unsubscribe" at the foot of every rebook email, live and demo copies. The report email says once that reminders follow, with the same link. Booking emails and Dana's answers don't carry it.
@@ -13,15 +13,21 @@
 - **Fixed on the way:** on laptop screens (1280 to 1535px) the brief's middle column was 168px wide, so a client's own words wrapped a word per line; three columns now start at 1536px. And "Mark as reviewed" on a brief could lose its Undo toast as the row left; the toast now stays.
 - **Tests:** 436 unit tests (16 new: who's unsubscribed and for how long, the address rule, the queue's text or call, the link and headers in each email, the signed token, recording once, Dana's line) and all 28 browser tests, including two new ones (Sofia unsubscribes from the page, keeps emails, then unsubscribes from her mail app; Dana stops Amelia's emails from her brief). Lint, typecheck, the copy check and the production build pass.
 
+### Reply alerts (D-087)
+- **The clinic hears the moment a client writes back.** Settings, Replies: an email address and, once Twilio is live, a mobile. Each alert says who wrote, how and when, their words, and has a gold "Answer Priya" button to their brief.
+- **Only what's news:** no alert for STOP or START, for old mail the dashboard's catch-up finds, or for the second line of a burst while the first still waits. Once Dana answers, the next reply alerts again. A failed alert never loses the reply.
+- **Tests:** 10 more unit tests (which replies alert, the email and the text, one alert per reply, a failed send keeps the reply) and a browser test for the Settings form. 446 unit tests and all 29 browser tests pass, with lint, typecheck, the copy check and the build.
+
 ### What Joshua needs to do
-1. **Nothing to migrate.** Deploy as usual.
-2. **`APP_URL` must be `https://www.rebloom.skin`** (the www address, as with the webhook), so the link and the one-click header point at the address that answers without a redirect. Mail apps only offer one-click on https.
-3. **To see it in the demo:** send yourself a demo copy of Sofia's email from the queue, press Unsubscribe at the foot (Gmail may also offer its own Unsubscribe beside the sender), then open the dashboard: Sofia's row offers a text, and her brief says she unsubscribed.
+1. **One database change** (`20261010120000_reply_alerts`): run `pnpm db:migrate`, or ask me to. The app runs without it; saving an alert address needs it. The unsubscribe work needs none.
+2. **`APP_URL` must be `https://www.rebloom.skin`** (the www address), so the unsubscribe link, the one-click header and the alert's "Answer" button point at the address that answers without a redirect. Mail apps only offer one-click on https.
+3. **Resend's webhook on www:** `https://www.rebloom.skin/api/resend/inbound`. Alerts are only as fast as replies arrive: without the webhook, a reply is only fetched when someone opens the dashboard.
+4. **To see the unsubscribe:** send yourself a demo copy of Sofia's email from the queue, press Unsubscribe at the foot (Gmail may also offer its own Unsubscribe beside the sender), then open the dashboard: Sofia's row offers a text, and her brief says she unsubscribed.
+5. **To see an alert:** Settings, Replies, put in your own email and Save. Send yourself a demo copy of a queue email, reply to it, and the alert arrives within seconds (with the webhook on www). Open its button in the same browser.
 
 ### What's next
-1. **A nudge when a reply lands** while Dana isn't on the dashboard (an email or text to the clinic).
-2. **Resend webhook on www:** `https://www.rebloom.skin/api/resend/inbound`, if not changed yet.
-3. **Clinic login** by magic link.
+1. **Clinic login** by magic link, so an alert's link opens on any device.
+2. **The intake options** (dark circles, dryness), if wanted.
 
 ---
 ## Session 10 · Friday October 9, 2026 · Replies from clients

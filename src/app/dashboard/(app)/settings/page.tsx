@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader, pill } from "@/components/dashboard/PageHeader";
 import { DepositSwitch } from "@/components/dashboard/DepositSwitch";
+import { ReplyAlerts } from "@/components/dashboard/ReplyAlerts";
 import { ClientPagePreview } from "@/components/flow/ClientPagePreview";
 import { NOTICE_HOURS } from "@/lib/booking/service";
 import { loadBook } from "@/lib/dashboard/load";
@@ -8,6 +9,7 @@ import type { OpeningHours } from "@/lib/domain";
 import { getStore } from "@/lib/store";
 import { env, features } from "@/lib/env";
 import { formatPrice } from "@/lib/plan/build";
+import { formatUsPhone } from "@/lib/sms/text";
 import { concernLabel } from "@/lib/skin/concerns";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -58,6 +60,7 @@ export default async function SettingsPage() {
               ["#menu", "Menu"],
               ["#brand", "Brand"],
               ["#booking", "Booking"],
+              ["#replies", "Replies"],
               ["#connects", "Connects to"],
             ].map(([href, label]) => (
               <li key={href}>
@@ -184,6 +187,26 @@ export default async function SettingsPage() {
             </div>
           ))}
         </dl>
+      </section>
+
+      {/* ---------- Replies (DECISIONS D-087) ---------- */}
+      <section id="replies" aria-labelledby="replies-title" className="glass focus-in mt-6 scroll-mt-28 p-6 sm:p-8">
+        <h2 id="replies-title" className="font-display text-[34px] font-light text-ink">
+          Replies
+        </h2>
+        <p className="t-caption mt-1 max-w-2xl !text-[12.5px]">
+          When a client writes back, hear about it straight away, with their words and a link to answer. A few lines in a row
+          send one alert.
+        </p>
+        <div className="mt-6 rounded-[16px] bg-white/70 p-6 ring-1 ring-inset ring-white">
+          <ReplyAlerts email={settings.alertEmail} phone={settings.alertPhone ? formatUsPhone(settings.alertPhone) : null} textsLive={features.sms} />
+          {!features.email && <p className="t-caption mt-1 !text-[13px] text-[#7a4210]">Email isn&apos;t connected yet, so alerts can&apos;t be emailed until it is.</p>}
+        </div>
+        {env.DEMO_MODE && (
+          <p className="t-caption mt-4 !text-[12.5px]">
+            Demo: alerts cover this browser&apos;s clients, including replies to the copies you send yourself.
+          </p>
+        )}
       </section>
 
       {/* ---------- Connects to ---------- */}
