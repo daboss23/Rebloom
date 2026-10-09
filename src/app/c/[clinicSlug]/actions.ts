@@ -14,6 +14,7 @@ import {
   ensureSandboxId,
   requestIpHash,
   requestUserAgent,
+  clearVisitClientId,
   sandboxNow,
   setVisitClientId,
 } from "@/lib/sandbox";
@@ -52,7 +53,8 @@ export async function giveConsent(slug: string, _prev: ActionResult | null, form
   const state = await loadFlow(slug);
   const now = await sandboxNow();
 
-  let client = state.client;
+  // A finished visit stays as it was: this is someone starting again, so they get a new one.
+  let client = state.finished ? null : state.client;
   if (!client) {
     client = await store.createClient({ clinicId: state.clinic.id, sandboxId, now });
     await setVisitClientId(slug, client.id);
@@ -60,10 +62,16 @@ export async function giveConsent(slug: string, _prev: ActionResult | null, form
 
   const [ipHash, userAgent] = await Promise.all([requestIpHash(), requestUserAgent()]);
   const record = { clientId: client.id, grantedAt: new Date().toISOString(), textVersion: CONSENT_VERSION, ipHash, userAgent };
-  if (!state.consents.some((c) => c.type === "biometric")) {
+  if (client !== state.client || !state.consents.some((c) => c.type === "biometric")) {
     await store.addConsent({ ...record, type: "biometric" });
   }
   redirect(`/c/${slug}/intake`);
+}
+
+/** "Start over" on the start page: forgets the visit in progress, so the next Begin is a new one. */
+export async function startOver(slug: string): Promise<void> {
+  await clearVisitClientId(slug);
+  redirect(`/c/${slug}/consent`);
 }
 
 /** How long the report gate waits for Claude's reading of the client's words before carrying on without it. */
@@ -78,7 +86,7 @@ export async function saveIntakeStep(slug: string, input: { step: IntakeStep; da
   const { step, data } = parsedInput.data;
 
   const state = await loadFlow(slug);
-  if (!state.client || !hasBiometricConsent(state)) return { ok: false, error: "Your session expired. Please start again." };
+  if (!state.client || state.finished || !hasBiometricConsent(state)) return { ok: false, error: "Your session expired. Please start again." };
 
   const parsed = stepSchemas[step].safeParse(data);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Please check your answer." };
