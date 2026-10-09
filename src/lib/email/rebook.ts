@@ -33,11 +33,28 @@ export interface RebookEmail {
  */
 const REPORT_LINK = /^https?:\/\/\S+\/r\/[\w-]+(\/rescan)?\/?$/;
 
+/** The line under every reminder and progress email (D-086). */
+export const UNSUBSCRIBE_LINE = "Rather not get reminders and updates?";
+
 /**
  * The email, from the clinic's name. `demoFor` names the sample client whose message this is, and adds a line
  * at the top saying so, so a copy can never pass for the clinic writing to the person who receives it.
+ * `unsubscribeUrl` adds the way out at the foot: every reminder and progress update carries one (D-086). Booking
+ * emails, which use the same frame, don't.
  */
-export function rebookEmail({ clinic, subject, body, demoFor }: { clinic: Clinic; subject: string; body: string; demoFor?: string }): RebookEmail {
+export function rebookEmail({
+  clinic,
+  subject,
+  body,
+  demoFor,
+  unsubscribeUrl,
+}: {
+  clinic: Clinic;
+  subject: string;
+  body: string;
+  demoFor?: string;
+  unsubscribeUrl?: string;
+}): RebookEmail {
   const cleanSubject = oneLine(subject);
   const paragraphs = body
     .replace(/\r\n?/g, "\n")
@@ -47,7 +64,8 @@ export function rebookEmail({ clinic, subject, body, demoFor }: { clinic: Clinic
   const demoLine = demoFor
     ? `Rebloom demo: this is the email ${demoFor}, a sample client, would receive from ${clinic.name}. It came to you because you asked for a copy.`
     : null;
-  const text = [demoLine, ...paragraphs].filter(Boolean).join("\n\n") + `\n\n${clinic.name}\n${clinic.address}\n\nPowered by Rebloom`;
+  const way = unsubscribeUrl ? `\n\n${UNSUBSCRIBE_LINE} Unsubscribe: ${unsubscribeUrl}` : "";
+  const text = [demoLine, ...paragraphs].filter(Boolean).join("\n\n") + `\n\n${clinic.name}\n${clinic.address}${way}\n\nPowered by Rebloom`;
 
   const linkify = (s: string) =>
     e(s).replace(/https?:\/\/[^\s<>"&]+(?:&amp;[^\s<>"&]+)*/g, (url) => `<a href="${url}" style="color:#1e5a78;word-break:break-all;">${url}</a>`);
@@ -68,7 +86,9 @@ export function rebookEmail({ clinic, subject, body, demoFor }: { clinic: Clinic
 ${demoLine ? `<tr><td style="padding:14px 32px;background:#0c1a22;border-radius:20px 20px 0 0;font-size:12.5px;line-height:1.5;color:#dbe8ef;">${e(demoLine)}</td></tr>\n` : ""}<tr><td style="padding:28px 32px 0;font-size:12px;letter-spacing:0.3em;text-transform:uppercase;color:#0c1a22;">${e(clinic.wordmark)}</td></tr>
 <tr><td style="padding:22px 32px 4px;font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;line-height:1.15;font-weight:300;color:#0c1a22;">${e(cleanSubject)}</td></tr>
 ${rows}
-<tr><td style="padding:28px 32px 28px;"><div style="border-top:1px solid #e3ebef;padding-top:20px;font-size:13px;line-height:1.5;color:#556773;">${e(clinic.name)} · ${e(clinic.address)}<br><br>Powered by Rebloom</div></td></tr>
+<tr><td style="padding:28px 32px 28px;"><div style="border-top:1px solid #e3ebef;padding-top:20px;font-size:13px;line-height:1.5;color:#556773;">${e(clinic.name)} · ${e(clinic.address)}${
+    unsubscribeUrl ? `<br>${e(UNSUBSCRIBE_LINE)} <a href="${e(unsubscribeUrl)}" style="color:#556773;text-decoration:underline;">Unsubscribe</a>` : ""
+  }<br><br>Powered by Rebloom</div></td></tr>
 </table>
 </td></tr>
 </table>

@@ -253,12 +253,17 @@ describe.skipIf(!url || !secret)("Supabase store (live project)", () => {
     const [a, b] = await Promise.all([settle(), settle()]);
     expect([a, b].filter(Boolean)).toHaveLength(1);
 
-    expect(await store.getClinicSettings(mv.id, sandboxId)).toEqual({ depositRequired: true });
-    expect(await store.setClinicSettings(mv.id, sandboxId, { depositRequired: false }, now)).toEqual({ depositRequired: false });
-    expect(await store.setClinicSettings(mv.id, sandboxId, { depositRequired: false }, now)).toEqual({ depositRequired: false });
-    expect(await store.getClinicSettings(mv.id, sandboxId)).toEqual({ depositRequired: false });
+    const off = { depositRequired: false, alertEmail: null, alertPhone: null };
+    expect(await store.getClinicSettings(mv.id, sandboxId)).toEqual({ depositRequired: true, alertEmail: null, alertPhone: null });
+    expect(await store.setClinicSettings(mv.id, sandboxId, { depositRequired: false }, now)).toEqual(off);
+    expect(await store.setClinicSettings(mv.id, sandboxId, { depositRequired: false }, now)).toEqual(off);
+    expect(await store.getClinicSettings(mv.id, sandboxId)).toEqual(off);
+    // Reply alerts (D-087) save beside the deposit switch, without touching it.
+    const alerts = { alertEmail: "dana@maisonverre.test", alertPhone: "+13105550142" };
+    expect(await store.setClinicSettings(mv.id, sandboxId, alerts, now)).toEqual({ ...off, ...alerts });
+    expect(await store.getClinicSettings(mv.id, sandboxId)).toEqual({ ...off, ...alerts });
     // Another sandbox keeps the defaults.
-    expect(await store.getClinicSettings(mv.id, randomUUID())).toEqual({ depositRequired: true });
+    expect(await store.getClinicSettings(mv.id, randomUUID())).toEqual({ depositRequired: true, alertEmail: null, alertPhone: null });
 
     const message = await store.addMessage({
       clinicId: mv.id, clientId: client.id, sandboxId, type: "booking_confirmation", channel: "email", subject: "s", body: "b",

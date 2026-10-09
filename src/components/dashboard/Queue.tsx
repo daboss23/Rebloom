@@ -65,6 +65,24 @@ export function Queue({
       else say(result.error ?? "Something went wrong.");
     });
 
+  const toastRegion = (
+    <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
+      {toast && (
+        <div key={toast.id} className="toast sea on-dark pointer-events-auto flex max-w-md items-center gap-6 rounded-[14px] py-3.5 pl-5 pr-4 text-[13.5px] shadow-[0_24px_48px_-20px_rgba(12,26,34,0.6)]">
+          {toast.bloom && <Bloom size={22} unfurl className="text-[#f1d49a]" />}
+          <p>{toast.text}</p>
+          {toast.undo && (
+            <button type="button" onClick={toast.undo} className="text-[13px] text-[#e2c07a] underline underline-offset-4 hover:text-white">
+              Undo
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  // On a brief, the client's one row leaves once it's handled. The toast, and its Undo, stay.
+  if (rows.length === 0 && onBrief) return toastRegion;
   if (rows.length === 0) {
     return (
       <div className="glass px-8 py-14 text-center">
@@ -201,19 +219,7 @@ export function Queue({
         />
       )}
 
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
-        {toast && (
-          <div key={toast.id} className="toast sea on-dark pointer-events-auto flex max-w-md items-center gap-6 rounded-[14px] py-3.5 pl-5 pr-4 text-[13.5px] shadow-[0_24px_48px_-20px_rgba(12,26,34,0.6)]">
-            {toast.bloom && <Bloom size={22} unfurl className="text-[#f1d49a]" />}
-            <p>{toast.text}</p>
-            {toast.undo && (
-              <button type="button" onClick={toast.undo} className="text-[13px] text-[#e2c07a] underline underline-offset-4 hover:text-white">
-                Undo
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+      {toastRegion}
     </>
   );
 }

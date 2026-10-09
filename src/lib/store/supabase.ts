@@ -4,7 +4,7 @@ import "server-only";
 // for every table with no policies, so the public keys can read nothing (see the migration).
 
 import { createClient, type PostgrestError, type SupabaseClient } from "@supabase/supabase-js";
-import { DEFAULT_CLINIC_SETTINGS, type Appointment, type Client, type ClientPlan, type Consent, type Intake, type Message, type PlanItem, type Report, type Sandbox, type Scan, type Staff } from "@/lib/domain";
+import { DEFAULT_CLINIC_SETTINGS, type Appointment, type Client, type ClientPlan, type ClinicSettings, type Consent, type Intake, type Message, type PlanItem, type Report, type Sandbox, type Scan, type Staff } from "@/lib/domain";
 import { env, supabaseSecretKey } from "@/lib/env";
 import { newId, newToken } from "@/lib/ids";
 import { toUsE164 } from "@/lib/sms/text";
@@ -57,6 +57,13 @@ const UNIQUE_VIOLATION = "23505";
 /** appointments_no_overlap: another booked visit has that time. */
 const EXCLUSION_VIOLATION = "23P01";
 
+/** A clinic_settings row, with the defaults for any column a migration hasn't added yet. */
+const settingsFromRow = (row: Row): ClinicSettings => ({
+  depositRequired: Boolean(row.deposit_required ?? DEFAULT_CLINIC_SETTINGS.depositRequired),
+  alertEmail: (row.alert_email as string | null | undefined) ?? null,
+  alertPhone: (row.alert_phone as string | null | undefined) ?? null,
+});
+
 export const supabaseStore: Store = {
   kind: "supabase",
 
@@ -92,23 +99,29 @@ export const supabaseStore: Store = {
   },
   async getClinicSettings(clinicId, sandboxId) {
     if (sandboxId !== null && !isUuid(sandboxId)) return { ...DEFAULT_CLINIC_SETTINGS };
-    let query = db().from("clinic_settings").select("deposit_required").eq("clinic_id", clinicId);
+    // Every column, so reading works before and after a migration adds one (the reply alerts, D-087).
+    let query = db().from("clinic_settings").select("*").eq("clinic_id", clinicId);
     query = sandboxId === null ? query.is("sandbox_id", null) : query.eq("sandbox_id", sandboxId);
     const row = check(await query.maybeSingle(), "getClinicSettings") as Row | null;
-    return { ...DEFAULT_CLINIC_SETTINGS, ...(row ? { depositRequired: Boolean(row.deposit_required) } : {}) };
+    return row ? settingsFromRow(row) : { ...DEFAULT_CLINIC_SETTINGS };
   },
   async setClinicSettings(clinicId, sandboxId, patch, now) {
     const current = await supabaseStore.getClinicSettings(clinicId, sandboxId);
     const next = { ...current, ...patch };
+    // Only the columns being changed, so the deposit switch never depends on a later migration.
+    const alerts = "alertEmail" in patch || "alertPhone" in patch ? { alert_email: next.alertEmail, alert_phone: next.alertPhone } : {};
     const row = check(
       await db()
         .from("clinic_settings")
-        .upsert({ clinic_id: clinicId, sandbox_id: sandboxId, deposit_required: next.depositRequired, updated_at: now.toISOString() }, { onConflict: "clinic_id,sandbox_id" })
-        .select("deposit_required")
+        .upsert(
+          { clinic_id: clinicId, sandbox_id: sandboxId, deposit_required: next.depositRequired, ...alerts, updated_at: now.toISOString() },
+          { onConflict: "clinic_id,sandbox_id" },
+        )
+        .select("*")
         .single(),
       "setClinicSettings",
     ) as Row;
-    return { depositRequired: Boolean(row.deposit_required) };
+    return settingsFromRow(row);
   },
 
   async getSandbox(id) {

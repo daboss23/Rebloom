@@ -35,6 +35,9 @@ export const escapeHtml = (s: string) =>
 /** Typed by the client: one line, no control characters, so it can't reshape a header. */
 export const oneLine = (s: string) => s.replace(/[\u0000-\u001f\u007f]+/g, " ").trim();
 
+/** Said once, in the first email: what else is coming, and that it can stop. */
+const updatesLine = (clinic: Pick<Clinic, "name">) => `${clinic.name} will also email you reminders and progress updates. Rather not get them?`;
+
 export interface ReportEmail {
   from: string;
   subject: string;
@@ -42,8 +45,11 @@ export interface ReportEmail {
   html: string;
 }
 
-/** The email itself, in the clinic's voice (brief 7.7). Pure, so it can be tested without sending anything. */
-export function reportEmail({ clinic, firstName, url }: { clinic: Clinic; firstName: string; url: string }): ReportEmail {
+/**
+ * The email itself, in the clinic's voice (brief 7.7). Pure, so it can be tested without sending anything. Their yes
+ * to email updates came with the details they gave (D-083), so the first email already carries the way out (D-086).
+ */
+export function reportEmail({ clinic, firstName, url, unsubscribeUrl }: { clinic: Clinic; firstName: string; url: string; unsubscribeUrl?: string }): ReportEmail {
   const name = oneLine(firstName);
   const subject = `${name}, your skin report from ${clinic.name}`;
   const lines = [
@@ -54,6 +60,7 @@ export function reportEmail({ clinic, firstName, url }: { clinic: Clinic; firstN
     `When you're ready, book your first visit from your report, or call us on ${clinic.phone}.`,
     `${clinic.name}\n${clinic.address}`,
     "You're receiving this because you asked for your results after your skin scan. You can delete your photo and details at any time from your report.",
+    ...(unsubscribeUrl ? [`${updatesLine(clinic)} Unsubscribe: ${unsubscribeUrl}`] : []),
   ];
   const text = `${lines.join("\n\n")}\n\nPowered by Rebloom`;
 
@@ -72,7 +79,9 @@ export function reportEmail({ clinic, firstName, url }: { clinic: Clinic; firstN
 </td></tr>
 <tr><td style="padding:24px 32px 0;font-size:14px;line-height:1.6;">The link is private and yours to keep. Come back to it after every visit to see your progress. When you're ready, book your first visit from your report, or call us on ${e(clinic.phone)}.</td></tr>
 <tr><td style="padding:24px 32px 0;font-size:13px;line-height:1.5;color:#556773;">If the button doesn't work, copy this link into your browser:<br><a href="${e(url)}" style="color:#1e5a78;word-break:break-all;">${e(url)}</a></td></tr>
-<tr><td style="padding:28px 32px 28px;font-size:13px;line-height:1.5;color:#556773;border-top:1px solid #e3ebef;">${e(clinic.name)} · ${e(clinic.address)}<br>You're receiving this because you asked for your results after your skin scan. You can delete your photo and details at any time from your report.<br><br>Powered by Rebloom</td></tr>
+<tr><td style="padding:28px 32px 28px;font-size:13px;line-height:1.5;color:#556773;border-top:1px solid #e3ebef;">${e(clinic.name)} · ${e(clinic.address)}<br>You're receiving this because you asked for your results after your skin scan. You can delete your photo and details at any time from your report.${
+    unsubscribeUrl ? `<br>${e(updatesLine(clinic))} <a href="${e(unsubscribeUrl)}" style="color:#556773;text-decoration:underline;">Unsubscribe</a>` : ""
+  }<br><br>Powered by Rebloom</td></tr>
 </table>
 </td></tr>
 </table>
@@ -96,6 +105,8 @@ export async function sendReportEmail(input: {
   firstName: string;
   email: string;
   url: string;
+  /** The client's unsubscribe page (D-086). */
+  unsubscribeUrl?: string;
   now: Date;
 }): Promise<ReportDelivery> {
   if (!reportEmailLive()) return "off";
@@ -105,7 +116,7 @@ export async function sendReportEmail(input: {
   const earlier = await reportDelivery(input.clinic.id, input.clientId, input.sandboxId, input.scanId).catch(() => "not_sent");
   if (earlier === "sent") return "sent";
 
-  const message = reportEmail({ clinic: input.clinic, firstName: input.firstName, url: input.url });
+  const message = reportEmail({ clinic: input.clinic, firstName: input.firstName, url: input.url, unsubscribeUrl: input.unsubscribeUrl });
   let delivered = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {

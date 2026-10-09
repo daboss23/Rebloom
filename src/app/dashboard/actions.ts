@@ -13,11 +13,13 @@ import { env, features } from "@/lib/env";
 import { hintFor } from "@/lib/email/hints";
 import { answerEmail } from "@/lib/email/answer";
 import { DEMO_COPY_LIMIT, DEMO_COPY_TYPE, demoCopyKey, foreignLinks, rebookEmail } from "@/lib/email/rebook";
+import { canWriteByEmail } from "@/lib/email/opt-out";
 import { resend } from "@/lib/email/resend";
+import { setEmailPreference, unsubscribeLinks } from "@/lib/email/unsubscribe";
 import { replyTo } from "@/lib/replies/address";
 import { addressOf } from "@/lib/replies/parse";
 import { ANSWER_TYPE, HANDLED_TYPE, canAnswerByText, handledKey, replySubject, threadSubject } from "@/lib/replies/thread";
-import { TEXT_MAX_CHARS, TEXT_OPT_OUT, toUsE164 } from "@/lib/sms/text";
+import { TEXT_MAX_CHARS, TEXT_OPT_OUT, formatUsPhone, toUsE164 } from "@/lib/sms/text";
 import { sendText } from "@/lib/sms/twilio";
 import { appOrigin } from "@/lib/origin";
 import { ensureSandboxId, sandboxNow } from "@/lib/sandbox";
@@ -85,18 +87,27 @@ export async function sendRebook(input: z.input<typeof draftInput>): Promise<Act
   if (!(await readSession())) return { ok: false, error: "Please sign in again." };
   const book = await loadBook();
   const item = book.queue.items.find((i) => i.clientId === parsed.data.clientId && i.dedupeKey === parsed.data.dedupeKey);
+  const who = book.facts.find((f) => f.client.id === parsed.data.clientId);
+  // They may have unsubscribed while the sheet was open: the queue, worked out again, no longer offers the email.
+  if (item && item.action !== "email" && who?.unsubscribedAt) {
+    return { ok: false, error: `${who.client.firstName ?? "This client"} has unsubscribed from the clinic's emails, so this can't go by email.` };
+  }
   if (!item || item.action !== "email") return { ok: false, error: "This one has already been handled." };
   const facts = book.facts.find((f) => f.client.id === item.clientId)!;
   const { subject, body } = parsed.data;
   const issues = checkCopy(`${subject}\n${body}`);
   if (issues.length > 0) return { ok: false, error: `Please reword "${issues[0].match}". It isn't in the clinic's voice.` };
+  // Every reminder and progress email carries the way out: a link at the foot, and the headers behind a mail app's
+  // own Unsubscribe button (D-086). On a demo copy it unsubscribes the sample client, in this browser's demo.
+  const origin = await appOrigin();
+  const way = unsubscribeLinks(origin, book.clinic, facts.client.id);
 
   // Real email only for a real client, outside demo mode, with Resend set up (DECISIONS D-008).
   const live = !env.DEMO_MODE && features.email && Boolean(env.EMAIL_FROM) && !facts.client.isDemo && Boolean(facts.client.email);
   let status: "sent" | "failed" = "sent";
   if (live) {
     try {
-      const mail = rebookEmail({ clinic: book.clinic, subject, body });
+      const mail = rebookEmail({ clinic: book.clinic, subject, body, unsubscribeUrl: way?.page });
       const { error } = await resend().emails.send({
         from: mail.from,
         to: facts.client.email!,
@@ -105,6 +116,7 @@ export async function sendRebook(input: z.input<typeof draftInput>): Promise<Act
         subject: mail.subject,
         text: mail.text,
         html: mail.html,
+        headers: way?.headers,
       });
       if (error) status = "failed";
     } catch {
@@ -119,15 +131,23 @@ export async function sendRebook(input: z.input<typeof draftInput>): Promise<Act
   if (copyTo) {
     const copies = book.input.messages.filter((m) => m.type === DEMO_COPY_TYPE && m.status === "sent").length;
     if (copies >= DEMO_COPY_LIMIT) return { ok: false, error: `This demo has sent its ${DEMO_COPY_LIMIT} copies. Clear the address to log the message without one.` };
-    if (foreignLinks(`${subject}\n${body}`, await appOrigin()).length > 0) {
+    if (foreignLinks(`${subject}\n${body}`, origin).length > 0) {
       return { ok: false, error: "In the demo, a copy can only link to this app. Remove the other link, or clear the address." };
     }
-    const mail = rebookEmail({ clinic: book.clinic, subject, body, demoFor: fullName(facts.client) });
+    const mail = rebookEmail({ clinic: book.clinic, subject, body, demoFor: fullName(facts.client), unsubscribeUrl: way?.page });
     let failure: string | null = null;
     try {
       const { error } = await resend().emails.send(
         // A reply to the copy lands on the sample client's brief, in this browser's demo (D-081).
-        { from: mail.from, to: copyTo, replyTo: replyTo(book.clinic, facts.client.id), subject: mail.subject, text: mail.text, html: mail.html },
+        {
+          from: mail.from,
+          to: copyTo,
+          replyTo: replyTo(book.clinic, facts.client.id),
+          subject: mail.subject,
+          text: mail.text,
+          html: mail.html,
+          headers: way?.headers,
+        },
         // One email per row and address, even if Send is pressed twice. The key stays short whatever the address.
         { idempotencyKey: `${book.sandboxId}:${demoCopyKey(item.dedupeKey)}:${createHash("sha256").update(copyTo).digest("hex").slice(0, 16)}` },
       );
@@ -285,6 +305,8 @@ export async function undoDone(input: z.input<typeof doneInput>): Promise<Action
   if (!parsed.success) return { ok: false, error: "Something went wrong. Please try again." };
   const session = await readSession();
   if (!session) return { ok: false, error: "Please sign in again." };
+  // An unsubscribe is the client's to take back, on their own page (D-086), never the clinic's.
+  if (parsed.data.dedupeKey.startsWith("email_preference:")) return { ok: false, error: "Nothing to undo." };
   const book = await loadBook();
   if (!book.facts.some((f) => f.client.id === parsed.data.clientId)) return { ok: false, error: "We couldn't find this client." };
   const undone = await getStore().removeSkippedMessage(parsed.data.clientId, parsed.data.dedupeKey);
@@ -323,6 +345,9 @@ export async function answerClient(input: z.input<typeof answerInput>): Promise<
 
   const to = channel === "email" ? client.email : toUsE164(client.phone);
   if (!to) return { ok: false, error: channel === "email" ? "There's no email address to write to." : "There's no mobile number to text." };
+  if (channel === "email" && !canWriteByEmail({ email: client.email, unsubscribedAt: facts.unsubscribedAt, messages: facts.messages })) {
+    return { ok: false, error: `${name} unsubscribed from the clinic's emails. You can answer here once they write in.` };
+  }
   if (channel === "text") {
     if (!canAnswerByText({ phone: client.phone, canText: facts.canText, messages: facts.messages })) {
       return { ok: false, error: `${name} hasn't said yes to texts, or replied STOP. Answer by email instead.` };
@@ -452,6 +477,24 @@ export async function markReplyHandled(input: { clientId: string }): Promise<Act
   return { ok: true, message: "Marked as handled.", dedupeKey };
 }
 
+/**
+ * "Stop emails": the client asked the clinic, by a reply or on the phone, to stop emailing them (D-086). The same
+ * unsubscribe as their own link, recorded in their conversation with Dana's name. Only the client can take it back.
+ */
+export async function stopEmails(input: { clientId: string }): Promise<ActionResult> {
+  if (typeof input?.clientId !== "string") return { ok: false, error: "Something went wrong. Please try again." };
+  if (!(await readSession())) return { ok: false, error: "Please sign in again." };
+  const book = await loadBook();
+  const facts = book.facts.find((f) => f.client.id === input.clientId);
+  if (!facts?.client.email) return { ok: false, error: "There's no email address to stop." };
+  const name = facts.client.firstName ?? "They";
+  if (facts.unsubscribedAt) return { ok: true, message: `${name} has already unsubscribed.` };
+  const now = await setEmailPreference(book.clinic, facts.client.id, "out", { staff: book.staff.name });
+  revalidatePath("/dashboard", "layout");
+  if (!now?.unsubscribedAt) return { ok: false, error: "That didn't save. Please try again." };
+  return { ok: true, message: `Done. ${name} won't get reminder or update emails.` };
+}
+
 const noteInput = z.object({ clientId: z.string().min(1), note: z.string().max(1200) });
 
 /** Dana's note, shown on the client's report. */
@@ -501,6 +544,34 @@ export async function confirmPlan(input: { clientId: string }): Promise<ActionRe
   const saved = await store.createPlan(kept.plan, kept.items);
   revalidatePath("/dashboard", "layout");
   return saved ? { ok: true, message: "Plan confirmed." } : { ok: false, error: "This client already has a plan." };
+}
+
+const alertsInput = z.object({
+  email: z.union([z.literal(""), z.email("That email address doesn't look right.").max(254)]),
+  phone: z.string().trim().max(30),
+});
+
+/**
+ * Where reply alerts go (DECISIONS D-087): an email address, a US mobile, either or both. Empty turns that one off.
+ * In the demo it holds for this browser's sandbox only, as the deposit switch does.
+ */
+export async function setReplyAlerts(input: z.input<typeof alertsInput>): Promise<ActionResult> {
+  const parsed = alertsInput.safeParse({ email: String(input?.email ?? "").trim(), phone: String(input?.phone ?? "") });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Please check the details." };
+  const session = await readSession();
+  if (!session) return { ok: false, error: "Please sign in again." };
+  const phone = parsed.data.phone ? toUsE164(parsed.data.phone) : null;
+  if (parsed.data.phone && !phone) return { ok: false, error: "Please check the mobile number. Alerts go to US mobiles." };
+  const email = parsed.data.email ? parsed.data.email.toLowerCase() : null;
+  try {
+    await getStore().setClinicSettings(session.clinic.id, session.sandboxId, { alertEmail: email, alertPhone: phone }, await sandboxNow());
+  } catch (e) {
+    console.error(`Reply alerts not saved: ${e instanceof Error ? e.message : String(e)}`);
+    return { ok: false, error: "That didn't save. If the database was just updated, run its latest change (pnpm db:migrate)." };
+  }
+  revalidatePath("/dashboard/settings");
+  if (!email && !phone) return { ok: true, message: "Reply alerts are off." };
+  return { ok: true, message: `Saved. Replies are sent to ${[email, phone && formatUsPhone(phone)].filter(Boolean).join(" and ")} as they land.` };
 }
 
 /** The owner's switch for deposits at booking (DECISIONS D-066). In the demo it holds for this browser's sandbox only. */
