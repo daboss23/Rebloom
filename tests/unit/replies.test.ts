@@ -269,3 +269,14 @@ describe("a reply arriving", () => {
     expect(await receive.clientForEmail([], "nobody@example.com")).toBeNull();
   });
 });
+
+describe("the report gate's details", () => {
+  it("needs a first name, a last name and a primary email", async () => {
+    const { unlockSchema } = await import("@/lib/flow/intake-schema");
+    const ok = { firstName: "Bruce", lastName: "Lee", email: "Bruce@Example.com", phone: "" };
+    expect(unlockSchema.parse(ok).email).toBe("bruce@example.com");
+    expect(unlockSchema.safeParse({ ...ok, lastName: "  " }).error?.issues[0].message).toBe("Please add your last name.");
+    expect(unlockSchema.safeParse({ ...ok, firstName: "" }).error?.issues[0].message).toBe("Please add your first name.");
+    expect(unlockSchema.safeParse({ ...ok, email: "" }).error?.issues[0].message).toBe("Please add your primary email.");
+  });
+});

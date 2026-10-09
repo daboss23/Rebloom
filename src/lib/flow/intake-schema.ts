@@ -53,6 +53,7 @@ export const stepSchemas = {
 /** The report gate: contact details are asked for only after the scan (brief 3.1 step 6). */
 export const unlockSchema = z.object({
   firstName: z.string().trim().min(1, "Please add your first name.").max(60),
-  email: z.string().trim().toLowerCase().email("Please check your email address."),
+  lastName: z.string().trim().min(1, "Please add your last name.").max(60),
+  email: z.string().trim().toLowerCase().min(1, "Please add your primary email.").email("Please check your email address."),
   phone: shortText(30),
 });

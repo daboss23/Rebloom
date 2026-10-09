@@ -11,7 +11,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/scans/[id]/
   const scan = await getOwnScan(id);
   const file = scan?.status === "complete" ? await getStorage().get(scan.imagePath) : null;
   if (!file) return new Response("Not found", { status: 404 });
-  const blurred = await sharp(file.bytes).resize({ width: 240 }).blur(12).jpeg({ quality: 60 }).toBuffer();
+  const blurred = await sharp(file.bytes).resize({ width: 240 }).blur(7).jpeg({ quality: 60 }).toBuffer();
   return new Response(new Uint8Array(blurred), {
     headers: { "content-type": "image/jpeg", "cache-control": "private, no-store", "x-robots-tag": "noindex" },
   });
