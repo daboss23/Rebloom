@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ConfirmPlan } from "@/components/dashboard/ConfirmPlan";
+import { Conversation, type ConversationEntry } from "@/components/dashboard/Conversation";
 import { NoteEditor } from "@/components/dashboard/NoteEditor";
 import { LightField } from "@/components/dashboard/LightField";
 import { Portrait } from "@/components/dashboard/Portrait";
@@ -17,7 +18,9 @@ import { monthDay, shortDay, shortName, statusOf } from "@/lib/dashboard/view";
 import { env, features } from "@/lib/env";
 import { currentReading } from "@/lib/intake/goal-reading";
 import { formatPrice } from "@/lib/plan/build";
-import { courses } from "@/lib/rebook/engine";
+import { courses, daysBetween } from "@/lib/rebook/engine";
+import { canAnswerByText, replySubject, thread, threadSubject } from "@/lib/replies/thread";
+import { formatUsPhone, toUsE164 } from "@/lib/sms/text";
 import { concernLabel } from "@/lib/skin/concerns";
 
 export async function generateMetadata({ params }: PageProps<"/dashboard/clients/[id]">): Promise<Metadata> {
@@ -132,6 +135,50 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
   const initials = `${name[0]}${client.lastName?.[0] ?? ""}`;
   const pastVisits = facts.appointments.filter((a) => a.status !== "cancelled");
 
+  // ---------- The conversation (D-081) ----------
+  const stamp = (instant: string) =>
+    `${new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: tz }).format(new Date(instant))} · ${time(instant)}`;
+  const waitedFor = (instant: string) => {
+    const days = daysBetween(local(instant), book.today);
+    return days <= 0 ? "today" : days === 1 ? "since yesterday" : `${days} days`;
+  };
+  const entries: ConversationEntry[] = thread(facts.messages, client).map((e) => ({
+    ...e,
+    when: stamp(e.at),
+    waiting: facts.reply?.id === e.id ? waitedFor(e.at) : null,
+  }));
+  const mobile = toUsE164(client.phone);
+  const channels = { email: Boolean(client.email), text: canAnswerByText({ phone: client.phone, canText: facts.canText, messages: facts.messages }) };
+  const conversation = (
+    <section
+      id="conversation"
+      aria-labelledby="conversation-title"
+      className={cx("glass focus-in scroll-mt-8 p-6 sm:p-8", facts.reply ? "order-first mt-10" : "order-last mt-12")}
+      style={{ animationDelay: facts.reply ? "60ms" : "300ms" }}
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+        <h2 id="conversation-title" className="font-display text-[34px] font-light leading-none text-ink">
+          {facts.reply ? `${name} wrote back` : "Conversation"}
+        </h2>
+        <p className="t-caption !text-[12.5px]">Their replies to the clinic&apos;s emails and texts land here.</p>
+      </div>
+      <div className="mx-auto max-w-[46rem]">
+        <Conversation
+          clientId={client.id}
+          firstName={name}
+          entries={entries}
+          channels={channels}
+          defaultChannel={channels.text && (facts.reply?.channel === "sms" || !channels.email) ? "text" : "email"}
+          email={client.email}
+          phone={mobile ? formatUsPhone(mobile) : client.phone}
+          subject={replySubject(facts.reply?.channel === "email" ? facts.reply.subject : threadSubject(facts.messages), `A note from ${book.clinic.name}`)}
+          waiting={Boolean(facts.reply)}
+          demo={env.DEMO_MODE}
+        />
+      </div>
+    </section>
+  );
+
   return (
     <div>
       <Link href="/dashboard/clients" className="group inline-flex items-center gap-2 text-[13px] text-text-3 hover:text-ink">
@@ -171,6 +218,11 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
           <Queue rows={[toQueueRow(item, facts, book.clinic.name)]} demo={env.DEMO_MODE} realCopy={env.DEMO_MODE && features.email} empty="" onBrief />
         </section>
       )}
+
+      {/* A reply waiting on Dana comes first; otherwise the conversation follows the brief. Moved by order, not
+          by place in the tree, so answering it keeps the composer and its Undo where they are. */}
+      <div className="flex flex-col">
+      {conversation}
 
       <div className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2 xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_minmax(0,23rem)]">
         {/* ---------- Face and scores ---------- */}
@@ -311,6 +363,8 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
           )}
           </div>
         </section>
+      </div>
+
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import { env, features } from "@/lib/env";
 import { isoDateInZone, virtualNow } from "@/lib/clock";
 import { bookingCancelledEmail, bookingConfirmationEmail, visitInvite, visitWhen, type BookingDetails } from "@/lib/email/booking";
 import { resend } from "@/lib/email/resend";
+import { replyTo } from "@/lib/replies/address";
 import { newId } from "@/lib/ids";
 import { appOrigin } from "@/lib/origin";
 import { CHECKOUT_MINUTES, depositCheckout, depositsLive, refundDeposit } from "@/lib/payments/stripe";
@@ -372,6 +373,7 @@ async function sendBookingEmail(
         {
           from: mail.from,
           to: client.email!,
+          replyTo: replyTo(clinic, client.id),
           subject: mail.subject,
           text: mail.text,
           html: mail.html,

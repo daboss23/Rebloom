@@ -4,6 +4,7 @@ import "server-only";
 
 import type { Clinic } from "@/lib/domain";
 import { env, features } from "@/lib/env";
+import { replyTo } from "@/lib/replies/address";
 import { getStore } from "@/lib/store";
 import { resend } from "./resend";
 
@@ -113,7 +114,8 @@ export async function sendReportEmail(input: {
     });
     const { error } = await Promise.race([
       resend().emails.send(
-        { from: message.from, to: input.email, subject: message.subject, text: message.text, html: message.html },
+        // Replies come back to the client's own address and land on their brief (D-081).
+        { from: message.from, to: input.email, replyTo: replyTo(input.clinic, input.clientId), subject: message.subject, text: message.text, html: message.html },
         { idempotencyKey: dedupeKey },
       ),
       timeout,

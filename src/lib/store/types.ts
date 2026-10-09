@@ -113,6 +113,13 @@ export interface Store {
   transitionAppointment(id: string, from: AppointmentMatch, patch: AppointmentPatch): Promise<Appointment | null>;
   /** One clinic's outbox in one sandbox, oldest first. */
   listMessages(clinicId: string, sandboxId: string): Promise<Message[]>;
+  /** One client's messages and replies, oldest first (DECISIONS D-081). */
+  listClientMessages(clientId: string): Promise<Message[]>;
+  /**
+   * Real clients (never the demo's samples) with this email address, any case, or this US mobile number however it
+   * was typed. How a reply that didn't come to a client's own reply address finds them (D-081). Newest first.
+   */
+  findClientsByContact(contact: { email: string } | { phone: string }): Promise<Client[]>;
   /**
    * Every row the dashboard needs for one clinic in one sandbox. One round of reads instead of
    * several per client, so the dashboard stays quick however many clients a sandbox gathers.

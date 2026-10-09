@@ -19,6 +19,7 @@ import type {
 import { isoDateInZone } from "@/lib/clock";
 import { buildPlan, rankPriorities, shiftDate, statedConcerns } from "@/lib/plan/build";
 import { concernLabel, type ConcernKey } from "@/lib/skin/concerns";
+import { optedOutOfTexts, waitingReply } from "@/lib/replies/thread";
 import { TEXT_OPT_OUT, toUsE164 } from "@/lib/sms/text";
 import type { PlanWithItems } from "@/lib/store/types";
 import {
@@ -140,8 +141,10 @@ export interface ClientFacts {
   appointments: Appointment[];
   messages: Message[];
   canEmail: boolean;
-  /** A US mobile number and a yes to texts (D-080). */
+  /** A US mobile number and a yes to texts (D-080), and no STOP since (D-081). */
   canText: boolean;
+  /** Their latest reply, while it waits on an answer from the clinic (D-081). */
+  reply: Message | null;
 }
 
 export interface Course {
@@ -171,6 +174,7 @@ export function clientFacts(input: EngineInput): ClientFacts[] {
   const reports = new Map(input.reports.map((r) => [r.clientId, r]));
   return input.clients.map((client) => {
     const live = (plans.get(client.id) ?? []).filter((p) => p.status !== "cancelled");
+    const mine = messages.get(client.id) ?? [];
     return {
       client,
       intake: intakes.get(client.id) ?? null,
@@ -180,9 +184,10 @@ export function clientFacts(input: EngineInput): ClientFacts[] {
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
       plan: live[live.length - 1] ?? null,
       appointments: (appointments.get(client.id) ?? []).sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
-      messages: messages.get(client.id) ?? [],
+      messages: mine,
       canEmail: Boolean(client.email) && (consents.get(client.id) ?? []).some((c) => c.type === "reminders"),
-      canText: Boolean(toUsE164(client.phone)) && (consents.get(client.id) ?? []).some((c) => c.type === "texts"),
+      canText: Boolean(toUsE164(client.phone)) && (consents.get(client.id) ?? []).some((c) => c.type === "texts") && !optedOutOfTexts(mine),
+      reply: waitingReply(mine),
     };
   });
 }

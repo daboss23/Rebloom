@@ -1,5 +1,33 @@
 # Progress
 
+## Session 10 · Friday October 9, 2026 · Replies from clients
+
+**When a client answers an email or a text, it now lands on their brief, and Dana answers from there** (DECISIONS D-081).
+
+### What's done
+- **One conversation per client.** The brief shows everything the clinic sent and everything they wrote back, in order, as a thread: their replies on the left, the clinic's on the right, automatic emails quieter than what Dana wrote.
+- **Emails:** every email now carries the client's own reply address (`r-…@reply.yourdomain.com`), so a reply finds the right client, with only their new words kept (no quoted thread, no "Sent from my iPhone"). Out-of-office replies and bounces are ignored.
+- **Texts:** replies to the clinic's Twilio number land the same way. A STOP is remembered: the queue stops offering texts until they send START.
+- **Today:** a new "Waiting on your answer" list at the top, longest wait first, and the morning line says who wrote back. A queue row for someone who wrote back quotes them and says to answer first.
+- **Answering:** by email or text from the brief, or "No answer needed" with Undo. Answers keep the clinic's voice. Email answers quote what the client wrote, under "Re: …".
+- **In the demo:** Daniel texted back 18 days ago and nobody saw it, which is why he went quiet. Priya asked about downtime last night. Amelia's question was answered. With Resend set up, a judge who replies to a demo copy sees their reply land in that sample client's conversation, and gets Dana's answer back.
+- **Tests:** 418 unit tests (18 new: reading replies, quotes and sign-offs, STOP and START, what waits, reply addresses, Twilio's signature, routing and duplicates) and two new browser tests (answering Daniel's text from Today; "No answer needed" and Undo for Priya). All 23 other browser tests pass; "a scan runs end to end" times out on the mask request in this workspace with or without these changes (a cold compile).
+
+### What Joshua needs to do
+1. **One database change** (`20261009120000_replies`): run `pnpm db:migrate`, or ask me to. **Do this before deploying**: new demo sandboxes include replies, and can't be created until it's applied.
+2. **Nothing else for the demo.** Daniel and Priya are waiting on Today.
+3. **Email replies, when the domain is ready:**
+   - Resend, **Domains**, your domain, turn on **Receiving** for a subdomain such as `reply.yourdomain.com`, and add the MX record it shows in your DNS. The main domain's mail is untouched.
+   - Resend, **Webhooks**, **Add endpoint** `https://<your domain>/api/resend/inbound`, event `email.received`. Copy its signing secret (`whsec_…`).
+   - In Vercel: `REPLY_DOMAIN=reply.yourdomain.com` and `RESEND_WEBHOOK_SECRET=whsec_…` (Production and Preview), then Redeploy. From then on every email carries the reply address.
+4. **Text replies, with Twilio:** in the Twilio console, your number, **Messaging**, set "A message comes in" to `https://<your domain>/api/twilio/inbound` (HTTP POST). `APP_URL` must be set to that same domain.
+
+### What's next
+1. **Clinic login** by magic link.
+2. **A nudge when a reply lands** while Dana isn't on the dashboard (an email or text to the clinic).
+
+---
+
 ## Session 9 · Thursday October 8, 2026 · Claude reads the client's words, and texts
 
 **The report now answers what the client actually said, and Dana can text as well as email** (DECISIONS D-079, D-080).

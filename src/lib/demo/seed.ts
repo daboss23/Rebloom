@@ -25,6 +25,7 @@ import type {
 import { zonedDateTime } from "@/lib/clock";
 import { newId, newToken, stableId } from "@/lib/ids";
 import { nextOpenDay, shiftDate } from "@/lib/plan/build";
+import { ANSWER_TYPE, REPLY_TYPE, inboundKey, replySubject } from "@/lib/replies/thread";
 import { SCORED_CONCERNS } from "@/lib/skin/concerns";
 import { normalizeResult } from "@/lib/skin/normalize";
 import { SHARED_DEMO_PREFIX, demoMaskPath } from "@/lib/store/scan-paths";
@@ -382,6 +383,33 @@ export function buildDemoBundle(input: DemoInput): DemoBundle {
           bookedAt,
         );
       });
+
+    // ---------- Their conversation (D-081) ----------
+    // Seeded replies carry no sender: only a reply that really arrived has one (it decides who a demo answer reaches).
+    const fill = (text: string) => text.replaceAll("{practitioner}", practitioner?.name ?? clinic.name).replaceAll("{clinic}", clinic.name);
+    (demo.conversation ?? []).forEach((line, n) => {
+      const sentAt = at(shiftDate(today, line.day), line.time);
+      const lastEmail = bundle.messages
+        .filter((m) => m.clientId === clientId && m.channel === "email" && m.subject && Date.parse(m.createdAt) <= sentAt)
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+        .pop();
+      const fromClient = line.from === "client";
+      bundle.messages.push({
+        id: newId(),
+        clinicId: clinic.id,
+        clientId,
+        sandboxId,
+        type: fromClient ? REPLY_TYPE : (line.type ?? ANSWER_TYPE),
+        channel: line.channel,
+        subject: line.channel === "email" ? replySubject(lastEmail?.subject, `A note from ${clinic.name}`) : null,
+        body: fill(line.body),
+        status: fromClient ? "received" : "sent",
+        dedupeKey: fromClient ? inboundKey(`demo-${demo.key}-${n}`) : `demo_line:${n}`,
+        scheduledFor: null,
+        sentAt: iso(sentAt),
+        createdAt: iso(sentAt),
+      });
+    });
   });
 
   return bundle;

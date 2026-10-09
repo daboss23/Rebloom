@@ -113,6 +113,20 @@ export function Queue({
                   <KindChip row={row} />
                 </div>
                 <p className="max-w-[52ch] text-[15px] leading-relaxed text-text-2 md:mt-1.5">{row.reason}</p>
+                {row.reply && (
+                  // They wrote back (D-081): a pre-written message now would talk past them.
+                  <p className="mt-3 max-w-[56ch] border-t border-[#0c1a22]/[0.06] pt-3 text-[13.5px] leading-relaxed text-text-2">
+                    <span className="font-medium text-[#7a5014]">Wrote back: </span>
+                    &ldquo;{row.reply}&rdquo;{" "}
+                    {onBrief ? (
+                      <span className="text-text-3">Answer below first.</span>
+                    ) : (
+                      <Link href={`${row.href}#conversation`} className="text-[#1e5a78] underline decoration-[#1e5a78]/30 underline-offset-4 hover:decoration-[#1e5a78]">
+                        Answer first
+                      </Link>
+                    )}
+                  </p>
+                )}
               </div>
 
               <div className="flex items-baseline gap-2 md:block md:text-right">
@@ -423,7 +437,7 @@ function SendSheet({
 }
 
 /** Email or text, for a client who said yes to both. Arrow keys move between them, as radios do. */
-function ChannelSwitch({ value, onChange }: { value: Draft["channel"]; onChange: (c: Draft["channel"]) => void }) {
+export function ChannelSwitch({ value, onChange }: { value: Draft["channel"]; onChange: (c: Draft["channel"]) => void }) {
   const options = [
     { id: "email", label: "Email", Icon: IconMail },
     { id: "text", label: "Text", Icon: IconMessage },

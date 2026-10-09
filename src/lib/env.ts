@@ -65,6 +65,16 @@ export const envSchema = z.object({
   ANTHROPIC_API_KEY: optional,
   RESEND_API_KEY: optional,
   EMAIL_FROM: optional,
+  /**
+   * Replies from clients (D-081): the subdomain Resend receives on, e.g. "reply.yourdomain.com". Every email then
+   * carries the client's own reply address there. Without it, replies go to EMAIL_FROM as before.
+   */
+  REPLY_DOMAIN: z.preprocess(
+    (v) => (v === "" || v === undefined ? undefined : String(v).trim().toLowerCase().replace(/^@/, "")),
+    z.string().regex(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/, "REPLY_DOMAIN must be a domain, like reply.yourdomain.com").optional(),
+  ),
+  /** The signing secret (whsec_…) of the Resend webhook that delivers email.received. */
+  RESEND_WEBHOOK_SECRET: optional,
   STRIPE_SECRET_KEY: z.preprocess(
     (v) => (v === "" ? undefined : v),
     z
@@ -129,6 +139,8 @@ export const features = {
   /** Claude reads the client's own words (D-079). Without a key, the word list does it. */
   claude: Boolean(env.ANTHROPIC_API_KEY),
   sms: Boolean(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_FROM),
+  /** Emails carry each client's reply address, and Resend's webhook can deliver what comes back (D-081). */
+  replies: Boolean(env.RESEND_API_KEY && env.REPLY_DOMAIN && env.RESEND_WEBHOOK_SECRET),
   isProductionDeploy: env.VERCEL_ENV === "production",
 } as const;
 
