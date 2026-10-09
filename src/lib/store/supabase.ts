@@ -7,6 +7,7 @@ import { createClient, type PostgrestError, type SupabaseClient } from "@supabas
 import { DEFAULT_CLINIC_SETTINGS, type Appointment, type Client, type ClientPlan, type Consent, type Intake, type Message, type PlanItem, type Report, type Sandbox, type Scan, type Staff } from "@/lib/domain";
 import { env, supabaseSecretKey } from "@/lib/env";
 import { newId, newToken } from "@/lib/ids";
+import { toUsE164 } from "@/lib/sms/text";
 import { clinicFromRow, fromRow, menuItemFromRow, toRow, type Row } from "./rows";
 import { scanStoragePaths } from "./scan-paths";
 import { SlotTakenError, type ObjectStorage, type PlanWithItems, type Store, type UploadTarget } from "./types";
@@ -251,6 +252,34 @@ export const supabaseStore: Store = {
       await db().from("messages").select("*").eq("clinic_id", clinicId).eq("sandbox_id", sandboxId).order("created_at"),
       "listMessages",
     );
+  },
+  async listClientMessages(clientId) {
+    if (!isUuid(clientId)) return [];
+    return many<Message>(await db().from("messages").select("*").eq("client_id", clientId).order("created_at"), "listClientMessages");
+  },
+  async findClientsByContact(contact) {
+    if ("email" in contact) {
+      // ilike for any case; its wildcards are escaped so an address only ever matches itself.
+      const email = contact.email.trim().replace(/[\\%_]/g, (c) => `\\${c}`);
+      return many<Client>(
+        await db().from("clients").select("*").eq("is_demo", false).ilike("email", email).order("created_at", { ascending: false }).limit(20),
+        "findClientsByContact",
+      );
+    }
+    const target = toUsE164(contact.phone);
+    if (!target) return [];
+    // Phones are kept as typed, so narrow on the last four digits, then compare the whole number.
+    const rows = many<Client>(
+      await db()
+        .from("clients")
+        .select("*")
+        .eq("is_demo", false)
+        .like("phone", `%${target.slice(-4)}%`)
+        .order("created_at", { ascending: false })
+        .limit(200),
+      "findClientsByContact",
+    );
+    return rows.filter((c) => toUsE164(c.phone) === target).slice(0, 20);
   },
 
   async listClinicRecords(clinicId, sandboxId) {

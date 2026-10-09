@@ -24,6 +24,8 @@ export interface QueueRow {
   text: string | null;
   /** Who a text shows as coming from: the clinic's name. */
   sender: string;
+  /** Their reply, while it waits on an answer (D-081): answer it before sending anything pre-written. */
+  reply: string | null;
 }
 
 export function toQueueRow(item: QueueItem, facts: ClientFacts, clinicName: string): QueueRow {
@@ -44,5 +46,12 @@ export function toQueueRow(item: QueueItem, facts: ClientFacts, clinicName: stri
     draft: item.draft,
     text: item.text,
     sender: clinicName,
+    reply: facts.reply ? excerpt(facts.reply.body) : null,
   };
+}
+
+/** The first words of a reply, on one line. */
+export function excerpt(text: string, max = 110): string {
+  const line = text.replace(/\s+/g, " ").trim();
+  return line.length <= max ? line : `${line.slice(0, max).replace(/\s+\S*$/, "")}…`;
 }

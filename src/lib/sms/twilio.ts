@@ -2,6 +2,7 @@ import "server-only";
 // Texts through Twilio's REST API (DECISIONS D-080). Server only: the auth token never reaches a browser.
 // Plain fetch on purpose: one endpoint doesn't justify Twilio's SDK.
 
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { env, features } from "@/lib/env";
 
 export type TextResult = { ok: true; sid: string } | { ok: false; error: string; optedOut: boolean };
@@ -32,4 +33,24 @@ export async function sendText({ to, body }: { to: string; body: string }): Prom
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Couldn't reach Twilio.", optedOut: false };
   }
+}
+
+/**
+ * Twilio's signature on a webhook (X-Twilio-Signature): HMAC-SHA1 of the exact URL it called, followed by every
+ * posted field and its value in key order, with the auth token. Proves a reply really came through Twilio (D-081).
+ */
+export function twilioSignature(url: string, params: URLSearchParams, authToken: string): string {
+  const keys = [...new Set(params.keys())].sort();
+  const data = url + keys.map((k) => params.getAll(k).map((v) => `${k}${v}`).join("")).join("");
+  return createHmac("sha1", authToken).update(data, "utf8").digest("base64");
+}
+
+/** True when the signature matches one of the URLs Twilio might have called. */
+export function validTwilioSignature(urls: string[], params: URLSearchParams, signature: string | null): boolean {
+  if (!signature || !env.TWILIO_AUTH_TOKEN) return false;
+  const given = Buffer.from(signature);
+  return urls.some((url) => {
+    const expected = Buffer.from(twilioSignature(url, params, env.TWILIO_AUTH_TOKEN!));
+    return expected.length === given.length && timingSafeEqual(expected, given);
+  });
 }

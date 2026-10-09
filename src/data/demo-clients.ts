@@ -64,6 +64,23 @@ export interface DemoClient {
   visits: DemoVisit[];
   /** Dana's note, shown on the client's report. */
   note: string | null;
+  /**
+   * Their conversation with the clinic beyond the automatic emails (D-081), oldest first. "{practitioner}" and
+   * "{clinic}" become the clinic's own, so the second demo clinic reads right. A client's email line answers the
+   * clinic's latest email ("Re: …").
+   */
+  conversation?: DemoLine[];
+}
+
+export interface DemoLine {
+  day: number;
+  /** Local clinic time. */
+  time: string;
+  from: "client" | "clinic";
+  channel: "email" | "sms";
+  body: string;
+  /** For the clinic's lines: the rebook trigger it was sent for. An answer otherwise. */
+  type?: string;
 }
 
 const none = { retinoid: "no", sun_exposure: "no", pregnant_breastfeeding: "no", isotretinoin: "no", cold_sores: "no", sensitivities: "no" } as const;
@@ -116,6 +133,17 @@ export const DEMO_CLIENTS: DemoClient[] = [
       { day: 7, time: "11:00", treatment: "hydrating-infusion" },
     ],
     note: "Amelia, your texture has come a long way since October. One hydrating facial the week before the wedding, then just SPF and your serum.",
+    // A question about her booking, answered the next morning: a conversation that's done.
+    conversation: [
+      { day: -3, time: "20:05", from: "client", channel: "email", body: "Thank you! Can I wear makeup after the facial? I have my dress fitting that afternoon." },
+      {
+        day: -2,
+        time: "09:40",
+        from: "clinic",
+        channel: "email",
+        body: "Hi Amelia,\n\nYes, a light mineral makeup is fine afterwards. Your skin can look a little flushed for an hour or so, so leave it until lunchtime if you can. Enjoy the fitting!\n\n{practitioner}",
+      },
+    ],
   },
   {
     key: "priya",
@@ -143,6 +171,16 @@ export const DEMO_CLIENTS: DemoClient[] = [
     plan: null,
     visits: [],
     note: null,
+    // Wrote back to her report last night. Waiting: the queue says to answer her before sending the follow-up.
+    conversation: [
+      {
+        day: -1,
+        time: "21:12",
+        from: "client",
+        channel: "email",
+        body: "This is really helpful, thank you. Is there any downtime after the first session? I have a work trip in three weeks and would rather not be red in meetings.",
+      },
+    ],
   },
   {
     key: "marcus",
@@ -348,6 +386,18 @@ export const DEMO_CLIENTS: DemoClient[] = [
     },
     visits: [{ day: -38, time: "17:00", treatment: "peel-series", planned: true }],
     note: null,
+    // He did answer the reminder. Nobody saw it, so he went quiet: the reply that explains the "missed".
+    conversation: [
+      {
+        day: -18,
+        time: "10:30",
+        from: "clinic",
+        channel: "sms",
+        type: "next_session_due",
+        body: "Hi Daniel, it's {practitioner} at {clinic}. Your second peel is due this week. Reply here and I'll find you a time. Reply STOP to opt out.",
+      },
+      { day: -18, time: "19:48", from: "client", channel: "sms", body: "Sorry, work has been crazy. Could I come in on a Saturday morning?" },
+    ],
   },
   {
     key: "nina",

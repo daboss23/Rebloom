@@ -10,7 +10,10 @@ import { loadBook } from "@/lib/dashboard/load";
 import { fullName, visitsOn } from "@/lib/dashboard/view";
 import { env, features } from "@/lib/env";
 import { nextOpenDay, shiftDate } from "@/lib/plan/build";
-import { TRIGGER_LABEL } from "@/lib/rebook/engine";
+import { TRIGGER_LABEL, daysBetween } from "@/lib/rebook/engine";
+import { at } from "@/lib/replies/thread";
+import { excerpt } from "@/components/dashboard/queue-row";
+import { isoDateInZone } from "@/lib/clock";
 
 function greeting(now: Date, timeZone: string): string {
   const hour = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone }).format(now));
@@ -39,7 +42,15 @@ export default async function TodayPage() {
   const first = (id: string) => byId.get(id)!.client.firstName!;
   const moment = queue.items.find((i) => i.kind === "progress_moment");
   const risk = queue.items.filter((i) => i.atRisk).map((i) => first(i.clientId));
+  // Clients who wrote back and are waiting on an answer (D-081), longest wait first.
+  const replies = facts
+    .filter((f) => f.reply && f.client.firstName)
+    .map((f) => ({ facts: f, reply: f.reply!, days: daysBetween(isoDateInZone(new Date(at(f.reply!)), clinic.timezone), today) }))
+    .sort((a, b) => b.days - a.days);
+  const waited = (days: number) => (days <= 0 ? "Today" : days === 1 ? "Yesterday" : `${days} days ago`);
+
   const story = [
+    replies.length ? `${names(replies.slice(0, 3).map((r) => r.facts.client.firstName!))} wrote back.` : null,
     moment ? `${first(moment.clientId)}'s skin is coming into bloom, with real change since the first scan. The perfect moment to rebook.` : null,
     risk.length ? `${names(risk.slice(0, 3))} ${risk.length === 1 ? "needs" : "need"} a little care.` : null,
   ]
@@ -83,6 +94,41 @@ export default async function TodayPage() {
       </section>
 
       <div className="mt-12 grid gap-x-10 gap-y-12 xl:grid-cols-[minmax(0,1fr)_21rem]">
+        <div className="min-w-0 space-y-12">
+        {replies.length > 0 && (
+          <section aria-labelledby="wrote-back">
+            <div className="mb-5">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-text-3">Replies</p>
+              <h2 id="wrote-back" className="mt-2 font-display text-[36px] font-light leading-none text-ink">
+                Waiting on your answer
+              </h2>
+            </div>
+            <ul className="glass focus-in divide-y divide-[#0c1a22]/[0.06] overflow-hidden" style={{ animationDelay: "80ms" }}>
+              {replies.map(({ facts: f, reply, days }) => (
+                <li key={reply.id}>
+                  <Link
+                    href={`/dashboard/clients/${f.client.id}#conversation`}
+                    className="group grid gap-x-6 gap-y-3 px-5 py-5 transition-colors duration-200 hover:bg-white/50 sm:grid-cols-[11rem_minmax(0,1fr)_auto] sm:items-center sm:px-6"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-display text-[22px] leading-tight text-ink">{fullName(f.client)}</span>
+                      <span className={`mt-1 flex items-center gap-1.5 text-[12.5px] ${days >= 3 ? "font-medium text-[#7a5014]" : "text-text-3"}`}>
+                        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#c99645]" />
+                        {reply.channel === "sms" ? "Text" : "Email"} · {waited(days)}
+                      </span>
+                    </span>
+                    <span className="min-w-0 font-display text-[19px] font-light italic leading-snug text-text-2">&ldquo;{excerpt(reply.body, 140)}&rdquo;</span>
+                    <span className="btn-sea justify-self-start sm:justify-self-end">
+                      Answer
+                      <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <section aria-labelledby="contact">
           <div className="mb-5 flex items-end justify-between gap-6">
             <div>
@@ -98,6 +144,7 @@ export default async function TodayPage() {
           </div>
           <Queue rows={rows} demo={env.DEMO_MODE} realCopy={env.DEMO_MODE && features.email} empty="Nobody needs a message today. Move the clock forward to see who will." />
         </section>
+        </div>
 
         <aside aria-label="Today" className="space-y-6 xl:pt-[4.6rem]">
           <section aria-labelledby="visits" className="glass focus-in overflow-hidden" style={{ animationDelay: "160ms" }}>

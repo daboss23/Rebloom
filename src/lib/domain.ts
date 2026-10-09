@@ -331,7 +331,8 @@ export interface Appointment {
   createdAt: ISODateTime;
 }
 
-export type MessageStatus = "draft" | "queued" | "sent" | "failed" | "skipped";
+/** "received" is a reply from the client (DECISIONS D-081); every other status is something the clinic sent. */
+export type MessageStatus = "draft" | "queued" | "sent" | "failed" | "skipped" | "received";
 
 /** The outbox. Demo emails go to a visible log, never a real inbox (brief section 5). */
 export interface Message {
@@ -339,7 +340,10 @@ export interface Message {
   clinicId: string;
   clientId: string;
   sandboxId: string | null;
-  /** "report_link", "booking_confirmation", or a rebook trigger such as "next_session_due". */
+  /**
+   * "report_link", "booking_confirmation", a rebook trigger such as "next_session_due", or, for a client's
+   * conversation (D-081): "reply" from them, "answer" from the clinic, "reply_handled" when no answer was needed.
+   */
   type: string;
   channel: "email" | "sms";
   subject: string | null;
@@ -350,4 +354,9 @@ export interface Message {
   scheduledFor: ISODateTime | null;
   sentAt: ISODateTime | null;
   createdAt: ISODateTime;
+  /**
+   * A reply only: the address or number it came from. Left out of everything the clinic sends, so sending never
+   * depends on the replies migration.
+   */
+  sender?: string | null;
 }

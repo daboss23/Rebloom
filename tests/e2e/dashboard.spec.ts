@@ -67,6 +67,46 @@ test("Sofia said yes to texts, so Dana can text her instead, and the way out sta
   await expect(sent).toContainText("Text · Hi Sofia, shall I hold a time next week?");
 });
 
+test("Daniel's text waited 18 days: Dana answers it from his brief, and it leaves Today", async ({ page }) => {
+  const waiting = page.getByRole("region", { name: "Waiting on your answer" });
+  await expect(waiting).toContainText("Daniel Walsh");
+  await expect(waiting).toContainText("Priya Shah");
+  // The queue warns before a pre-written message talks past him.
+  await expect(page.getByRole("listitem").filter({ hasText: "The second peel was due" })).toContainText("Wrote back:");
+
+  await waiting.getByRole("link", { name: /Daniel Walsh/ }).click();
+  await expect(page).toHaveURL(/\/dashboard\/clients\/.+#conversation$/);
+  const conversation = page.getByRole("region", { name: "Daniel wrote back" });
+  await expect(conversation).toContainText("Could I come in on a Saturday morning?");
+  await expect(conversation).toContainText("Waiting on you · 18 days");
+  // He texted, so the answer starts as a text.
+  await expect(conversation.getByRole("radio", { name: "Text" })).toBeChecked();
+
+  await conversation.getByRole("textbox", { name: "Answer Daniel" }).fill("Saturday at 10 works. Shall I hold it for you?");
+  await conversation.getByRole("button", { name: "Send text" }).click();
+  await expect(page.getByText("Texted Daniel. Logged here, not sent (demo).")).toBeVisible();
+  const done = page.getByRole("region", { name: "Conversation" });
+  await expect(done).toContainText("Saturday at 10 works. Shall I hold it for you?");
+  await expect(done).not.toContainText("Waiting on you");
+
+  await page.goto("/dashboard");
+  await expect(page.getByRole("region", { name: "Waiting on your answer" })).not.toContainText("Daniel Walsh");
+});
+
+test("a reply that needs no answer is marked handled, and Undo brings it back", async ({ page }) => {
+  await page.getByRole("region", { name: "Waiting on your answer" }).getByRole("link", { name: /Priya Shah/ }).click();
+  const conversation = page.getByRole("region", { name: "Priya wrote back" });
+  await expect(conversation).toContainText("Is there any downtime after the first session?");
+  await expect(conversation).toContainText("Re: Your skin report from Maison Verre");
+  await conversation.getByRole("button", { name: "No answer needed" }).click();
+  await expect(page.getByText("Marked as handled.")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Conversation" })).toContainText("Marked as handled by Dana.");
+
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByText("Waiting on your answer again.")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Priya wrote back" })).toContainText("Waiting on you");
+});
+
 test("Chloe has no email consent, so the queue offers a call instead", async ({ page }) => {
   const chloe = page.getByRole("listitem").filter({ hasText: "Chloe Bennett" });
   await expect(chloe.getByRole("link", { name: /Call/ })).toHaveAttribute("href", /^tel:/);

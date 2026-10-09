@@ -11,8 +11,12 @@ import { clearStaffCookie, readSession, setStaffCookie } from "@/lib/dashboard/s
 import { ensureDemoClients } from "@/lib/demo/ensure";
 import { env, features } from "@/lib/env";
 import { hintFor } from "@/lib/email/hints";
+import { answerEmail } from "@/lib/email/answer";
 import { DEMO_COPY_LIMIT, DEMO_COPY_TYPE, demoCopyKey, foreignLinks, rebookEmail } from "@/lib/email/rebook";
 import { resend } from "@/lib/email/resend";
+import { replyTo } from "@/lib/replies/address";
+import { addressOf } from "@/lib/replies/parse";
+import { ANSWER_TYPE, HANDLED_TYPE, canAnswerByText, handledKey, replySubject, threadSubject } from "@/lib/replies/thread";
 import { TEXT_MAX_CHARS, TEXT_OPT_OUT, toUsE164 } from "@/lib/sms/text";
 import { sendText } from "@/lib/sms/twilio";
 import { appOrigin } from "@/lib/origin";
@@ -93,7 +97,15 @@ export async function sendRebook(input: z.input<typeof draftInput>): Promise<Act
   if (live) {
     try {
       const mail = rebookEmail({ clinic: book.clinic, subject, body });
-      const { error } = await resend().emails.send({ from: mail.from, to: facts.client.email!, subject: mail.subject, text: mail.text, html: mail.html });
+      const { error } = await resend().emails.send({
+        from: mail.from,
+        to: facts.client.email!,
+        // Their answer lands on the brief (D-081).
+        replyTo: replyTo(book.clinic, facts.client.id),
+        subject: mail.subject,
+        text: mail.text,
+        html: mail.html,
+      });
       if (error) status = "failed";
     } catch {
       status = "failed";
@@ -114,7 +126,8 @@ export async function sendRebook(input: z.input<typeof draftInput>): Promise<Act
     let failure: string | null = null;
     try {
       const { error } = await resend().emails.send(
-        { from: mail.from, to: copyTo, subject: mail.subject, text: mail.text, html: mail.html },
+        // A reply to the copy lands on the sample client's brief, in this browser's demo (D-081).
+        { from: mail.from, to: copyTo, replyTo: replyTo(book.clinic, facts.client.id), subject: mail.subject, text: mail.text, html: mail.html },
         // One email per row and address, even if Send is pressed twice. The key stays short whatever the address.
         { idempotencyKey: `${book.sandboxId}:${demoCopyKey(item.dedupeKey)}:${createHash("sha256").update(copyTo).digest("hex").slice(0, 16)}` },
       );
@@ -277,6 +290,163 @@ export async function undoDone(input: z.input<typeof doneInput>): Promise<Action
   const undone = await getStore().removeSkippedMessage(parsed.data.clientId, parsed.data.dedupeKey);
   revalidatePath("/dashboard", "layout");
   return undone ? { ok: true, message: "Back in the queue." } : { ok: false, error: "Nothing to undo." };
+}
+
+const answerInput = z.object({
+  clientId: z.string().min(1),
+  channel: z.enum(["email", "text"]),
+  body: z.string().trim().min(1, "Write a message first.").max(5000, "Keep it under 5,000 characters."),
+  /** Made once per answer in the browser, so pressing Send twice sends once. */
+  nonce: z.string().min(8).max(64),
+});
+
+/** Answers a demo browser can email back to whoever replied to one of its copies (D-064, D-081). */
+const DEMO_ANSWER_LIMIT = 3;
+
+/**
+ * Dana writes to a client from their brief (DECISIONS D-081): usually an answer to their reply, by email or by text.
+ * The same guarantees as a rebook message: the clinic's voice, one send per press, real only for real clients outside
+ * demo mode. In the demo, when someone trying it replied to a copy, the answer goes back to them as a copy too.
+ */
+export async function answerClient(input: z.input<typeof answerInput>): Promise<ActionResult> {
+  const parsed = answerInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Please check the message." };
+  if (!(await readSession())) return { ok: false, error: "Please sign in again." };
+  const book = await loadBook();
+  const facts = book.facts.find((f) => f.client.id === parsed.data.clientId);
+  if (!facts) return { ok: false, error: "We couldn't find this client." };
+  const { channel, body, nonce } = parsed.data;
+  const { client, reply } = facts;
+  const name = client.firstName ?? "the client";
+  const issues = checkCopy(body);
+  if (issues.length > 0) return { ok: false, error: `Please reword "${issues[0].match}". It isn't in the clinic's voice.` };
+
+  const to = channel === "email" ? client.email : toUsE164(client.phone);
+  if (!to) return { ok: false, error: channel === "email" ? "There's no email address to write to." : "There's no mobile number to text." };
+  if (channel === "text") {
+    if (!canAnswerByText({ phone: client.phone, canText: facts.canText, messages: facts.messages })) {
+      return { ok: false, error: `${name} hasn't said yes to texts, or replied STOP. Answer by email instead.` };
+    }
+    if (body.length > TEXT_MAX_CHARS) return { ok: false, error: `Keep a text under ${TEXT_MAX_CHARS} characters.` };
+  }
+
+  const subject = channel === "email" ? replySubject(reply?.channel === "email" ? reply.subject : threadSubject(facts.messages), `A note from ${book.clinic.name}`) : null;
+  const when = (iso: string) =>
+    new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: book.clinic.timezone }).format(new Date(iso));
+  const quoted = reply?.channel === "email" ? { who: name, when: when(reply.sentAt ?? reply.createdAt), text: reply.body } : null;
+  const live = !env.DEMO_MODE && !client.isDemo && (channel === "email" ? features.email : features.sms);
+  let status: "sent" | "failed" = "sent";
+  if (live && channel === "email") {
+    try {
+      const mail = answerEmail({ clinic: book.clinic, subject: subject!, body, signedBy: book.staff.name, quoted });
+      const { error } = await resend().emails.send(
+        { from: mail.from, to, replyTo: replyTo(book.clinic, client.id), subject: mail.subject, text: mail.text, html: mail.html },
+        { idempotencyKey: `answer:${client.id}:${nonce}` },
+      );
+      if (error) status = "failed";
+    } catch {
+      status = "failed";
+    }
+  } else if (live) {
+    const result = await sendText({ to, body });
+    if (!result.ok) {
+      revalidatePath("/dashboard", "layout");
+      return {
+        ok: false,
+        error: result.optedOut ? `${name} replied STOP to the clinic's texts, so it can't reach them. Answer by email.` : "The text didn't go through. Please try again.",
+      };
+    }
+  }
+
+  // Demo mode: whoever is trying it replied to a copy, from their own address. They get the answer, marked as a demo.
+  const store = getStore();
+  // Only a reply that really arrived carries a sender; the demo's own sample replies don't.
+  const replier = reply?.channel === "email" ? addressOf(reply.sender) : null;
+  const demoTo = env.DEMO_MODE && features.email && channel === "email" && client.isDemo && replier && replier !== client.email?.toLowerCase() ? replier : null;
+  let copied = false;
+  if (demoTo) {
+    const used = book.input.messages.filter((m) => m.type === DEMO_COPY_TYPE && m.dedupeKey?.startsWith("demo_copy:answer:")).length;
+    if (used < DEMO_ANSWER_LIMIT && foreignLinks(body, await appOrigin()).length === 0) {
+      const mail = answerEmail({ clinic: book.clinic, subject: subject!, body, signedBy: book.staff.name, quoted, demoFor: fullName(client) });
+      try {
+        const { error } = await resend().emails.send(
+          { from: mail.from, to: demoTo, replyTo: replyTo(book.clinic, client.id), subject: mail.subject, text: mail.text, html: mail.html },
+          { idempotencyKey: `${book.sandboxId}:demo_answer:${nonce}` },
+        );
+        copied = !error;
+        if (error) console.error(`Demo answer not sent: ${error.message}`);
+      } catch (e) {
+        console.error(`Demo answer not sent: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+  }
+
+  const sentAt = book.now.toISOString();
+  const message = await store.addMessage({
+    clinicId: book.clinic.id,
+    clientId: client.id,
+    sandboxId: book.sandboxId,
+    type: ANSWER_TYPE,
+    channel: channel === "text" ? "sms" : "email",
+    subject,
+    body,
+    status,
+    dedupeKey: `answer:${nonce}`,
+    scheduledFor: null,
+    sentAt: status === "sent" ? sentAt : null,
+    createdAt: sentAt,
+  });
+  if (copied) {
+    await store
+      .addMessage({
+        clinicId: book.clinic.id,
+        clientId: client.id,
+        sandboxId: book.sandboxId,
+        type: DEMO_COPY_TYPE,
+        channel: "email",
+        subject,
+        body,
+        status: "sent",
+        dedupeKey: `demo_copy:answer:${nonce}`,
+        scheduledFor: null,
+        sentAt,
+        createdAt: sentAt,
+      })
+      .catch((e) => console.error(`Demo answer not recorded: ${e instanceof Error ? e.message : String(e)}`));
+  }
+  revalidatePath("/dashboard", "layout");
+  if (!message) return { ok: false, error: "This one has already been sent." };
+  if (status === "failed") return { ok: false, error: "The email didn't go through. Please try again." };
+  if (copied) return { ok: true, message: `Logged for ${name}, and the answer is on its way to ${demoTo}.` };
+  const how = channel === "text" ? "Texted" : "Sent to";
+  return { ok: true, message: live ? `${how} ${name}.` : `${how} ${name}. Logged here, not ${channel === "text" ? "sent" : "emailed"} (demo).` };
+}
+
+/** "Mark as handled": the reply needed no answer (a thank-you). A line in the conversation that Undo can take back. */
+export async function markReplyHandled(input: { clientId: string }): Promise<ActionResult & { dedupeKey?: string }> {
+  if (typeof input?.clientId !== "string") return { ok: false, error: "Something went wrong. Please try again." };
+  if (!(await readSession())) return { ok: false, error: "Please sign in again." };
+  const book = await loadBook();
+  const facts = book.facts.find((f) => f.client.id === input.clientId);
+  if (!facts?.reply) return { ok: false, error: "Nothing is waiting on an answer." };
+  const at = book.now.toISOString();
+  const dedupeKey = handledKey(facts.reply.id);
+  await getStore().addMessage({
+    clinicId: book.clinic.id,
+    clientId: facts.client.id,
+    sandboxId: book.sandboxId,
+    type: HANDLED_TYPE,
+    channel: facts.reply.channel,
+    subject: null,
+    body: `Marked as handled by ${book.staff.name}.`,
+    status: "skipped",
+    dedupeKey,
+    scheduledFor: null,
+    sentAt: null,
+    createdAt: at,
+  });
+  revalidatePath("/dashboard", "layout");
+  return { ok: true, message: "Marked as handled.", dedupeKey };
 }
 
 const noteInput = z.object({ clientId: z.string().min(1), note: z.string().max(1200) });

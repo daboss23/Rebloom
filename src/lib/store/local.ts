@@ -13,6 +13,7 @@ import { SEED_STAFF } from "@/data/staff";
 import { DEFAULT_CLINIC_SETTINGS, type ApiUsage, type Appointment, type Client, type ClientPlan, type ClinicSettings, type Consent, type Intake, type Message, type PlanItem, type Report, type Sandbox, type Scan } from "@/lib/domain";
 import { localSecret } from "@/lib/env";
 import { newId, newToken } from "@/lib/ids";
+import { toUsE164 } from "@/lib/sms/text";
 import { scanStoragePaths } from "./scan-paths";
 import { SlotTakenError, type ObjectStorage, type Store, type UploadTarget } from "./types";
 
@@ -267,6 +268,14 @@ export const localStore: Store = {
       db.messages
         .filter((m) => m.clinicId === clinicId && m.sandboxId === sandboxId)
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    ),
+  listClientMessages: (clientId) =>
+    tx((db) => db.messages.filter((m) => m.clientId === clientId).sort((a, b) => a.createdAt.localeCompare(b.createdAt))),
+  findClientsByContact: (contact) =>
+    tx((db) =>
+      db.clients
+        .filter((c) => !c.isDemo && ("email" in contact ? c.email?.toLowerCase() === contact.email.toLowerCase() : toUsE164(c.phone) === toUsE164(contact.phone)))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     ),
   listClinicRecords: (clinicId, sandboxId) =>
     tx((db) => {
