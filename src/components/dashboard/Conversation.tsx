@@ -46,6 +46,7 @@ export function Conversation({
   channels,
   defaultChannel,
   email,
+  unsubscribed = false,
   phone,
   subject,
   waiting,
@@ -58,6 +59,8 @@ export function Conversation({
   channels: { email: boolean; text: boolean };
   defaultChannel: Channel;
   email: string | null;
+  /** Their address unsubscribed from the clinic's emails (D-086): email waits until they write in. */
+  unsubscribed?: boolean;
   /** Shown as typed: "(310) 555-0142". */
   phone: string | null;
   /** The subject an email answer goes under. */
@@ -185,7 +188,7 @@ export function Conversation({
             )}
           </div>
           <p className="t-caption mt-3 !text-[12.5px]">
-            {isText ? `To ${phone}` : `To ${email} · ${subject}`}
+            {isText ? `To ${phone}${unsubscribed && !channels.email ? ` · ${firstName} unsubscribed from emails` : ""}` : `To ${email} · ${subject}`}
           </p>
           <textarea
             id={`${countId}-body`}
@@ -238,7 +241,11 @@ export function Conversation({
           </div>
         </form>
       ) : (
-        <p className="t-caption mt-6">There&apos;s no email address or mobile number to write to {firstName} at.</p>
+        <p className="t-caption mt-6">
+          {unsubscribed
+            ? `${firstName} unsubscribed from the clinic's emails. If they write in, you can answer here.`
+            : `There's no email address or mobile number to write to ${firstName} at.`}
+        </p>
       )}
 
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">

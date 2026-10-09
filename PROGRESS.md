@@ -1,5 +1,29 @@
 # Progress
 
+## Session 11 · Friday October 9, 2026 · The way out of emails
+
+**Every reminder and progress email now carries a working unsubscribe, and the clinic honours it everywhere** (DECISIONS D-086).
+
+### What's done
+- **In the email:** "Rather not get reminders and updates? Unsubscribe" at the foot of every rebook email, live and demo copies. The report email says once that reminders follow, with the same link. Booking emails and Dana's answers don't carry it.
+- **One click in Gmail, Apple Mail and Outlook:** rebook emails carry the List-Unsubscribe headers, so the mail app's own Unsubscribe button works with no page in between.
+- **The page:** under the clinic's own name and look, one button, no sign-in. Afterwards it says what still comes, how to stop texts, and offers "Keep getting emails" for a mistake. Link checkers can't unsubscribe anyone by opening it.
+- **The dashboard:** an unsubscribe shows in the client's conversation. The queue switches that client to a text or a call and says why. The brief shows "Emails" and "Texts" with the other facts, and "Stop emails" for a client who asks Dana by reply or phone. It covers every record on the same address, so someone who scanned twice is stopped on both.
+- **The gate** now says "Unsubscribe at any time from the link in each one."
+- **Fixed on the way:** on laptop screens (1280 to 1535px) the brief's middle column was 168px wide, so a client's own words wrapped a word per line; three columns now start at 1536px. And "Mark as reviewed" on a brief could lose its Undo toast as the row left; the toast now stays.
+- **Tests:** 436 unit tests (16 new: who's unsubscribed and for how long, the address rule, the queue's text or call, the link and headers in each email, the signed token, recording once, Dana's line) and all 28 browser tests, including two new ones (Sofia unsubscribes from the page, keeps emails, then unsubscribes from her mail app; Dana stops Amelia's emails from her brief). Lint, typecheck, the copy check and the production build pass.
+
+### What Joshua needs to do
+1. **Nothing to migrate.** Deploy as usual.
+2. **`APP_URL` must be `https://www.rebloom.skin`** (the www address, as with the webhook), so the link and the one-click header point at the address that answers without a redirect. Mail apps only offer one-click on https.
+3. **To see it in the demo:** send yourself a demo copy of Sofia's email from the queue, press Unsubscribe at the foot (Gmail may also offer its own Unsubscribe beside the sender), then open the dashboard: Sofia's row offers a text, and her brief says she unsubscribed.
+
+### What's next
+1. **A nudge when a reply lands** while Dana isn't on the dashboard (an email or text to the clinic).
+2. **Resend webhook on www:** `https://www.rebloom.skin/api/resend/inbound`, if not changed yet.
+3. **Clinic login** by magic link.
+
+---
 ## Session 10 · Friday October 9, 2026 · Replies from clients
 
 **When a client answers an email or a text, it now lands on their brief, and Dana answers from there** (DECISIONS D-081).

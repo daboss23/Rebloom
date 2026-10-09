@@ -10,6 +10,7 @@ import { Queue } from "@/components/dashboard/Queue";
 import { toQueueRow } from "@/components/dashboard/queue-row";
 import { Sparkline } from "@/components/dashboard/Sparkline";
 import { StatusMark } from "@/components/dashboard/StatusMark";
+import { StopEmails } from "@/components/dashboard/StopEmails";
 import { IconAlert, IconArrowLeft, IconArrowUpRight } from "@/components/ui/Icons";
 import { cx } from "@/components/ui/cx";
 import { briefFacts, lowestScores, suggestedPlan } from "@/lib/dashboard/brief";
@@ -19,7 +20,8 @@ import { env, features } from "@/lib/env";
 import { currentReading } from "@/lib/intake/goal-reading";
 import { formatPrice } from "@/lib/plan/build";
 import { TRIGGER_ORDER, courses, daysBetween } from "@/lib/rebook/engine";
-import { canAnswerByText, replySubject, thread, threadSubject } from "@/lib/replies/thread";
+import { canWriteByEmail } from "@/lib/email/opt-out";
+import { canAnswerByText, optedOutOfTexts, replySubject, thread, threadSubject } from "@/lib/replies/thread";
 import { formatUsPhone, toUsE164 } from "@/lib/sms/text";
 import { concernLabel } from "@/lib/skin/concerns";
 
@@ -151,7 +153,20 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
     logged: e.side === "clinic" && (client.isDemo || (env.DEMO_MODE && rebookTypes.has(facts.messages.find((m) => m.id === e.id)?.type ?? ""))),
   }));
   const mobile = toUsE164(client.phone);
-  const channels = { email: Boolean(client.email), text: canAnswerByText({ phone: client.phone, canText: facts.canText, messages: facts.messages }) };
+  const channels = {
+    // After an unsubscribe, email only to answer something they wrote since (D-086).
+    email: canWriteByEmail({ email: client.email, unsubscribedAt: facts.unsubscribedAt, messages: facts.messages }),
+    text: canAnswerByText({ phone: client.phone, canText: facts.canText, messages: facts.messages }),
+  };
+  // How the clinic may reach them, beside the other facts.
+  const emails = !client.email
+    ? "No address"
+    : facts.unsubscribedAt
+      ? `Unsubscribed ${monthDay(local(facts.unsubscribedAt))}`
+      : facts.canEmail
+        ? "Reminders on"
+        : "No consent";
+  const texts = !mobile ? "No mobile" : optedOutOfTexts(facts.messages) ? "Replied STOP" : facts.canText ? "Reminders on" : "No consent";
   const conversation = (
     <section
       id="conversation"
@@ -173,6 +188,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
           channels={channels}
           defaultChannel={channels.text && (facts.reply?.channel === "sms" || !channels.email) ? "text" : "email"}
           email={client.email}
+          unsubscribed={Boolean(facts.unsubscribedAt)}
           phone={mobile ? formatUsPhone(mobile) : client.phone}
           subject={replySubject(facts.reply?.channel === "email" ? facts.reply.subject : threadSubject(facts.messages), `A note from ${book.clinic.name}`)}
           waiting={Boolean(facts.reply)}
@@ -216,18 +232,17 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
         )}
       </header>
 
-      {item && (
-        <section aria-label="In the queue" className="mt-10">
-          <Queue rows={[toQueueRow(item, facts, book.clinic.name)]} demo={env.DEMO_MODE} realCopy={env.DEMO_MODE && features.email} empty="" onBrief />
-        </section>
-      )}
+      {/* Mounted even when nothing is queued, so handling the row keeps its toast and Undo on screen. */}
+      <section aria-label={item ? "In the queue" : undefined} className={item ? "mt-10" : undefined}>
+        <Queue rows={item ? [toQueueRow(item, facts, book.clinic.name)] : []} demo={env.DEMO_MODE} realCopy={env.DEMO_MODE && features.email} empty="" onBrief />
+      </section>
 
       {/* A reply waiting on Dana comes first; otherwise the conversation follows the brief. Moved by order, not
           by place in the tree, so answering it keeps the composer and its Undo where they are. */}
       <div className="flex flex-col">
       {conversation}
 
-      <div className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2 xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_minmax(0,23rem)]">
+      <div className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2 2xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_minmax(0,23rem)]">
         {/* ---------- Face and scores ---------- */}
         <section aria-labelledby="scores" className="glass focus-in min-w-0 self-start p-4" style={{ animationDelay: "80ms" }}>
           <Portrait src={photo} initials={initials} caption={latest ? `Scan ${String(latest.scanNumber).padStart(2, "0")} · ${monthDay(local(latest.createdAt))}` : "No scan yet"} />
@@ -279,10 +294,15 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
               ["Budget", info.budget ?? "Not given"],
               ["Past treatments", info.pastTreatments],
               ["Skin type", info.skinType ?? "Unknown"],
+              ["Emails", emails],
+              ["Texts", texts],
             ].map(([term, value]) => (
               <div key={term} className="border-t border-[#0c1a22]/[0.07] py-4">
                 <dt className="t-label !text-[10.5px]">{term}</dt>
-                <dd className="mt-1.5 text-[15px] text-ink">{value}</dd>
+                <dd className="mt-1.5 text-[15px] text-ink">
+                  {value}
+                  {term === "Emails" && facts.canEmail && <StopEmails clientId={client.id} firstName={name} />}
+                </dd>
               </div>
             ))}
           </dl>
@@ -329,7 +349,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
         {/* ---------- The plan ---------- */}
         <section
           aria-labelledby="plan"
-          className="sea on-dark focus-in relative overflow-hidden rounded-[22px] p-7 shadow-[0_40px_80px_-40px_rgba(12,26,34,0.7)] md:col-span-2 xl:col-span-1 self-start sm:p-8"
+          className="sea on-dark focus-in relative overflow-hidden rounded-[22px] p-7 shadow-[0_40px_80px_-40px_rgba(12,26,34,0.7)] md:col-span-2 2xl:col-span-1 self-start sm:p-8"
           style={{ animationDelay: "240ms" }}
         >
           <LightField variant="sea" className="opacity-45" />

@@ -8,6 +8,7 @@ import { INTAKE_STEPS, stepSchemas, unlockSchema, type IntakeStep } from "@/lib/
 import { getOwnScan } from "@/lib/scans/access";
 import { hasBiometricConsent, loadFlow } from "@/lib/flow/load";
 import { sendReportEmail, type ReportDelivery } from "@/lib/email/report";
+import { unsubscribeLinks } from "@/lib/email/unsubscribe";
 import { ensureGoalReading } from "@/lib/intake/read-goal";
 import { appOrigin } from "@/lib/origin";
 import {
@@ -193,6 +194,7 @@ export async function unlockReport(
   }
   const report = await store.getOrCreateReport(client.id, now);
   const reportPath = `/r/${report.token}`;
+  const origin = await appOrigin();
   const delivery = await sendReportEmail({
     clinic: state.clinic,
     clientId: client.id,
@@ -200,7 +202,8 @@ export async function unlockReport(
     scanId: scan.id,
     firstName: parsed.data.firstName,
     email: parsed.data.email,
-    url: `${await appOrigin()}${reportPath}`,
+    url: `${origin}${reportPath}`,
+    unsubscribeUrl: unsubscribeLinks(origin, state.clinic, client.id)?.page,
     now,
   });
   return { ok: true, sent: { firstName: parsed.data.firstName, email: parsed.data.email, reportPath, delivery } };

@@ -63,22 +63,27 @@ export async function clientForPhone(phone: string): Promise<Client | null> {
   return lastText.sort((a, b) => b.at.localeCompare(a.at))[0].client;
 }
 
+/**
+ * When something the client did lands in their conversation: on their sandbox's clock, which the demo can run ahead
+ * (D-016), and never before what came before it, so a reply follows the message it answers.
+ */
+export async function conversationTime(client: Client, messages: Message[], real?: Date): Promise<string> {
+  const sandbox = client.sandboxId ? await getStore().getSandbox(client.sandboxId) : null;
+  const clock = virtualNow({ demoToday: env.DEMO_TODAY, offsetDays: sandbox?.clockOffsetDays ?? 0 }, real);
+  const latest = messages.reduce((t, m) => Math.max(t, Date.parse(at(m))), 0);
+  return new Date(Math.max(clock.getTime(), latest + 1000)).toISOString();
+}
+
 /** Adds the reply to the client's conversation, on their sandbox's clock and never before what came before it. */
 export async function saveReply(client: Client, inbound: Inbound): Promise<Received> {
   const store = getStore();
-  const [messages, sandbox] = await Promise.all([
-    store.listClientMessages(client.id),
-    client.sandboxId ? store.getSandbox(client.sandboxId) : Promise.resolve(null),
-  ]);
+  const messages = await store.listClientMessages(client.id);
   // Real time for the valve, as every limit does (D-016).
   const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
   if (messages.filter((m) => isReply(m) && m.createdAt >= dayAgo).length >= REPLIES_PER_CLIENT_PER_DAY) {
     return { status: "limited", clientId: client.id };
   }
-  // The demo clock can run ahead (D-016): a reply belongs after the message it answers, on the same clock.
-  const clock = virtualNow({ demoToday: env.DEMO_TODAY, offsetDays: sandbox?.clockOffsetDays ?? 0 }, inbound.receivedAt);
-  const latest = messages.reduce((t, m) => Math.max(t, Date.parse(at(m))), 0);
-  const receivedAt = new Date(Math.max(clock.getTime(), latest + 1000)).toISOString();
+  const receivedAt = await conversationTime(client, messages, inbound.receivedAt);
 
   const message = await store.addMessage({
     clinicId: client.clinicId,

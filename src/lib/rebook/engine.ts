@@ -19,6 +19,7 @@ import type {
 import { isoDateInZone } from "@/lib/clock";
 import { buildPlan, rankPriorities, shiftDate, statedConcerns } from "@/lib/plan/build";
 import { concernLabel, type ConcernKey } from "@/lib/skin/concerns";
+import { unsubscribedAddresses, unsubscribedAt } from "@/lib/email/opt-out";
 import { optedOutOfTexts, waitingReply } from "@/lib/replies/thread";
 import { TEXT_OPT_OUT, toUsE164 } from "@/lib/sms/text";
 import type { PlanWithItems } from "@/lib/store/types";
@@ -140,7 +141,10 @@ export interface ClientFacts {
   plan: PlanWithItems | null;
   appointments: Appointment[];
   messages: Message[];
+  /** An address, a yes to email updates, and their address hasn't unsubscribed (D-086). */
   canEmail: boolean;
+  /** When their address unsubscribed from the clinic's emails, or null (D-086). */
+  unsubscribedAt: string | null;
   /** A US mobile number and a yes to texts (D-080), and no STOP since (D-081). */
   canText: boolean;
   /** Their latest reply, while it waits on an answer from the clinic (D-081). */
@@ -172,9 +176,12 @@ export function clientFacts(input: EngineInput): ClientFacts[] {
   ];
   const intakes = new Map(input.intakes.map((i) => [i.clientId, i]));
   const reports = new Map(input.reports.map((r) => [r.clientId, r]));
+  // Read across every client, since an unsubscribe belongs to the address (D-086).
+  const unsubscribed = unsubscribedAddresses(input.clients, input.messages);
   return input.clients.map((client) => {
     const live = (plans.get(client.id) ?? []).filter((p) => p.status !== "cancelled");
     const mine = messages.get(client.id) ?? [];
+    const optedOut = unsubscribedAt(client, unsubscribed);
     return {
       client,
       intake: intakes.get(client.id) ?? null,
@@ -185,7 +192,8 @@ export function clientFacts(input: EngineInput): ClientFacts[] {
       plan: live[live.length - 1] ?? null,
       appointments: (appointments.get(client.id) ?? []).sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
       messages: mine,
-      canEmail: Boolean(client.email) && (consents.get(client.id) ?? []).some((c) => c.type === "reminders"),
+      canEmail: Boolean(client.email) && (consents.get(client.id) ?? []).some((c) => c.type === "reminders") && !optedOut,
+      unsubscribedAt: optedOut,
       canText: Boolean(toUsE164(client.phone)) && (consents.get(client.id) ?? []).some((c) => c.type === "texts") && !optedOutOfTexts(mine),
       reply: waitingReply(mine),
     };
@@ -318,8 +326,11 @@ export function buildQueue(input: EngineInput): Queue {
       const action =
         rest.action ?? (rest.draft ? (facts.canEmail ? "email" : facts.canText && rest.text ? "text" : "call") : "review");
       const message = action === "email" || action === "text";
+      // Say why a message the engine wrote isn't going by email, so the call or text doesn't look like a mistake.
+      const why = rest.draft && action !== "email" && facts.unsubscribedAt ? ` Unsubscribed from emails, so a ${action === "text" ? "text" : "call"}.` : "";
       return {
         ...rest,
+        reason: `${rest.reason}${why}`,
         clientId: client.id,
         kind,
         action,
@@ -412,9 +423,12 @@ export function buildQueue(input: EngineInput): Queue {
         const lastVisit = local(next.course.done[next.course.done.length - 1].startsAt);
         candidates.push(
           make("lapsed", {
-            reason: `Last visit ${ago(daysBetween(lastVisit, today))}. ${
-              facts.canEmail || facts.canText ? "A personal note may bring them back." : "No consent to email or text, so a call."
-            }`,
+            reason: [
+              `Last visit ${ago(daysBetween(lastVisit, today))}.`,
+              facts.canEmail || facts.canText ? "A personal note may bring them back." : facts.unsubscribedAt ? null : "No consent to email or text, so a call.",
+            ]
+              .filter(Boolean)
+              .join(" "),
             dueDate: next.latest,
             dedupeKey: `lapsed:${next.course.item.id}`,
             text: texted(

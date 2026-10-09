@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test";
+import { createHmac } from "node:crypto";
+import { expect, test, type Page } from "@playwright/test";
 
 // The clinic dashboard in demo mode. Each test gets a fresh browser, so a fresh sandbox and its own
 // copy of the twelve demo clients (DECISIONS D-014).
@@ -117,6 +118,67 @@ test("Chloe has no email consent, so the queue offers a call instead", async ({ 
   // One click too many is easy to take back.
   await page.getByRole("button", { name: "Undo" }).click();
   await expect(page.getByRole("listitem").filter({ hasText: "Chloe Bennett" }).getByRole("button", { name: "Mark as called" })).toBeVisible();
+});
+
+/** A demo client's brief link, from the client list. */
+async function briefOf(page: Page, name: string): Promise<string> {
+  await page.goto("/dashboard/clients");
+  const href = await page.locator('a[href^="/dashboard/clients/"]').filter({ hasText: name }).first().getAttribute("href");
+  return href!;
+}
+
+/** The signed token in a client's unsubscribe link, made as the server makes it (D-086). The dev server's secret. */
+const unsubscribeToken = (clientId: string) => {
+  const hex = clientId.replace(/-/g, "");
+  const secret = `${process.env.IP_HASH_SALT || "rebloom-local-development-secret"}:unsubscribe`;
+  return hex + createHmac("sha256", secret).update(hex).digest("hex").slice(0, 16);
+};
+
+test("Sofia unsubscribes from the link in an email: the queue texts her instead, and her brief says so", async ({ page, request }) => {
+  const brief = await briefOf(page, "Sofia Morales");
+  const token = unsubscribeToken(brief.split("/").pop()!);
+
+  await page.goto(`/c/maison-verre/unsubscribe/${token}`);
+  await expect(page.getByRole("heading", { name: "Stop emails from Maison Verre?" })).toBeVisible();
+  await expect(page.getByText("Rebloom demo: Sofia is a sample client.")).toBeVisible();
+  await page.getByRole("button", { name: "Unsubscribe" }).click();
+  await expect(page.getByRole("heading", { name: "You're unsubscribed." })).toBeVisible();
+  // She said yes to texts, so the page says how to stop those too.
+  await expect(page.getByText("Reply STOP to any text from us")).toBeVisible();
+  // A reload shows where she stands; it never presses anything again.
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "You're unsubscribed." })).toBeVisible();
+
+  await page.goto("/dashboard");
+  const row = page.getByRole("listitem").filter({ hasText: "Sofia Morales" });
+  await expect(row).toContainText("Unsubscribed from emails, so a text.");
+  await page.goto(brief);
+  await expect(page.getByRole("region", { name: "About the client" })).toContainText("Unsubscribed");
+  await expect(page.getByRole("region", { name: "Conversation" })).toContainText("Unsubscribed from emails, from the link in an email.");
+
+  // Unsubscribed by mistake: one press brings emails back.
+  await page.goto(`/c/maison-verre/unsubscribe/${token}`);
+  await page.getByRole("button", { name: "Keep getting emails" }).click();
+  await expect(page.getByRole("heading", { name: "You'll keep hearing from us." })).toBeVisible();
+
+  // A mail app's own Unsubscribe button posts straight to the link in the email's headers (RFC 8058).
+  const posted = await request.post(`/api/unsubscribe/${token}`, { form: { "List-Unsubscribe": "One-Click" } });
+  expect(posted.status()).toBe(200);
+  await page.goto(brief);
+  await expect(page.getByRole("region", { name: "Conversation" })).toContainText("Unsubscribed from emails, from their mail app.");
+  expect((await request.post(`/api/unsubscribe/${token.slice(0, -1)}0`)).status()).toBe(404);
+});
+
+test("Amelia asked to stop emails: Dana records it on her brief", async ({ page }) => {
+  await page.goto(await briefOf(page, "Amelia"));
+  const about = page.getByRole("region", { name: "About the client" });
+  await expect(about).toContainText("Reminders on");
+  await about.getByRole("button", { name: "Stop emails" }).click();
+  await expect(about).toContainText("Only when Amelia asks.");
+  await about.getByRole("group", { name: "Stop emails to Amelia" }).getByRole("button", { name: "Stop emails" }).click();
+  await expect(about).toContainText("Unsubscribed");
+  await expect(about.getByRole("button", { name: "Stop emails" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Conversation" })).toContainText("Emails stopped by Dana, at their request.");
 });
 
 test("closing the sheet keeps Dana's edits, and focus goes back to the row", async ({ page }) => {
