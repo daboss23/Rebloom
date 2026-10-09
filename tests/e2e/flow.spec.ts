@@ -112,7 +112,8 @@ test("a scan runs end to end in fixture mode, and Delete my data removes it", as
   const preview = await page.request.get(`/api/scans/${scanId}/preview`);
   expect(preview.headers()["content-type"]).toBe("image/jpeg");
   await gate.getByLabel("First name").fill("Amelia");
-  await gate.getByLabel("Email", { exact: true }).fill("amelia@example.com");
+  await gate.getByLabel("Last name").fill("Test");
+  await gate.getByLabel("Primary email").fill("amelia@example.com");
   // Texts are their own yes, and need a number to reach (D-080).
   await gate.getByRole("checkbox", { name: /Text me reminders and progress updates from Maison Verre/ }).check();
   await gate.getByRole("button", { name: "Send my results" }).click();
@@ -169,7 +170,8 @@ test("a progress scan from the report link, on another device, turns the report 
   const gate = page.getByRole("dialog", { name: "Your skin report is ready." });
   await expect(gate).toBeVisible({ timeout: 30_000 });
   await gate.getByLabel("First name").fill("Nora");
-  await gate.getByLabel("Email", { exact: true }).fill("nora@example.com");
+  await gate.getByLabel("Last name").fill("Test");
+  await gate.getByLabel("Primary email").fill("nora@example.com");
   await gate.getByRole("button", { name: "Send my results" }).click();
   await page.getByRole("link", { name: "Open my report" }).click();
   await expect(page.getByRole("heading", { name: "Your three priorities" })).toBeVisible();

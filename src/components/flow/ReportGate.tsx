@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { unlockReport, type SentResults, type UnlockResult } from "@/app/c/[clinicSlug]/actions";
 import { Bloom } from "@/components/dashboard/Bloom";
@@ -8,7 +7,7 @@ import { LightField } from "@/components/dashboard/LightField";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Checkbox, FieldLabel, TextInput } from "@/components/ui/Field";
 import { FormAlert } from "@/components/ui/FormAlert";
-import { TEXTS_CONSENT } from "@/lib/flow/consent";
+import { EMAIL_UPDATES_NOTICE, TEXTS_CONSENT } from "@/lib/flow/consent";
 import { IconLock } from "@/components/ui/Icons";
 import { Label, ScoreNumber } from "@/components/ui/Typography";
 import { ScoreRuler } from "@/components/ui/ScoreRuler";
@@ -142,12 +141,19 @@ export function ReportGate({
                     </div>
                   </header>
                   <form action={action} className="space-y-4 px-6 pb-6 pt-6">
-                    <div>
-                      <FieldLabel htmlFor="firstName">First name</FieldLabel>
-                      <TextInput id="firstName" name="firstName" autoComplete="given-name" maxLength={60} required defaultValue={state?.values?.firstName} {...invalid("firstName")} />
+                    {/* All three are needed to send the report and keep the clinic's records straight. */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="min-w-0">
+                        <FieldLabel htmlFor="firstName">First name</FieldLabel>
+                        <TextInput id="firstName" name="firstName" autoComplete="given-name" maxLength={60} required defaultValue={state?.values?.firstName} {...invalid("firstName")} />
+                      </div>
+                      <div className="min-w-0">
+                        <FieldLabel htmlFor="lastName">Last name</FieldLabel>
+                        <TextInput id="lastName" name="lastName" autoComplete="family-name" maxLength={60} required defaultValue={state?.values?.lastName} {...invalid("lastName")} />
+                      </div>
                     </div>
                     <div>
-                      <FieldLabel htmlFor="email">Email</FieldLabel>
+                      <FieldLabel htmlFor="email">Primary email</FieldLabel>
                       <TextInput
                         id="email"
                         name="email"
@@ -165,9 +171,6 @@ export function ReportGate({
                       </FieldLabel>
                       <TextInput id="phone" name="phone" type="tel" autoComplete="tel" maxLength={30} defaultValue={state?.values?.phone} {...invalid("phone")} />
                     </div>
-                    <Checkbox id="reminders" name="reminders" defaultChecked={state?.values?.reminders}>
-                      Remind me when it&apos;s time for a progress scan.
-                    </Checkbox>
                     {/* Its own box, unticked, as US texting rules expect (D-080). */}
                     <Checkbox id="texts" name="texts" defaultChecked={state?.values?.texts}>
                       {TEXTS_CONSENT.ask(clinicName)}
@@ -179,7 +182,9 @@ export function ReportGate({
                     <Button type="submit" block disabled={pending} className="!min-h-14 text-[16px]">
                       {pending ? "Sending your results" : "Send my results"}
                     </Button>
-                    <p className="t-caption text-center">Private to you. No spam. Delete your data at any time.</p>
+                    <p className="t-caption text-center">
+                      {EMAIL_UPDATES_NOTICE(clinicName)} Private to you. Delete your data at any time.
+                    </p>
                   </form>
                 </>
               )}
@@ -219,11 +224,7 @@ function Confirmation({ sent, clinicName, demo }: { sent: SentResults; clinicNam
 
       {emailed ? (
         <p className="t-caption mt-8">
-          Nothing in your inbox after a few minutes? Check your spam folder, or{" "}
-          <Link href={sent.reportPath} className="text-ink underline decoration-[#0c1a22]/30 underline-offset-4 hover:decoration-ink">
-            open your report here
-          </Link>
-          .
+          Nothing in your inbox after a few minutes? Check your spam folder.
         </p>
       ) : (
         <>
@@ -245,7 +246,7 @@ function Confirmation({ sent, clinicName, demo }: { sent: SentResults; clinicNam
 /** The report, already written, sitting just out of focus behind the panel. */
 function BlurredReport({ scanId }: { scanId: string }) {
   return (
-    <div aria-hidden inert className="reveal pointer-events-none select-none blur-[6px]">
+    <div aria-hidden inert className="reveal pointer-events-none select-none blur-[4px]">
       <Label>Your skin report</Label>
       <p className="t-h1 mt-4">Your skin is telling a clear story.</p>
       <p className="t-body mt-4">

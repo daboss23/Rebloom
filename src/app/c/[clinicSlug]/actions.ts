@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { z } from "zod";
-import { CONSENT_VERSION, TEXTS_CONSENT_VERSION } from "@/lib/flow/consent";
+import { CONSENT_VERSION, EMAIL_UPDATES_VERSION, TEXTS_CONSENT_VERSION } from "@/lib/flow/consent";
 import { INTAKE_STEPS, stepSchemas, unlockSchema, type IntakeStep } from "@/lib/flow/intake-schema";
 import { getOwnScan } from "@/lib/scans/access";
 import { hasBiometricConsent, loadFlow } from "@/lib/flow/load";
@@ -38,9 +38,9 @@ export interface SentResults {
 export interface UnlockResult extends ActionResult {
   sent?: SentResults;
   /** What was typed, sent back with an error so the form never makes them type it again. */
-  values?: { firstName: string; email: string; phone: string; reminders: boolean; texts: boolean };
+  values?: { firstName: string; lastName: string; email: string; phone: string; reminders: boolean; texts: boolean };
   /** The field the error is about, so the form can mark it and move focus there. */
-  field?: "firstName" | "email" | "phone";
+  field?: "firstName" | "lastName" | "email" | "phone";
 }
 
 /** Records consent, creating the client for this browser if needed. */
@@ -132,9 +132,11 @@ export async function unlockReport(
   const text = (key: string) => String(form.get(key) ?? "");
   const values = {
     firstName: text("firstName"),
+    lastName: text("lastName"),
     email: text("email"),
     phone: text("phone"),
-    reminders: form.get("reminders") === "on",
+    // No box any more: their details are the yes to email updates (D-083).
+    reminders: true,
     texts: form.get("texts") === "on",
   };
   const parsed = unlockSchema.safeParse(values);
@@ -145,7 +147,7 @@ export async function unlockReport(
       ok: false,
       error: issue?.message ?? "Please check your details.",
       values,
-      field: field === "firstName" || field === "email" || field === "phone" ? field : undefined,
+      field: field === "firstName" || field === "lastName" || field === "email" || field === "phone" ? field : undefined,
     };
   }
   // Texts need a number they can reach (D-080).
@@ -180,7 +182,7 @@ export async function unlockReport(
   });
   // Each yes is its own record, with the wording version they saw.
   const asked = [
-    ...(values.reminders ? [{ type: "reminders", textVersion: CONSENT_VERSION } as const] : []),
+    { type: "reminders", textVersion: EMAIL_UPDATES_VERSION } as const,
     ...(values.texts ? [{ type: "texts", textVersion: TEXTS_CONSENT_VERSION } as const] : []),
   ].filter((c) => !state.consents.some((existing) => existing.type === c.type));
   if (asked.length > 0) {

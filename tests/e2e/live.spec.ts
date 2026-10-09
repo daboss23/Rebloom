@@ -42,7 +42,8 @@ async function unlockReport(page: Page) {
   const gate = page.getByRole("dialog", { name: "Your skin report is ready." });
   await expect(gate).toBeVisible({ timeout: 45_000 });
   await gate.getByLabel("First name").fill("Amelia");
-  await gate.getByLabel("Email", { exact: true }).fill("amelia@example.com");
+  await gate.getByLabel("Last name").fill("Test");
+  await gate.getByLabel("Primary email").fill("amelia@example.com");
   await gate.getByRole("button", { name: "Send my results" }).click();
   await page.getByRole("link", { name: "Open my report" }).click();
   await expect(page.getByRole("heading", { name: "Amelia, your skin is telling a clear story." })).toBeVisible();

@@ -486,3 +486,9 @@ The browser remembers the client it's scanning as for 30 days (D-013), and only 
 - **A visit is finished once its scan is complete.** Begin then asks for consent again and starts a new client, with empty questions and the details pop-up at the end. The old client keeps their report; their next scan is a progress scan from the report link (D-073). A failed scan doesn't finish a visit, so "Try again" still works.
 - **A visit left part way** shows "Pick up where you left off" on the start page, with "Start over" beside it, instead of dropping someone mid-questionnaire unannounced.
 - The scan route refuses a second first scan on a finished visit.
+
+## D-083 · The report gate asks for a full name and a primary email, and email updates need no box (J, Oct 9)
+- **First name, last name and primary email** are all required before the report unlocks (checked in the browser and on the server). Phone stays optional.
+- **No "Remind me" box.** Joshua: clinics will send updates anyway. Sending their details now records the email-updates yes (`reminders`, version `2026-10-09.1`), and the line under the button says so: the clinic emails the report, reminders and progress updates; to stop them, reply to any email (replies land on the brief, D-081). The text box stays: US rules need a clear yes before texting (D-080).
+- **Still to build:** an unsubscribe link in rebook emails, so stopping doesn't depend on Dana reading a reply.
+- **The blurred report** behind the gate is a touch clearer (text 4px, photo blur 7): its shape shows, its words don't. After the report is emailed, the confirmation no longer offers a link to open it on screen.
