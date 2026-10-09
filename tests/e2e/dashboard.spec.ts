@@ -84,7 +84,7 @@ test("Daniel's text waited 18 days: Dana answers it from his brief, and it leave
 
   await conversation.getByRole("textbox", { name: "Answer Daniel" }).fill("Saturday at 10 works. Shall I hold it for you?");
   await conversation.getByRole("button", { name: "Send text" }).click();
-  await expect(page.getByText("Texted Daniel. Logged here, not sent (demo).")).toBeVisible();
+  await expect(page.getByText("Texted Daniel. Logged here, not sent (a sample client).")).toBeVisible();
   const done = page.getByRole("region", { name: "Conversation" });
   await expect(done).toContainText("Saturday at 10 works. Shall I hold it for you?");
   await expect(done).not.toContainText("Waiting on you");

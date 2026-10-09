@@ -23,6 +23,8 @@ export interface ConversationEntry {
   automatic: boolean;
   /** For a reply from an address or number that isn't the one on file. */
   sender: string | null;
+  /** For the clinic's messages: kept in the outbox but never sent (a sample client, or a demo-mode rebook message). */
+  logged: boolean;
   /** The reply waiting on an answer, with how long it has waited: "18 days". */
   waiting: string | null;
 }
@@ -147,7 +149,7 @@ export function Conversation({
             </li>
           )}
           {entries.slice(hidden).map((entry) => (
-            <Entry key={entry.id} entry={entry} firstName={firstName} demo={demo} arriving={!seen.has(entry.id)} />
+            <Entry key={entry.id} entry={entry} firstName={firstName} arriving={!seen.has(entry.id)} />
           ))}
         </ol>
       )}
@@ -274,7 +276,7 @@ function Words({ text, onDark }: { text: string; onDark: boolean }) {
   );
 }
 
-function Entry({ entry, firstName, demo, arriving }: { entry: ConversationEntry; firstName: string; demo: boolean; arriving: boolean }) {
+function Entry({ entry, firstName, arriving }: { entry: ConversationEntry; firstName: string; arriving: boolean }) {
   const [open, setOpen] = useState(false);
   const how = entry.channel === "sms" ? "Text" : "Email";
 
@@ -294,7 +296,7 @@ function Entry({ entry, firstName, demo, arriving }: { entry: ConversationEntry;
   // Long emails open on their first lines.
   const long = entry.channel === "email" && (entry.body.length > 420 || entry.body.split("\n").length > 8);
   const status =
-    entry.status === "failed" ? "Didn't go through" : fromClient ? null : demo ? "Logged" : "Sent";
+    entry.status === "failed" ? "Didn't go through" : fromClient ? null : entry.logged ? "Logged" : "Sent";
 
   return (
     <li className={cx("flex flex-col", fromClient ? "items-start" : "items-end", arriving && "focus-in")}>

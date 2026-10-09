@@ -18,7 +18,7 @@ import { monthDay, shortDay, shortName, statusOf } from "@/lib/dashboard/view";
 import { env, features } from "@/lib/env";
 import { currentReading } from "@/lib/intake/goal-reading";
 import { formatPrice } from "@/lib/plan/build";
-import { courses, daysBetween } from "@/lib/rebook/engine";
+import { TRIGGER_ORDER, courses, daysBetween } from "@/lib/rebook/engine";
 import { canAnswerByText, replySubject, thread, threadSubject } from "@/lib/replies/thread";
 import { formatUsPhone, toUsE164 } from "@/lib/sms/text";
 import { concernLabel } from "@/lib/skin/concerns";
@@ -142,10 +142,13 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
     const days = daysBetween(local(instant), book.today);
     return days <= 0 ? "today" : days === 1 ? "since yesterday" : `${days} days`;
   };
+  const rebookTypes = new Set<string>(TRIGGER_ORDER);
   const entries: ConversationEntry[] = thread(facts.messages, client).map((e) => ({
     ...e,
     when: stamp(e.at),
     waiting: facts.reply?.id === e.id ? waitedFor(e.at) : null,
+    // Sent for real unless it's a sample client's, or a rebook message sent in demo mode (D-085).
+    logged: e.side === "clinic" && (client.isDemo || (env.DEMO_MODE && rebookTypes.has(facts.messages.find((m) => m.id === e.id)?.type ?? ""))),
   }));
   const mobile = toUsE164(client.phone);
   const channels = { email: Boolean(client.email), text: canAnswerByText({ phone: client.phone, canText: facts.canText, messages: facts.messages }) };
@@ -173,7 +176,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
           phone={mobile ? formatUsPhone(mobile) : client.phone}
           subject={replySubject(facts.reply?.channel === "email" ? facts.reply.subject : threadSubject(facts.messages), `A note from ${book.clinic.name}`)}
           waiting={Boolean(facts.reply)}
-          demo={env.DEMO_MODE}
+          demo={env.DEMO_MODE && client.isDemo}
         />
       </div>
     </section>

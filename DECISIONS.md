@@ -498,3 +498,9 @@ Joshua's first real reply reached Resend but not the dashboard: Resend's webhook
 - **A safety net:** when the dashboard opens, the app asks Resend for the replies it received in the last 14 days (at most once a minute per server, three seconds at most) and takes in any sent to a reply address that isn't kept yet. The webhook stays the fast path; this catches whatever it missed, including past replies.
 - **One way in:** the webhook and the fetch share one step (`takeInEmail`), keyed by Resend's email id, so a reply is kept once whichever path brings it, and the same rules apply (quoted text cut, auto-replies ignored).
 - **Arrival time:** a reply fetched late keeps the time Resend received it, on the client's sandbox clock.
+
+## D-085 · A real client who wrote in gets a real answer, even in demo mode (J + C, Oct 9). Refines D-081
+Joshua answered his own test reply ("gday!") and nothing arrived: demo mode logged every answer, even to a real client. That was the wrong line. Clients who scan for real already get real report and booking emails in demo mode; an answer to someone who wrote in belongs with those.
+- **Answers send** to any real client (email with Resend set up; text with Twilio set up), demo mode or not. Only the demo's sample clients are logged and never sent, and the toast says which ("a sample client", "email isn't set up").
+- **Rebook messages** from the queue are unchanged: logged in demo mode.
+- **The thread labels each message** "Sent" or "Logged" by what actually happened, rather than by the mode.

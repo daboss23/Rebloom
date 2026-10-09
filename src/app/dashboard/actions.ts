@@ -334,7 +334,9 @@ export async function answerClient(input: z.input<typeof answerInput>): Promise<
   const when = (iso: string) =>
     new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: book.clinic.timezone }).format(new Date(iso));
   const quoted = reply?.channel === "email" ? { who: name, when: when(reply.sentAt ?? reply.createdAt), text: reply.body } : null;
-  const live = !env.DEMO_MODE && !client.isDemo && (channel === "email" ? features.email : features.sms);
+  // A real client who wrote in gets a real answer, demo mode or not, as booking emails do. Only the demo's sample
+  // clients are logged and never sent (D-085).
+  const live = !client.isDemo && (channel === "email" ? features.email : features.sms);
   let status: "sent" | "failed" = "sent";
   if (live && channel === "email") {
     try {
@@ -419,7 +421,8 @@ export async function answerClient(input: z.input<typeof answerInput>): Promise<
   if (status === "failed") return { ok: false, error: "The email didn't go through. Please try again." };
   if (copied) return { ok: true, message: `Logged for ${name}, and the answer is on its way to ${demoTo}.` };
   const how = channel === "text" ? "Texted" : "Sent to";
-  return { ok: true, message: live ? `${how} ${name}.` : `${how} ${name}. Logged here, not ${channel === "text" ? "sent" : "emailed"} (demo).` };
+  const why = client.isDemo ? "a sample client" : channel === "text" ? "texts aren't set up" : "email isn't set up";
+  return { ok: true, message: live ? `${how} ${name}.` : `${how} ${name}. Logged here, not ${channel === "text" ? "sent" : "emailed"} (${why}).` };
 }
 
 /** "Mark as handled": the reply needed no answer (a thank-you). A line in the conversation that Undo can take back. */
