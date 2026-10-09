@@ -29,6 +29,9 @@ export async function POST(request: Request) {
   const { email_id: id, from, to, cc, received_for, subject, created_at } = event.data;
   const outcome = await takeInEmail({ id, from, to, cc, received_for, subject, created_at });
   // Resend tries again later when reading the email fails; anything else is an answer.
-  if (outcome.status === "error") return json({ error: outcome.message }, 502);
+  if (outcome.status === "error") {
+    console.error(`Reply webhook: couldn't take in ${id}: ${outcome.message}`);
+    return json({ error: outcome.message }, 502);
+  }
   return json({ received: true, status: outcome.status });
 }

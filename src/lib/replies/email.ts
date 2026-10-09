@@ -57,7 +57,11 @@ export async function syncEmailReplies(now = Date.now()): Promise<number> {
   lastSync = now;
   try {
     const { data, error } = await resend().emails.receiving.list({ limit: 50 });
-    if (error || !data) return 0;
+    // Said in the logs: a sending-only API key can't read received mail, and that's the usual reason.
+    if (error || !data) {
+      console.error(`Reply sync: Resend wouldn't list received emails (${error?.name ?? "no data"}): ${error?.message ?? ""}`);
+      return 0;
+    }
     const ours = data.data.filter(
       (e) =>
         now - Date.parse(e.created_at) < SYNC_WINDOW_MS &&
@@ -65,8 +69,9 @@ export async function syncEmailReplies(now = Date.now()): Promise<number> {
     );
     let saved = 0;
     for (const e of ours) {
-      const outcome = await takeInEmail(e).catch(() => null);
-      if (outcome?.status === "saved") saved++;
+      const outcome = await takeInEmail(e).catch((err) => ({ status: "error" as const, message: err instanceof Error ? err.message : String(err) }));
+      if (outcome.status === "saved") saved++;
+      if (outcome.status === "error") console.error(`Reply sync: couldn't take in ${e.id}: ${outcome.message}`);
     }
     return saved;
   } catch (e) {
