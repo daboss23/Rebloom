@@ -22,6 +22,8 @@ export async function POST(request: Request) {
     return json({ error: "Your session expired. Please start again from the beginning." }, 401);
   }
   if (!state.intake?.completedAt) return json({ error: "Please finish the questions first." }, 409);
+  // A finished visit's next scan is a progress scan from its report link, never a second first scan.
+  if (state.finished) return json({ error: "This visit is finished. Please start again." }, 409);
 
   const store = getStore();
   const imagePath = scanImagePath(state.client.id, newId());

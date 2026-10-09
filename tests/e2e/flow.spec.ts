@@ -26,6 +26,50 @@ test("the intake can't be skipped", async ({ page }) => {
   await expect(page).toHaveURL(/\/consent$/);
 });
 
+test("a visit left part way offers to pick up or start over", async ({ page }) => {
+  await page.goto("/c/maison-verre/consent");
+  await page.locator("label[for=biometric]").click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Texture" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByText("2 of 7")).toBeVisible();
+
+  await page.goto("/c/maison-verre");
+  await page.getByRole("link", { name: "Pick up where you left off" }).click();
+  // The next question still to answer (the goal question is optional).
+  await expect(page.getByRole("heading", { name: "Any event coming up?" })).toBeVisible();
+
+  await page.goto("/c/maison-verre");
+  await page.getByRole("button", { name: "Start over" }).click();
+  await expect(page.getByRole("heading", { name: "Your photo, your choice." })).toBeVisible();
+  await page.goto("/c/maison-verre");
+  await expect(page.getByRole("link", { name: "Begin" })).toBeVisible();
+});
+
+test("after a finished scan, Begin starts a new visit instead of reopening the old one", async ({ page }) => {
+  test.setTimeout(120_000);
+  await completeIntake(page);
+  const photo = await sharp({ create: { width: 810, height: 1080, channels: 3, background: "#cbb8a6" } }).jpeg().toBuffer();
+  const scan = await (
+    await page.request.post("/api/scans", {
+      data: { clinicSlug: "maison-verre", width: 810, height: 1080, quality: GOOD_QUALITY, landmarks: syntheticLandmarks() },
+    })
+  ).json();
+  await page.request.put(scan.upload.url, { headers: scan.upload.headers, data: photo });
+  await page.request.post(`/api/scans/${scan.scanId}/analyze`);
+  await page.goto(`/c/maison-verre/processing?scan=${scan.scanId}`);
+  await expect(page.getByRole("dialog", { name: "Your skin report is ready." })).toBeVisible({ timeout: 30_000 });
+
+  await page.goto("/c/maison-verre");
+  await page.getByRole("link", { name: "Begin" }).click();
+  // Consent again, then the first question: not the old visit's last one.
+  await expect(page.getByRole("heading", { name: "Your photo, your choice." })).toBeVisible();
+  await page.locator("label[for=biometric]").click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByText("1 of 7")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Texture" })).toHaveAttribute("aria-pressed", "false");
+});
+
 test("an uploaded photo without a face is explained, not accepted", async ({ page }) => {
   await completeIntake(page, "tidewater");
   const wall = await sharp({ create: { width: 600, height: 800, channels: 3, background: "#d8d2c8" } }).jpeg().toBuffer();

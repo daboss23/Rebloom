@@ -480,3 +480,9 @@ Joshua asked for clients' replies to reach the dashboard. Every rebook message a
 - **Demo:** Daniel texted back 18 days ago and nobody answered (why he's at risk), Priya asked about downtime last night, and Amelia's question was answered. Answers are logged, never sent. With Resend set up, a reply to a demo copy (D-064) lands in that browser's sample client, and Dana's answer goes back to whoever replied, marked as a demo (three per browser).
 - **Safety valves:** 30 replies per client per day; replies take their sandbox's clock and always sort after what they answer.
 - **Not yet:** attachments and pictures (the thread says one was sent), and a notification when a reply lands while Dana is away from the dashboard.
+
+## D-082 · A finished scan ends the visit (C, Oct 9). Fixes a bug Joshua found
+The browser remembers the client it's scanning as for 30 days (D-013), and only Delete my data forgot it. So after a finished scan, "Begin" reopened that visit: consent already given, every answer filled in, straight to the optional age question; the new scan joined the old client, the report gate was skipped (it already had a name and email), and the confirmation said the report couldn't be emailed (none was sent for that scan).
+- **A visit is finished once its scan is complete.** Begin then asks for consent again and starts a new client, with empty questions and the details pop-up at the end. The old client keeps their report; their next scan is a progress scan from the report link (D-073). A failed scan doesn't finish a visit, so "Try again" still works.
+- **A visit left part way** shows "Pick up where you left off" on the start page, with "Start over" beside it, instead of dropping someone mid-questionnaire unannounced.
+- The scan route refuses a second first scan on a finished visit.

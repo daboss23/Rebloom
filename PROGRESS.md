@@ -13,6 +13,8 @@
 - **In the demo:** Daniel texted back 18 days ago and nobody saw it, which is why he went quiet. Priya asked about downtime last night. Amelia's question was answered. With Resend set up, a judge who replies to a demo copy sees their reply land in that sample client's conversation, and gets Dana's answer back.
 - **Tests:** 418 unit tests (18 new: reading replies, quotes and sign-offs, STOP and START, what waits, reply addresses, Twilio's signature, routing and duplicates) and two new browser tests (answering Daniel's text from Today; "No answer needed" and Undo for Priya). All 23 other browser tests pass; "a scan runs end to end" times out on the mask request in this workspace with or without these changes (a cold compile).
 
+- **Fixed (D-082):** after a finished scan, "Try the client experience" reopened that visit at the age question, skipped the details pop-up and said the report couldn't be emailed. A finished scan now ends the visit; a visit left part way offers "Pick up where you left off" or "Start over".
+
 ### What Joshua needs to do
 1. **One database change** (`20261009120000_replies`): run `pnpm db:migrate`, or ask me to. **Do this before deploying**: new demo sandboxes include replies, and can't be created until it's applied.
 2. **Nothing else for the demo.** Daniel and Priya are waiting on Today.

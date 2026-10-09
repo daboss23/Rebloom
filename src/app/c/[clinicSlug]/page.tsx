@@ -1,6 +1,7 @@
 import { ButtonLink } from "@/components/ui/Button";
 import { IconArrowRight, IconCheckCircle, IconLock } from "@/components/ui/Icons";
-import { loadClinic } from "@/lib/flow/load";
+import { inProgress, loadFlow } from "@/lib/flow/load";
+import { startOver } from "./actions";
 
 const PROMISES = [
   ["Your three priorities", "Not fifteen numbers. The three things worth your attention, in plain words.", <IconCheckCircle key="p" width={18} height={18} />],
@@ -9,7 +10,10 @@ const PROMISES = [
 ] as const;
 
 export default async function ScanStartPage({ params }: PageProps<"/c/[clinicSlug]">) {
-  const clinic = await loadClinic((await params).clinicSlug);
+  const state = await loadFlow((await params).clinicSlug);
+  const { clinic } = state;
+  // Someone who began and left part way: offer to carry on, never drop them mid-questionnaire unannounced.
+  const resume = inProgress(state);
   return (
     <div className="pb-4 pt-10">
       {clinic.lockupUrl && (
@@ -30,10 +34,21 @@ export default async function ScanStartPage({ params }: PageProps<"/c/[clinicSlu
 
       <div className="focus-in mt-10" style={{ animationDelay: "240ms" }}>
         <ButtonLink href={`/c/${clinic.slug}/consent`} block className="group !min-h-14 text-[16px]">
-          Begin
+          {resume ? "Pick up where you left off" : "Begin"}
           <IconArrowRight width={18} height={18} aria-hidden className="transition-transform duration-300 ease-out group-hover:translate-x-1" />
         </ButtonLink>
-        <p className="t-caption mt-4 text-center">About three minutes · Free · No account needed</p>
+        {resume ? (
+          <form action={startOver.bind(null, clinic.slug)} className="mt-4 text-center">
+            <p className="t-caption">
+              Welcome back. Your answers so far are saved.{" "}
+              <button type="submit" className="text-ink underline decoration-[#0c1a22]/25 underline-offset-4 hover:decoration-ink">
+                Start over
+              </button>
+            </p>
+          </form>
+        ) : (
+          <p className="t-caption mt-4 text-center">About three minutes · Free · No account needed</p>
+        )}
       </div>
 
       <ul className="mt-14 space-y-3">

@@ -1,13 +1,13 @@
 import { ConsentForm } from "@/components/flow/ConsentForm";
 import { Label } from "@/components/ui/Typography";
 import { IconLock } from "@/components/ui/Icons";
-import { hasBiometricConsent, loadFlow } from "@/lib/flow/load";
+import { inProgress, loadFlow } from "@/lib/flow/load";
 import { redirect } from "next/navigation";
 
 export default async function ConsentPage({ params }: PageProps<"/c/[clinicSlug]/consent">) {
   const { clinicSlug } = await params;
   const state = await loadFlow(clinicSlug);
-  if (state.client && hasBiometricConsent(state)) redirect(`/c/${clinicSlug}/intake`);
+  if (inProgress(state)) redirect(`/c/${clinicSlug}/intake`);
   const { clinic } = state;
 
   const sections: [string, string][] = [
