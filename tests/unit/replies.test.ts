@@ -280,3 +280,40 @@ describe("the report gate's details", () => {
     expect(unlockSchema.safeParse({ ...ok, email: "" }).error?.issues[0].message).toBe("Please add your primary email.");
   });
 });
+
+describe("fetching replies the webhook missed", () => {
+  it("takes in what Resend received for a reply address, once, at the time it arrived", async () => {
+    const store = (await import("@/lib/store/local")).localStore;
+    const { replyAddress } = await import("@/lib/replies/address");
+    const resendModule = await import("@/lib/email/resend");
+    await store.createSandbox("sync", new Date());
+    const client = await store.createClient({ clinicId: MAISON_VERRE.id, sandboxId: "sync", now: new Date() });
+    await store.updateClient(client.id, { firstName: "Cai", email: "cai@example.com" });
+    const arrived = new Date(Date.now() - 3_600_000).toISOString();
+    const received = [
+      { id: "em_sync_1", from: "Cai <cai@example.com>", to: [replyAddress(client.id)!], received_for: [], cc: [], subject: "Re: Your report", created_at: arrived },
+      { id: "em_other", from: "x@example.com", to: ["hello@elsewhere.test"], received_for: [], cc: [], subject: "Hi", created_at: arrived },
+    ];
+    const fake = {
+      emails: {
+        receiving: {
+          list: vi.fn(async () => ({ data: { object: "list", has_more: false, data: received }, error: null })),
+          get: vi.fn(async (id: string) => ({
+            data: { ...received.find((e) => e.id === id), text: "Thursday works.\n\nOn Tue Dana wrote:\n> old", html: null, headers: {}, attachments: [] },
+            error: null,
+          })),
+        },
+      },
+    };
+    const spy = vi.spyOn(resendModule, "resend").mockReturnValue(fake as never);
+    const { syncEmailReplies } = await import("@/lib/replies/email");
+    expect(await syncEmailReplies(Date.now())).toBe(1);
+    // A minute later: nothing new, and the kept reply isn't read from Resend again.
+    expect(await syncEmailReplies(Date.now() + 61_000)).toBe(0);
+    expect(fake.emails.receiving.get).toHaveBeenCalledTimes(1);
+    const reply = (await store.listClientMessages(client.id)).find((m) => m.status === "received")!;
+    expect(reply.body).toBe("Thursday works.");
+    expect(Math.abs(Date.parse(reply.createdAt) - Date.parse(arrived))).toBeLessThan(5000);
+    spy.mockRestore();
+  });
+});

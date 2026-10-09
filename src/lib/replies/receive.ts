@@ -21,6 +21,8 @@ export interface Inbound {
   sender: string;
   subject: string | null;
   body: string;
+  /** When the provider received it, if known: a reply fetched late still reads at the time it was sent. */
+  receivedAt?: Date;
 }
 
 export type Received =
@@ -74,7 +76,7 @@ export async function saveReply(client: Client, inbound: Inbound): Promise<Recei
     return { status: "limited", clientId: client.id };
   }
   // The demo clock can run ahead (D-016): a reply belongs after the message it answers, on the same clock.
-  const clock = virtualNow({ demoToday: env.DEMO_TODAY, offsetDays: sandbox?.clockOffsetDays ?? 0 });
+  const clock = virtualNow({ demoToday: env.DEMO_TODAY, offsetDays: sandbox?.clockOffsetDays ?? 0 }, inbound.receivedAt);
   const latest = messages.reduce((t, m) => Math.max(t, Date.parse(at(m))), 0);
   const receivedAt = new Date(Math.max(clock.getTime(), latest + 1000)).toISOString();
 

@@ -492,3 +492,9 @@ The browser remembers the client it's scanning as for 30 days (D-013), and only 
 - **No "Remind me" box.** Joshua: clinics will send updates anyway. Sending their details now records the email-updates yes (`reminders`, version `2026-10-09.1`), and the line under the button says so: the clinic emails the report, reminders and progress updates; to stop them, reply to any email (replies land on the brief, D-081). The text box stays: US rules need a clear yes before texting (D-080).
 - **Still to build:** an unsubscribe link in rebook emails, so stopping doesn't depend on Dana reading a reply.
 - **The blurred report** behind the gate is a touch clearer (text 4px, photo blur 7): its shape shows, its words don't. After the report is emailed, the confirmation no longer offers a link to open it on screen.
+
+## D-084 · Replies don't depend on the webhook alone (C, Oct 9)
+Joshua's first real reply reached Resend but not the dashboard: Resend's webhook hit `rebloom.skin`, which Vercel redirects to `www.rebloom.skin`, and webhooks don't follow redirects (308). One misconfigured setting was enough to lose a client's words silently.
+- **A safety net:** when the dashboard opens, the app asks Resend for the replies it received in the last 14 days (at most once a minute per server, three seconds at most) and takes in any sent to a reply address that isn't kept yet. The webhook stays the fast path; this catches whatever it missed, including past replies.
+- **One way in:** the webhook and the fetch share one step (`takeInEmail`), keyed by Resend's email id, so a reply is kept once whichever path brings it, and the same rules apply (quoted text cut, auto-replies ignored).
+- **Arrival time:** a reply fetched late keeps the time Resend received it, on the client's sandbox clock.
