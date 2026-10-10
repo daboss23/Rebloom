@@ -36,9 +36,9 @@ export function NoteEditor({ clientId, initial, author }: { clientId: string; in
         />
       </label>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <span className="t-caption !text-[0.78125rem]">{author}</span>
+        <span className="t-caption !text-[0.8125rem]">{author}</span>
         <span className="flex items-center gap-4">
-          <span role="status" className="t-caption !text-[0.78125rem]">
+          <span role="status" className="t-caption !text-[0.8125rem]">
             {status?.text}
           </span>
           <button

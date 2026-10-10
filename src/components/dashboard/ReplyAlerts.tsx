@@ -57,7 +57,7 @@ export function ReplyAlerts({ email, phone, textsLive }: { email: string | null;
             aria-invalid={status && !status.ok && /mobile/i.test(status.text) ? true : undefined}
             className={field}
           />
-          <span id={`${id}-phone-help`} className="t-caption mt-2 block !text-[0.78125rem]">
+          <span id={`${id}-phone-help`} className="t-caption mt-2 block !text-[0.8125rem]">
             {textsLive ? "A US mobile. Optional." : "Texts need Twilio connected. A number saved now is used once it is."}
           </span>
         </label>

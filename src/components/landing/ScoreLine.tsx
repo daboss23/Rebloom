@@ -51,7 +51,7 @@ export function ScoreLine({ series, label, className, plotClassName }: { series:
           );
         })}
       </div>
-      <div aria-hidden className="mt-3 flex justify-between px-[2%] text-[0.6875rem] uppercase tracking-[0.14em] text-text-3">
+      <div aria-hidden className="mt-3 flex justify-between px-[2%] text-[0.75rem] uppercase tracking-[0.14em] text-text-3">
         <span>First scan</span>
         <span>Latest</span>
       </div>

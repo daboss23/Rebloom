@@ -34,12 +34,12 @@ export default async function EnterPage() {
             <IconArrowLeft width={15} height={15} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
             Rebloom home
           </Link>
-          <span className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">Clinic dashboard</span>
+          <span className="text-[0.75rem] uppercase tracking-[0.22em] text-[#1e5a78]">Clinic dashboard</span>
         </header>
 
         <main className="grid flex-1 content-center items-center gap-12 pb-20 pt-4 lg:grid-cols-[minmax(0,1fr)_416px] lg:gap-16 lg:pb-24 xl:gap-24">
           <section className="focus-in mx-auto w-full max-w-[640px] lg:mx-0">
-            <p className="flex items-center gap-2.5 text-[0.6875rem] uppercase tracking-[0.22em] text-[#9e4a5d]">
+            <p className="flex items-center gap-2.5 text-[0.75rem] uppercase tracking-[0.22em] text-[#9e4a5d]">
               <Bloom size={16} unfurl />
               Every client&apos;s next beginning
             </p>
@@ -65,7 +65,7 @@ export default async function EnterPage() {
           </section>
 
           <section className="glass focus-in mx-auto w-full max-w-[26rem] p-8 sm:p-10 lg:mx-0" style={{ animationDelay: "180ms" }}>
-            <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-text-3">Demo clinic</p>
+            <p className="text-[0.75rem] uppercase tracking-[0.22em] text-text-3">Demo clinic</p>
             <div className="mt-5">
               <ClinicWordmark clinic={MAISON_VERRE} />
             </div>
@@ -81,7 +81,7 @@ export default async function EnterPage() {
                   <span className="block text-[0.8125rem] text-text-3">{DANA.title}</span>
                 </span>
               </div>
-              <p className="mt-5 text-[0.90625rem] leading-relaxed text-text-2">
+              <p className="mt-5 text-[0.9375rem] leading-relaxed text-text-2">
                 Twelve demo clients, laid out around today. Send, confirm and move the clock freely: everything stays in
                 this browser.
               </p>
@@ -91,7 +91,7 @@ export default async function EnterPage() {
                   <IconArrowRight width={18} height={18} className="transition-transform duration-300 ease-out group-hover:translate-x-1" />
                 </button>
               </form>
-              <p className="t-caption mt-5 !text-[0.75rem]">Clinic sign-in by email arrives at launch.</p>
+              <p className="t-caption mt-5 !text-[0.8125rem]">Clinic sign-in by email arrives at launch.</p>
             </div>
           </section>
 
@@ -114,7 +114,7 @@ function Pillars({ className }: { className: string }) {
       ].map(([term, detail], i) => (
         <div key={term} className="glass focus-in min-w-0 px-3 py-4 sm:px-5 sm:py-5" style={{ animationDelay: `${300 + i * 90}ms` }}>
           <dt className="font-display text-[1.1875rem] font-light text-ink sm:text-[1.5rem]">{term}</dt>
-          <dd className="mt-1.5 text-[0.78125rem] leading-snug text-text-3">{detail}</dd>
+          <dd className="mt-1.5 text-[0.8125rem] leading-snug text-text-3">{detail}</dd>
         </div>
       ))}
     </dl>

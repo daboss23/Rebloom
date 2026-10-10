@@ -111,10 +111,10 @@ export function FaceScan({
               style={{ transform: `scaleX(${Math.max(0.04, Math.min(1, progress))})` }}
             />
           </span>
-          <span key={stage} className="fade min-w-0 flex-1 truncate text-[0.65625rem] uppercase tracking-[0.16em] drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+          <span key={stage} className="fade min-w-0 flex-1 truncate text-[0.75rem] uppercase tracking-[0.16em] drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
             {stage}
           </span>
-          <span className="shrink-0 text-[0.65625rem] tabular-nums tracking-[0.12em] text-white/80">
+          <span className="shrink-0 text-[0.75rem] tabular-nums tracking-[0.12em] text-white/80">
             {Math.min(step, steps)}/{steps}
           </span>
         </div>

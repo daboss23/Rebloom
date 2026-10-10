@@ -13,7 +13,7 @@ export function StatusMark({ status }: { status: ClientStatus }) {
           ? "signal-course"
           : "signal-calm";
   return (
-    <span className={cx("signal h-7 px-3 text-[0.78125rem]", signal)}>
+    <span className={cx("signal h-7 px-3 text-[0.8125rem]", signal)}>
       <span aria-hidden className="signal-dot" />
       {STATUS_LABEL[status]}
     </span>

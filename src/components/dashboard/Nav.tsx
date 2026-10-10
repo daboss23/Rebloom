@@ -45,14 +45,14 @@ export function SideNav({ items }: { items: NavItem[] }) {
                 {item.label}
               </span>
               {item.attention ? (
-                <span className="flex items-center gap-1.5 text-[0.75rem] tabular-nums text-[#e2c07a]">
+                <span className="flex items-center gap-1.5 text-[0.8125rem] tabular-nums text-[#e2c07a]">
                   <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#e2c07a] shadow-[0_0_0_3px_rgb(226_192_122/0.18)]" />
                   {item.attention}
                   <span className="sr-only">{waitingLabel(item.attention)}</span>
                 </span>
               ) : (
                 item.count !== undefined && (
-                  <span className={cx("tabular-nums text-[0.75rem]", active ? "text-[#e2c07a]" : "text-ink-soft/80")}>{item.count}</span>
+                  <span className={cx("tabular-nums text-[0.8125rem]", active ? "text-[#e2c07a]" : "text-ink-soft/80")}>{item.count}</span>
                 )
               )}
             </Link>
@@ -82,13 +82,13 @@ export function TabNav({ items }: { items: NavItem[] }) {
             >
               {item.label}
               {item.attention ? (
-                <span className="flex items-center gap-1 text-[0.75rem] font-medium tabular-nums text-[#7a5014]">
+                <span className="flex items-center gap-1 text-[0.8125rem] font-medium tabular-nums text-[#7a5014]">
                   <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#c99645]" />
                   {item.attention}
                   <span className="sr-only">{waitingLabel(item.attention)}</span>
                 </span>
               ) : (
-                item.count !== undefined && <span className="tabular-nums text-[0.75rem] text-text-3">{item.count}</span>
+                item.count !== undefined && <span className="tabular-nums text-[0.8125rem] text-text-3">{item.count}</span>
               )}
             </Link>
           </li>

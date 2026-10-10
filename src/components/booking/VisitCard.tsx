@@ -54,8 +54,8 @@ export function VisitCard({
       <dl className="mt-6 border-t border-[#0c1a22]/[0.08]">
         {rows.map(([term, value]) => (
           <div key={term} className="grid grid-cols-[92px_1fr] gap-3 border-b border-[#0c1a22]/[0.06] py-3.5 last:border-0">
-            <dt className="t-label !text-[0.65625rem] leading-[1.9]">{term}</dt>
-            <dd className="text-[0.90625rem] leading-relaxed text-ink">{value}</dd>
+            <dt className="t-label !text-[0.75rem] leading-[1.9]">{term}</dt>
+            <dd className="text-[0.9375rem] leading-relaxed text-ink">{value}</dd>
           </div>
         ))}
       </dl>
@@ -67,7 +67,7 @@ export function VisitCard({
         {canCancel ? (
           <CancelVisit token={token} appointmentId={appointment.id} refund={paid ? dollars(appointment.depositCents) : null} noticeHours={noticeHours} />
         ) : (
-          <p className="t-caption !text-[0.84375rem]">
+          <p className="t-caption !text-[0.875rem]">
             Your visit is less than {noticeHours} hours away. To change it, please call us on{" "}
             <a href={`tel:${clinic.phone.replace(/[^\d+]/g, "")}`} className="text-ink underline decoration-[#0c1a22]/30 underline-offset-4">
               {clinic.phone}

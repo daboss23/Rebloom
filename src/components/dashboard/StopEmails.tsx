@@ -33,7 +33,7 @@ export function StopEmails({ clientId, firstName }: { clientId: string; firstNam
               if (!result.ok) setError(result.error ?? "Something went wrong. Please try again.");
             })
           }
-          className="rounded-full bg-ink px-3.5 py-1.5 text-[0.78125rem] text-white transition-colors duration-150 hover:bg-[#1b2c36] disabled:opacity-60"
+          className="rounded-full bg-ink px-3.5 py-1.5 text-[0.8125rem] text-white transition-colors duration-150 hover:bg-[#1b2c36] disabled:opacity-60"
         >
           {pending ? "Stopping" : "Stop emails"}
         </button>

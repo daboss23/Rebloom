@@ -50,7 +50,7 @@ export default async function RescanPage({ params, searchParams }: PageProps<"/r
 
 function BackLink({ token }: { token: string }) {
   return (
-    <Link href={`/r/${token}`} className="t-caption inline-flex min-h-11 items-center gap-2 !text-[0.84375rem] text-text-2 hover:text-ink">
+    <Link href={`/r/${token}`} className="t-caption inline-flex min-h-11 items-center gap-2 !text-[0.875rem] text-text-2 hover:text-ink">
       <IconArrowLeft width={16} height={16} />
       Your report
     </Link>

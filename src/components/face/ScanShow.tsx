@@ -368,7 +368,7 @@ export function ScanShow({
                 <span key={a} className={cx("h-[3px] rounded-full transition-[width,background-color] duration-500", ACTS[timeline.act] === a || (still && k === 0) ? "w-4 bg-[#f1d49a]" : "w-1.5 bg-white/55")} />
               ))}
             </span>
-            <span className="text-[0.59375rem] font-medium uppercase tracking-[0.18em] text-white">
+            <span className="text-[0.75rem] font-medium uppercase tracking-[0.18em] text-white">
               {String((still ? 0 : timeline.act) + 1).padStart(2, "0")} · {CHAPTER[act]}
             </span>
           </span>
@@ -380,26 +380,26 @@ export function ScanShow({
             <span className="font-display text-[2.25rem] font-light leading-none text-ink tabular-nums">
               {act === "lock" ? <CountUp key={`n-${timeline.run}-${timeline.act}`} value={points.length >= 468 ? 468 : points.length} format="int" delay={150} /> : "468"}
             </span>
-            <span className="text-[0.75rem] leading-tight text-text-2">points mapped on {face}</span>
+            <span className="text-[0.8125rem] leading-tight text-text-2">points mapped on {face}</span>
           </p>
         </ShowCard>
 
         <ShowCard state={card("contour")} place="right-[5%] bottom-[19%]" from="right">
           <Kicker>Contour</Kicker>
           <p className="mt-1 font-display text-[1.5rem] font-light leading-tight text-ink">Side to side</p>
-          <p className="mt-0.5 text-[0.75rem] leading-snug text-text-2">Shape and firmness, as the light turns</p>
+          <p className="mt-0.5 text-[0.8125rem] leading-snug text-text-2">Shape and firmness, as the light turns</p>
         </ShowCard>
 
         <ShowCard state={card("texture")} place="right-[5%] top-[13%]" from="right">
           <Kicker>Texture</Kicker>
           <p className="mt-1 font-display text-[1.5rem] font-light leading-tight text-ink">Up close</p>
-          <p className="mt-0.5 text-[0.75rem] leading-snug text-text-2">Smoothness and pores, cheek to cheek</p>
+          <p className="mt-0.5 text-[0.8125rem] leading-snug text-text-2">Smoothness and pores, cheek to cheek</p>
         </ShowCard>
 
         <ShowCard state={card("tone")} place="left-[5%] top-[13%]" from="left" narrow>
           <Kicker>Tone</Kicker>
           <p className="mt-1 font-display text-[1.5rem] font-light leading-tight text-ink">Evenness</p>
-          <p className="mt-0.5 text-[0.75rem] leading-snug text-text-2">Color compared, forehead to jaw</p>
+          <p className="mt-0.5 text-[0.8125rem] leading-snug text-text-2">Color compared, forehead to jaw</p>
           {swatches && (
             <span className="mt-2 flex gap-1.5">
               {swatches.map((c, k) => (
@@ -428,7 +428,7 @@ export function ScanShow({
                 }}
               >
                 <span className="h-4 w-4 rounded-full shadow-[inset_0_0_0_1.5px_rgba(255,255,255,0.85)]" style={{ background: swatches[k] }} />
-                <span className="text-[0.625rem] font-medium uppercase tracking-[0.12em] text-ink">{label}</span>
+                <span className="text-[0.75rem] font-medium uppercase tracking-[0.12em] text-ink">{label}</span>
               </span>
             );
           })}
@@ -436,7 +436,7 @@ export function ScanShow({
         <ShowCard state={card("lines")} place="left-[5%] bottom-[19%]" from="left">
           <Kicker>Lines</Kicker>
           <p className="mt-1 font-display text-[1.5rem] font-light leading-tight text-ink">Around the eyes</p>
-          <p className="mt-0.5 text-[0.75rem] leading-snug text-text-2">Fine lines, brow to under-eye</p>
+          <p className="mt-0.5 text-[0.8125rem] leading-snug text-text-2">Fine lines, brow to under-eye</p>
         </ShowCard>
 
         {report && (
@@ -472,7 +472,7 @@ const CHAPTER: Record<(typeof ACTS)[number], string> = { lock: "Lock-on", contou
 
 function Kicker({ children }: { children: ReactNode }) {
   return (
-    <span className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[0.18em] text-[#1e5a78]">
+    <span className="flex items-center gap-1.5 text-[0.75rem] font-medium uppercase tracking-[0.18em] text-[#1e5a78]">
       <span className="scan-pip" />
       {children}
     </span>

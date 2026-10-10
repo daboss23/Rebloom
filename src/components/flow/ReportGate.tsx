@@ -131,7 +131,7 @@ export function ReportGate({
                   <header className="sea on-dark relative overflow-hidden px-6 pb-7 pt-6">
                     <LightField variant="sea" className="opacity-70" />
                     <div className="relative">
-                      <p className="flex items-center gap-2 text-[0.6875rem] uppercase tracking-[0.22em] text-[#e2c07a]">
+                      <p className="flex items-center gap-2 text-[0.75rem] uppercase tracking-[0.22em] text-[#e2c07a]">
                         <IconLock width={15} height={15} aria-hidden />
                         Analysis complete
                       </p>

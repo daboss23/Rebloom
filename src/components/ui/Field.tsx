@@ -13,7 +13,7 @@ export function FieldLabel({ htmlFor, children, optional }: { htmlFor: string; c
   return (
     <label htmlFor={htmlFor} className="t-label mb-2 flex justify-between">
       <span>{children}</span>
-      {optional && <span className="normal-case tracking-normal text-[0.75rem]">Optional</span>}
+      {optional && <span className="normal-case tracking-normal text-[0.8125rem]">Optional</span>}
     </label>
   );
 }

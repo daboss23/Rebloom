@@ -162,7 +162,7 @@ export function HeroFace({
               <span className="scan-target absolute -translate-x-1/2 -translate-y-1/2" />
             </span>
           )}
-          <span className="absolute bottom-3 left-4 text-[0.6875rem] uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
+          <span className="absolute bottom-3 left-4 text-[0.75rem] uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
             Scan {scan} · Face map
           </span>
           {live && (
@@ -173,7 +173,7 @@ export function HeroFace({
                 setShowing(true);
                 setTake((n) => n + 1);
               }}
-              className="scan-chapter hero-card-in absolute right-3 top-3 flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-white transition-transform duration-150 active:scale-[0.96]"
+              className="scan-chapter hero-card-in absolute right-3 top-3 flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[0.75rem] font-medium uppercase tracking-[0.14em] text-white transition-transform duration-150 active:scale-[0.96]"
             >
               <svg aria-hidden viewBox="0 0 16 16" width={12} height={12}>
                 <path d="M13 8a5 5 0 1 1-1.5-3.5M13 2.5v3h-3" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
@@ -193,11 +193,11 @@ export function HeroFace({
           style={{ "--d": "60ms" } as React.CSSProperties}
         >
           <p key={current.key} className="fade flex items-baseline justify-between gap-3">
-            <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-[#1e5a78]">{current.label}</span>
+            <span className="text-[0.75rem] uppercase tracking-[0.14em] text-[#1e5a78]">{current.label}</span>
             <span className="font-display text-[2.125rem] font-light leading-none text-ink">{current.score}</span>
           </p>
           <ScoreRuler value={current.score} from={current.from} tone={current.score > current.from ? "growth" : "sea"} className="mt-2.5" />
-          <p className="mt-2 text-[0.75rem] text-text-2">
+          <p className="mt-2 text-[0.8125rem] text-text-2">
             {current.from === current.score ? `Holding at ${current.score} since scan 01` : `${current.from} at scan 01`}
           </p>
         </div>
@@ -214,7 +214,7 @@ export function HeroFace({
             <Bloom size={22} className="shrink-0 text-[#9e4a5d]" />
             <p>
               <span className="block font-display text-[1.875rem] font-light leading-none text-[var(--growth)]">+{change}</span>
-              <span className="mt-1 block text-[0.75rem] leading-tight text-text-2">
+              <span className="mt-1 block text-[0.8125rem] leading-tight text-text-2">
                 {featured.label} since scan 01
               </span>
             </p>
@@ -241,7 +241,7 @@ export function HeroFace({
                 setActive(i);
               }}
               className={cx(
-                "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-2 text-[0.78125rem] transition-[background-color,color] duration-300 active:scale-[0.97] sm:text-[0.8125rem]",
+                "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-2 text-[0.8125rem] transition-[background-color,color] duration-300 active:scale-[0.97] sm:text-[0.8125rem]",
                 i === active ? "bg-[linear-gradient(180deg,#1e5a78,#0e2230)] text-white" : "text-ink hover:bg-white",
               )}
             >
@@ -251,7 +251,7 @@ export function HeroFace({
           ))}
         </div>
       </div>
-      <figcaption className="mx-auto mt-4 max-w-[560px] text-[0.78125rem] leading-relaxed text-text-3 lg:mr-0">
+      <figcaption className="mx-auto mt-4 max-w-[560px] text-[0.8125rem] leading-relaxed text-text-3 lg:mr-0">
         {firstName} is a sample client: an AI-generated portrait, read and scored exactly as her report shows it.
       </figcaption>
     </figure>

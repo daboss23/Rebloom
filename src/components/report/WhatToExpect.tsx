@@ -76,7 +76,7 @@ export function WhatToExpect({
                 className="absolute inset-0 h-full w-full object-cover fade"
               />
             ) : (
-              <span className="absolute bottom-3 left-3 text-[0.6875rem] uppercase tracking-[0.14em] text-[#1e5a78]" role="status" style={{ animation: "breathe 2.4s ease-in-out infinite" }}>
+              <span className="absolute bottom-3 left-3 text-[0.75rem] uppercase tracking-[0.14em] text-[#1e5a78]" role="status" style={{ animation: "breathe 2.4s ease-in-out infinite" }}>
                 Preparing
               </span>
             )}

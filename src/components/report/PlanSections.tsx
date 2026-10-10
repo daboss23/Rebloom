@@ -101,7 +101,7 @@ function Lines({ option }: { option: PlanOption }) {
   return (
     <>
       {option.lines.map((l) => (
-        <div key={l.treatment.id} className="flex items-baseline justify-between gap-4 border-t border-[#0c1a22]/[0.07] py-3 text-[0.90625rem] first:border-t-0">
+        <div key={l.treatment.id} className="flex items-baseline justify-between gap-4 border-t border-[#0c1a22]/[0.07] py-3 text-[0.9375rem] first:border-t-0">
           <span className="text-text-2">
             {l.treatment.name} · {l.sessions === 1 ? "1 session" : `${l.sessions} sessions`}
           </span>
@@ -121,7 +121,7 @@ export function Investment({ plan, budgetBand }: { plan: Plan; budgetBand: Budge
       </h2>
       <div className="glass mt-6 px-5 pb-5 pt-2">
         <Lines option={plan.recommended} />
-        <div className="flex items-baseline justify-between border-t border-[#0c1a22]/[0.07] py-3 text-[0.90625rem]">
+        <div className="flex items-baseline justify-between border-t border-[#0c1a22]/[0.07] py-3 text-[0.9375rem]">
           <span className="text-text-2">Progress scans</span>
           <span className="text-text-3">Included</span>
         </div>
@@ -142,7 +142,7 @@ export function Investment({ plan, budgetBand }: { plan: Plan; budgetBand: Budge
           </p>
           <div className="mt-3">
             <Lines option={plan.withinBudget} />
-            <div className="flex items-baseline justify-between border-t border-[#0c1a22]/[0.12] pt-3 text-[0.90625rem]">
+            <div className="flex items-baseline justify-between border-t border-[#0c1a22]/[0.12] pt-3 text-[0.9375rem]">
               <span className="text-ink">Total</span>
               <span className="gold-foil font-display text-[1.625rem] leading-none tabular-nums">{formatPrice(plan.withinBudget.totalCents)}</span>
             </div>
