@@ -82,7 +82,7 @@ Next.js 16 (App Router, TypeScript), Tailwind CSS 4, Supabase (Postgres, Auth, p
 
 ## Privacy by design
 
-Explicit biometric consent before the camera opens, a versioned consent record, private storage with token-scoped access, hashed IPs, one-tap data deletion, and per-browser demo sandboxes so no visitor ever sees another visitor's face.
+Explicit biometric consent before the camera opens, a versioned consent record, private storage with token-scoped access, hashed IPs, one-tap data deletion, and private demo sandboxes, one per visitor, so no visitor ever sees another visitor's face.
 
 ## Project documents
 

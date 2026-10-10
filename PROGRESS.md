@@ -1,5 +1,23 @@
 # Progress
 
+## Session 13 · Saturday October 10, 2026 · A judge's demo follows them to any device
+
+**A judge who scans on their phone and opens the dashboard on their laptop now finds themselves there as a new client** (DECISIONS D-090). The demo stays private to each judge.
+
+### What's done
+- **"See it from the clinic's side"** on the confirmation after the scan, at the foot of the report, and in the report email: it opens the dashboard on any device, on the judge's own brief.
+- **"Scan yourself in"** on Today: a code for the phone's camera that carries the laptop's demo to the phone, so the scan lands in the dashboard on screen. On a phone, a "Start a scan" link.
+- **"Joshua just scanned."** The dashboard's live notice now announces new clients too, within 15 seconds, with a gold "Open Joshua's brief".
+- **Fixed:** the "Delete my data" browser test (it ran out of time, the app was fine).
+- **Tests:** unit tests for the links (each works only for its purpose, expires, appears only for someone who scanned themselves in) and the email; browser tests for the report's link opening on a second device, the code joining a phone to the demo, and the new-client notice.
+
+### What Joshua needs to do
+Nothing. To try it: open www.rebloom.skin on a laptop, enter the dashboard, and point your phone at "Scan yourself in".
+
+### What's next
+1. **For real clients:** the same code on the clinic's scan page, so someone starting on a desktop can scan on their phone instead.
+
+---
 ## Session 12 · Saturday October 10, 2026 · Replies in the dashboard, and alerts that open anywhere
 
 **A reply now shows up inside the dashboard the moment it lands** (DECISIONS D-089), **and an alert's Answer button opens the same demo on any device** (D-088).

@@ -539,3 +539,11 @@ The email alert reaches Dana away from the desk; at the desk she shouldn't need 
 - **The menu:** Today carries a gold count of replies waiting, on every page.
 - **Only news:** replies already waiting when the dashboard opened don't pop up (Today lists them), each reply is shown once, and none is shown while Dana is already on that client's brief. At most three at once. A notice stays until answered or dismissed: it asks for something.
 - **Why polling, not a push:** it needs nothing new from Supabase or Vercel, costs one small query per open dashboard, and 15 seconds is well inside how fast a client expects an answer.
+
+### D-090 · A judge's demo follows them to any device (J + C, Oct 10)
+Each judge keeps a private demo (D-013): no visitor sees another's face, name or email, and nobody's clicks change anyone else's dashboard. Joshua asked whether one shared demo would be simpler; the shared one would show every judge's face to anyone opening the site, contradict the consent screen ("You, and Maison Verre's practitioners"), and let judges collide. So the demo stays private, and it now travels: without logins a demo lives in a browser, so a judge who scanned on a phone and opened the dashboard on a laptop found their own scan missing. Signed links (D-088), each signed for one purpose so none can stand in for another, now carry it:
+- **Scan first, dashboard later:** the gate's confirmation, the report page and the report email carry "See it from the clinic's side" (deep sea and gold: Rebloom speaking, set apart from the clinic's page). It opens the dashboard on whatever device, signed in as Dana, on the judge's own brief. Only for someone who scanned themselves into the demo, never a sample client or a real clinic's client.
+- **Dashboard first, scan on the phone:** Today carries "Scan yourself in", a code for the phone's camera. The phone joins the laptop's demo and opens the clinic's scan page. On a phone already, the card is a "Start a scan" link instead.
+- **Watching it arrive:** the live notice (D-089) also announces new clients: "Joshua just scanned.", with a gold "Open Joshua's brief". A new client is someone who scanned themselves in and gave their name at the gate.
+- **Not done:** a browser that opened the demo before new sample data was added keeps its older copy (a fresh window gets the current one).
+
