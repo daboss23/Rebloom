@@ -697,7 +697,7 @@ function Questions({ p }: { p: LandingPreview }) {
   const faqs: [string, string][] = [
     [
       "Can I try it without signing up?",
-      `Yes. Enter the clinic dashboard and you get your own private copy of the demo clinic: ${words(p.clientCount)} sample clients, laid out around today. Send, confirm and move the clock forward as freely as you like. Scan your own face and you arrive in it as a new client, on whichever device you use.`,
+      `Yes. Enter the clinic dashboard and you get your own private copy of the demo clinic: ${words(p.clientCount)} sample clients, laid out around today. Send, confirm and move the clock forward as freely as you like. Scan your own face and you arrive in it as a new prospect, on whichever device you use.`,
     ],
     [
       "How does it decide who to contact?",

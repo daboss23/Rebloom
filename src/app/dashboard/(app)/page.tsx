@@ -40,7 +40,7 @@ export default async function TodayPage() {
   const open = Boolean(clinic.hours.days[new Date(`${today}T12:00:00Z`).getUTCDay() as 0]);
   const nextOpen = nextOpenDay(shiftDate(today, 1), clinic.hours);
   const recent = queue.handled.slice(0, 4);
-  // Demo only: a code that carries this demo to a phone, to scan in as a new client (D-090).
+  // Demo only: a code that carries this demo to a phone, to scan in as a new prospect (D-090).
   const scanIn = env.DEMO_MODE ? scanLink(await appOrigin(), book.sandboxId, clinic) : null;
 
   // One line that reads the queue back in words: the best moment first, then who needs care.

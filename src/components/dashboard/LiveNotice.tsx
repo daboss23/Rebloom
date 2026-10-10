@@ -1,7 +1,7 @@
 "use client";
 
 // The moment something happens in the book, inside the dashboard (DECISIONS D-089, D-090): a client writes back, or
-// someone scans themselves in as a new client, perhaps on their phone from the dashboard's own code. While the
+// someone scans themselves in as a new prospect, perhaps on their phone from the dashboard's own code. While the
 // dashboard is on screen it checks every few seconds; the news rises in from the corner on deep sea with a gold way
 // to act on it, and the page underneath refreshes so Today, Clients and the menu count it too. What was already there
 // when the dashboard opened never pops up: the pages list it.
@@ -108,7 +108,7 @@ export function LiveNotice(live: Live) {
           >
             <p className="flex items-center gap-2.5 text-[11px] uppercase tracking-[0.22em] text-[#e2c07a]">
               <span aria-hidden className="reply-dot relative h-1.5 w-1.5 rounded-full bg-[#e2c07a]" />
-              {reply ? "New reply" : "New client"}
+              {reply ? "New reply" : "New prospect"}
             </p>
             <p className="mt-3 font-display text-[28px] font-light leading-none text-white">{label}.</p>
             <p className="mt-2 text-[12.5px] text-ink-soft">

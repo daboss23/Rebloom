@@ -14,13 +14,20 @@ const sentenceCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /** "Pores are", "Firmness is": plural labels end in a single s. */
 const isAre = (name: string) => (/[^s]s$/i.test(name) ? "are" : "is");
 
-/** The two highest-scoring concerns, named in the subhead so it describes this face, not every face. */
-export function subhead(result: ScanResult): string {
-  const strengths = [...result.concerns].sort((a, b) => b.ui - a.ui).filter((c) => c.ui >= STRONG).slice(0, 2);
+/**
+ * The two highest-scoring concerns, named in the subhead so it describes this face, not every face. Never one the
+ * client told us worries them: praising it would argue with them. And no "already": on a first scan nothing has
+ * changed yet, so a strength is where they stand today, not progress.
+ */
+export function subhead(result: ScanResult, stated?: ReadonlyMap<ConcernKey, unknown>): string {
+  const strengths = [...result.concerns]
+    .filter((c) => c.ui >= STRONG && !stated?.has(c.key))
+    .sort((a, b) => b.ui - a.ui)
+    .slice(0, 2);
   if (strengths.length === 0) return "Here's what we see, and where we'd begin.";
   const named = sentenceCase(joinLabels(strengths.map((s) => s.key)));
   // One strength takes its own verb: "Blemishes are", "Firmness is".
-  return `${named} ${strengths.length === 1 ? isAre(named) : "are"} already looking strong. Here's where we'd begin.`;
+  return `${named} ${strengths.length === 1 ? isAre(named) : "are"} your strongest ${strengths.length === 1 ? "area" : "areas"} today. Here's where we'd begin.`;
 }
 
 /** Where on the face, for HD's per-area wrinkle and pore scores. Unknown area names are never shown. */

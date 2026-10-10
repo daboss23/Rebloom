@@ -8,7 +8,7 @@ const QUIET = 2;
 
 /**
  * Demo only (DECISIONS D-090): the way to see a scan arrive. A judge on a laptop points their phone at the code, takes
- * a scan as a new client, and lands in the dashboard they're looking at. The code carries this demo to the phone;
+ * a scan as a new prospect, and lands in the dashboard they're looking at. The code carries this demo to the phone;
  * on a phone already, the link starts a scan right here.
  */
 export function ScanYourselfIn({ url, clinic }: { url: string; clinic: { name: string; slug: string } }) {
@@ -26,7 +26,7 @@ export function ScanYourselfIn({ url, clinic }: { url: string; clinic: { name: s
         Scan yourself in
       </h2>
       <p className="mt-2 text-[14px] leading-relaxed text-text-2">
-        Take a skin scan as a new client of {clinic.name}, and watch it arrive here.
+        About 2 minutes: a few questions about your skin and goals, then your photo. You&apos;ll arrive here as a new prospect for {clinic.name}.
       </p>
       <div className="mt-5 hidden items-center gap-5 sm:flex">
         <figure className="relative shrink-0 rounded-[16px] bg-white p-2.5 shadow-[0_14px_30px_-18px_rgba(12,44,62,0.45)] ring-1 ring-[#0c1a22]/[0.06]">
@@ -37,7 +37,7 @@ export function ScanYourselfIn({ url, clinic }: { url: string; clinic: { name: s
             <Bloom size={22} className="text-[#b0802c]" />
           </span>
         </figure>
-        <p className="text-[13px] leading-relaxed text-text-3">Point your phone&apos;s camera at the code. Your scan lands in this dashboard.</p>
+        <p className="text-[13px] leading-relaxed text-text-3">Point your phone&apos;s camera at the code to start. Your scan lands in this dashboard.</p>
       </div>
       <Link href={`/c/${clinic.slug}`} className="group mt-5 inline-flex min-h-11 items-center gap-2 text-[14px] text-[#1e5a78] hover:text-ink">
         <span className="sm:hidden">Start a scan</span>

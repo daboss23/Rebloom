@@ -15,7 +15,7 @@ export function ClinicSide({ href, clinicName, className }: { href: string; clin
         Rebloom demo
       </p>
       <p className="mt-3 font-display text-[26px] font-light leading-[1.15] text-white [text-wrap:balance]">
-        You&apos;re now a new client of {clinicName}.
+        You&apos;re now a new prospect for {clinicName}.
       </p>
       <p className="mt-2 text-[14.5px] leading-relaxed text-[#cfe0e8]">See your scan the way the clinic does, on this device or any other.</p>
       {/* A plain link, not a prefetching one: opening it joins the demo's dashboard. */}
