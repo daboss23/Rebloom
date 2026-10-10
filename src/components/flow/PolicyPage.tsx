@@ -15,9 +15,12 @@ export function PolicyPage({ title, updated, children }: { title: string; update
         </div>
       </header>
       <main className="mx-auto w-full max-w-[680px] flex-1 px-5 pb-20 pt-12">
-        <Label>Demo policy · Updated {updated}</Label>
-        <h1 className="t-h1 mt-4">{title}</h1>
-        <p className="t-caption mt-6 rounded-[14px] bg-white/60 px-4 py-3 ring-1 ring-inset ring-[#0c1a22]/[0.07]">
+        {/* The title block sits on the logo's centre line; the reading below stays left-aligned. */}
+        <div className="text-center">
+          <Label>Demo policy · Updated {updated}</Label>
+          <h1 className="t-h1 mt-4">{title}</h1>
+        </div>
+        <p className="t-caption mt-6 rounded-[14px] bg-white/60 px-4 py-3 text-center ring-1 ring-inset ring-[#0c1a22]/[0.07]">
           Rebloom is a demo built for a hackathon. Maison Verre and Tidewater Skin Studio are fictional clinics. This page
           explains how the demo treats your data, in plain English. It is not legal advice.
         </p>
