@@ -125,6 +125,7 @@ export function ProcessingView({
         steps={STAGES.length}
         progress={progress}
         done={complete}
+        report={assembling ? { steps: ASSEMBLE_STEPS, at: assembleStep } : undefined}
       />
       <div className="mt-8" role="status" aria-live="polite">
         <Label>Your scan</Label>

@@ -1,22 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { ScanLight } from "@/components/face/ScanLight";
+import { ScanShow } from "@/components/face/ScanShow";
 import { cx } from "@/components/ui/cx";
 import { framing, onStage, photoBox } from "@/lib/face/frame";
-import { FACE_POINT_COUNT, canonicalFace, faceTargets, type Pt } from "@/lib/face/grid";
+import { FACE_POINT_COUNT, canonicalFace, type Pt } from "@/lib/face/grid";
 
-/** How long the target rests on each feature. */
-const HOP_MS = 1500;
 const REST = { oval: 0.52, features: 0.42 };
 
 /**
- * The scan, on the client's own face, while their photo is read (DECISIONS D-077). A fine grid that follows the
- * face's 3D shape sweeps across it, side to side, lighting the eyes, nose and lips as it passes; focus brackets
- * hold the face, a target settles on each feature in turn, and a ruler tracks the sweep. The bar is the analysis's
- * real progress and every figure is true (the face model's 468 points, the 15 measurements). When the reading
- * ends, the light settles and "Analysis complete" arrives. Without the photo (another tab, private mode) it scans
- * the face model itself. With reduced motion it holds still.
+ * The scan, on the client's own face, while their photo is read (DECISIONS D-077, D-092). A fine grid that follows
+ * the face's 3D shape sweeps across it while the scan plays its acts around the face (ScanShow): lock-on, contour,
+ * texture, tone and lines, with glass cards that come and go. Focus brackets hold the face and a ruler tracks the
+ * sweep; the bar is the analysis's real progress and every figure is true. Once the reading ends, the report's
+ * steps take over. Without the photo (another tab, private mode) it scans the face model itself. With reduced
+ * motion it holds still.
  */
 export function FaceScan({
   photo,
@@ -26,6 +25,7 @@ export function FaceScan({
   steps,
   progress,
   done,
+  report,
 }: {
   /** The photo just taken, or null to scan the face model instead. */
   photo: string | null;
@@ -37,39 +37,22 @@ export function FaceScan({
   /** The analysis's real progress, 0 to 1. */
   progress: number;
   done: boolean;
+  /** While the report is put together: its steps, and how many are done. */
+  report?: { steps: string[]; at: number };
 }) {
   const own = Boolean(photo && points && points.length >= FACE_POINT_COUNT);
   // The face model's own points: the scan is drawn on them, never on anything invented.
   const face = useMemo<Pt[]>(() => (own ? points!.slice(0, FACE_POINT_COUNT) : canonicalFace()), [own, points]);
   const [aspect, setAspect] = useState(0.75);
   const plane = useMemo(() => framing(face, own ? aspect : 0.75), [face, own, aspect]);
-  const targets = useMemo(() => faceTargets(face), [face]);
   const box = useMemo(() => bounds(face.map((p) => onStage(p, plane))), [face, plane]);
   const marker = useRef<HTMLSpanElement>(null);
-  const [still, setStill] = useState(false);
-  const [hop, setHop] = useState(0);
-
-  useEffect(() => {
-    // Motion preference only exists in the browser.
-    const s = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const t = window.setTimeout(() => setStill(s), 0);
-    return () => window.clearTimeout(t);
-  }, []);
-
-  // The target moves from feature to feature while the face is read.
-  useEffect(() => {
-    if (still || done) return;
-    const t = window.setInterval(() => setHop((h) => h + 1), HOP_MS);
-    return () => window.clearInterval(t);
-  }, [still, done]);
 
   // The ruler's marker follows the sweep, set directly so the page doesn't re-render each frame.
   const onFront = useCallback((front: number) => {
     if (marker.current) marker.current.style.transform = `translateX(${(front * 100).toFixed(2)}%)`;
   }, []);
 
-  const target = targets[hop % targets.length];
-  const [tx, ty] = onStage(target.at, plane);
   const pct = (n: number) => `${(n * 100).toFixed(2)}%`;
   const pad = 0.05;
 
@@ -81,20 +64,22 @@ export function FaceScan({
           own ? "bg-mist" : "bg-[radial-gradient(90%_70%_at_50%_42%,#1e5a78_0%,#0e2230_70%,#081820_100%)]",
         )}
       >
-        {own && (
-          // eslint-disable-next-line @next/next/no-img-element -- the photo just taken, from this tab only
-          <img
-            src={photo!}
-            alt=""
-            onLoad={(e) => setAspect(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight || 0.75)}
-            className="absolute max-w-none object-cover"
-            style={photoBox(plane)}
-          />
-        )}
-        {/* Cool light over the photo while it's read, so the scan carries. */}
-        {own && <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(206,236,248,0.18),rgba(12,44,62,0.18))]" />}
+        <ScanShow points={face} frame={plane} photo={own ? photo : null} phase={done ? "report" : "scan"} face="your face" report={report}>
+          {own && (
+            // eslint-disable-next-line @next/next/no-img-element -- the photo just taken, from this tab only
+            <img
+              src={photo!}
+              alt=""
+              onLoad={(e) => setAspect(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight || 0.75)}
+              className="absolute max-w-none object-cover"
+              style={photoBox(plane)}
+            />
+          )}
+          {/* Cool light over the photo while it's read, so the scan carries. */}
+          {own && <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(206,236,248,0.18),rgba(12,44,62,0.18))]" />}
 
-        <ScanLight points={face} frame={plane} passes={Infinity} settled={done} rest={REST} onFront={onFront} />
+          <ScanLight points={face} frame={plane} passes={Infinity} settled={done} rest={REST} onFront={onFront} />
+        </ScanShow>
 
         {/* Focus brackets: they close on the face as it's found. */}
         <div
@@ -105,28 +90,6 @@ export function FaceScan({
           {["left-0 top-0 border-l border-t rounded-tl-[10px]", "right-0 top-0 border-r border-t rounded-tr-[10px]", "bottom-0 left-0 border-b border-l rounded-bl-[10px]", "bottom-0 right-0 border-b border-r rounded-br-[10px]"].map((c) => (
             <span key={c} className={cx("absolute h-5 w-5 border-white/95 drop-shadow-[0_0_4px_rgba(120,210,255,0.9)]", c)} />
           ))}
-        </div>
-
-        {/* The target, settling on each feature in turn. */}
-        {!still && !done && (
-          <div aria-hidden className="pointer-events-none absolute transition-[left,top] duration-700 ease-gentle" style={{ left: pct(tx), top: pct(ty) }}>
-            <span className="scan-target absolute -translate-x-1/2 -translate-y-1/2" />
-            <span key={hop} className="fade absolute left-5 top-0 -translate-y-1/2 whitespace-nowrap rounded-full bg-[rgba(8,24,32,0.45)] px-2 py-0.5 text-[0.59375rem] uppercase tracking-[0.16em] text-white backdrop-blur-sm">
-              {target.label}
-            </span>
-          </div>
-        )}
-
-        {/* Readouts, true figures only. */}
-        <div
-          aria-hidden
-          className={cx("pointer-events-none absolute flex flex-col items-start gap-1.5 transition-opacity duration-700", done ? "opacity-0" : "scan-hex")}
-          style={{ left: pct(Math.min(0.84, box.right + 0.015)), top: pct(box.top + (box.bottom - box.top) * 0.28) }}
-        >
-          <Hex value="468" label="points" />
-          <span className="ml-6">
-            <Hex value="15" label="measures" />
-          </span>
         </div>
 
         {/* Bottom: a ruler that tracks the sweep, and the analysis's real progress. */}
@@ -156,36 +119,8 @@ export function FaceScan({
           </span>
         </div>
 
-        {/* The end of the reading. */}
-        <div
-          className={cx(
-            "absolute inset-x-[12%] top-[58%] flex items-center justify-center gap-2.5 rounded-[16px] border border-white/85 bg-white/60 px-5 py-3.5 text-[0.9375rem] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_20px_40px_-22px_rgba(12,44,62,0.6)] backdrop-blur-xl transition-[opacity,transform] duration-700 ease-gentle",
-            done ? "opacity-100" : "pointer-events-none translate-y-2 scale-[0.98] opacity-0",
-          )}
-        >
-          <svg aria-hidden viewBox="0 0 20 20" width={18} height={18} className="shrink-0 text-[var(--growth)]">
-            <circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
-            <path d="M6.2 10.3l2.5 2.4 5-5.2" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Analysis complete
-        </div>
       </div>
     </div>
-  );
-}
-
-/** A small glass hexagon with a true figure. */
-function Hex({ value, label }: { value: string; label: string }) {
-  return (
-    <span className="relative grid h-[52px] w-[46px] place-items-center text-white">
-      <svg viewBox="0 0 46 52" className="absolute inset-0 h-full w-full drop-shadow-[0_0_6px_rgba(120,210,255,0.8)]">
-        <path d="M23 1.5 44 13.5v25L23 50.5 2 38.5v-25Z" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.9)" strokeWidth="1" />
-      </svg>
-      <span className="relative text-center leading-none">
-        <span className="block font-display text-[1.0625rem]">{value}</span>
-        <span className="mt-0.5 block text-[0.4375rem] uppercase tracking-[0.14em] text-white/85">{label}</span>
-      </span>
-    </span>
   );
 }
 
