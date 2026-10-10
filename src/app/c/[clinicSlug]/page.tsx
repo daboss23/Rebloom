@@ -20,14 +20,16 @@ export default async function ScanStartPage({ params }: PageProps<"/c/[clinicSlu
         // eslint-disable-next-line @next/next/no-img-element -- static brand lockup
         <img src={clinic.lockupUrl} alt={clinic.name} width={240} height={110} className="focus-in mx-auto mb-12 h-auto w-[200px]" />
       )}
-      <p className="focus-in flex items-center gap-3 text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]" style={{ animationDelay: "60ms" }}>
-        <span aria-hidden className="block h-[2px] w-8 rounded-full bg-accent" />
+      {/* Centred under the clinic's lockup, so the page holds one axis down to the button. */}
+      <p className="focus-in flex items-center justify-center gap-3 text-center text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]" style={{ animationDelay: "60ms" }}>
+        <span aria-hidden className="block h-[2px] w-8 shrink-0 rounded-full bg-accent" />
         {clinic.name} · {clinic.city}
+        <span aria-hidden className="block h-[2px] w-8 shrink-0 rounded-full bg-accent" />
       </p>
-      <h1 className="t-h1 focus-in mt-5" style={{ animationDelay: "120ms" }}>
+      <h1 className="t-h1 focus-in mt-5 text-center" style={{ animationDelay: "120ms" }}>
         See your skin clearly.
       </h1>
-      <p className="focus-in mt-5 max-w-[30rem] text-[1.03125rem] leading-relaxed text-text-2" style={{ animationDelay: "180ms" }}>
+      <p className="focus-in mx-auto mt-5 max-w-[30rem] text-center text-[1.03125rem] leading-relaxed text-text-2" style={{ animationDelay: "180ms" }}>
         A short photo scan, read by AI skin analysis and reviewed by our practitioners. You&apos;ll get a private report
         that shows what we see, and where we&apos;d begin.
       </p>
