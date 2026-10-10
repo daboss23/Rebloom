@@ -1,6 +1,7 @@
-// A reply alert's "Answer" link (DECISIONS D-088). The signed token names a demo's sandbox and a client: this browser
-// joins that sandbox, signed in as the clinic's practitioner, and lands on the client's conversation. So the alert
-// works on whatever device it's read on. Anything that doesn't check out goes to the dashboard's front door.
+// A link into a demo's dashboard from anywhere (DECISIONS D-088, D-090): a reply alert's Answer button, or "See this
+// from the clinic's side" on a judge's own report. The signed token names a demo's sandbox and a client: this browser
+// joins that sandbox, signed in as the clinic's practitioner, and lands on the client. So it works on whatever device
+// it's opened on. Anything that doesn't check out goes to the dashboard's front door.
 import { cookies } from "next/headers";
 import { readHandoffToken } from "@/lib/dashboard/handoff";
 import { STAFF_COOKIE, setStaffCookie } from "@/lib/dashboard/session";
@@ -9,11 +10,14 @@ import { getStore } from "@/lib/store";
 
 export async function GET(request: Request, ctx: RouteContext<"/dashboard/open/[token]">) {
   const door = Response.redirect(new URL("/dashboard/enter", request.url), 303);
-  const handoff = readHandoffToken((await ctx.params).token);
+  const { token } = await ctx.params;
+  // The alert's answer goes to the conversation; the report's link to the top of the brief.
+  const answer = readHandoffToken("answer", token);
+  const handoff = answer ?? readHandoffToken("brief", token);
   if (!handoff) return door;
 
   const store = getStore();
-  const [sandbox, client] = await Promise.all([store.getSandbox(handoff.sandboxId), store.getClient(handoff.clientId)]);
+  const [sandbox, client] = await Promise.all([store.getSandbox(handoff.sandboxId), store.getClient(handoff.subjectId)]);
   // The demo was cleared (30 days), or the client was deleted from it.
   if (!sandbox || !client || client.sandboxId !== handoff.sandboxId) return door;
 
@@ -25,5 +29,5 @@ export async function GET(request: Request, ctx: RouteContext<"/dashboard/open/[
 
   await joinSandbox(handoff.sandboxId);
   await setStaffCookie(who.id);
-  return Response.redirect(new URL(`/dashboard/clients/${client.id}#conversation`, request.url), 303);
+  return Response.redirect(new URL(`/dashboard/clients/${client.id}${answer ? "#conversation" : ""}`, request.url), 303);
 }

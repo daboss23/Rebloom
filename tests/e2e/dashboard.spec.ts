@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 
 // The clinic dashboard in demo mode. Each test gets a fresh browser, so a fresh sandbox and its own
@@ -134,14 +134,24 @@ const unsubscribeToken = (clientId: string) => {
   return hex + createHmac("sha256", secret).update(hex).digest("hex").slice(0, 16);
 };
 
-/** The signed token in a reply alert's Answer link, made as the server makes it (D-088): sandbox, client, expiry. */
-const handoffToken = (sandboxId: string, clientId: string, secondsLeft = 14 * 86_400) => {
+/**
+ * The signed token in a link that carries a demo to another device, made as the server makes it (D-088, D-090):
+ * sandbox, subject (a client, or a clinic to scan in at), expiry. Each purpose signs with its own key.
+ */
+const HANDOFF_KEYS = { answer: "dashboard-handoff", brief: "handoff:brief", scan: "handoff:scan" } as const;
+const handoffToken = (sandboxId: string, subjectId: string, { purpose = "answer", secondsLeft = 14 * 86_400 }: { purpose?: keyof typeof HANDOFF_KEYS; secondsLeft?: number } = {}) => {
   const expires = Buffer.alloc(4);
   expires.writeUInt32BE(Math.floor(Date.now() / 1000) + secondsLeft);
-  const payload = Buffer.concat([Buffer.from(sandboxId.replace(/-/g, ""), "hex"), Buffer.from(clientId.replace(/-/g, ""), "hex"), expires]);
-  const secret = `${process.env.IP_HASH_SALT || "rebloom-local-development-secret"}:dashboard-handoff`;
+  const payload = Buffer.concat([Buffer.from(sandboxId.replace(/-/g, ""), "hex"), Buffer.from(subjectId.replace(/-/g, ""), "hex"), expires]);
+  const secret = `${process.env.IP_HASH_SALT || "rebloom-local-development-secret"}:${HANDOFF_KEYS[purpose]}`;
   return Buffer.concat([payload, createHmac("sha256", secret).update(payload).digest().subarray(0, 12)]).toString("base64url");
 };
+
+/** Maison Verre's id, as the seed data makes it (stableId). */
+const MAISON_VERRE_ID = (() => {
+  const h = createHash("sha1").update("rebloom:clinic:maison-verre").digest("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-5${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`;
+})();
 
 test("Sofia unsubscribes from the link in an email: the queue texts her instead, and her brief says so", async ({ page, request }) => {
   const brief = await briefOf(page, "Sofia Morales");
@@ -215,16 +225,18 @@ test("Settings says where reply alerts go, and checks the address", async ({ pag
   await expect(replies.getByRole("status")).toHaveText("Reply alerts are off.");
 });
 
-test("a reply that lands while the dashboard is open rises in, and its Answer opens the conversation", async ({ page }) => {
+test("news that lands while the dashboard is open rises in: a reply, then someone who scanned in", async ({ page }) => {
   // Daniel and Priya were already waiting when Dana came in: Today lists them, the menu counts them, nothing pops up.
   await expect(page.getByRole("link", { name: /^Today.*2 replies waiting/ }).first()).toBeVisible();
   const sofia = (await briefOf(page, "Sofia Morales")).split("/").pop()!;
+  const priya = (await briefOf(page, "Priya Shah")).split("/").pop()!;
   await page.goto("/dashboard");
   await expect(page.getByRole("article")).toHaveCount(0);
 
   // Sofia writes back while the dashboard is open (the webhook's side is covered by the unit tests).
   const reply = { id: "e2e-reply", clientId: sofia, name: "Sofia Morales", first: "Sofia", channel: "email", body: "Is Thursday free?", at: new Date().toISOString() };
-  await page.route("**/api/dashboard/replies", (route) => route.fulfill({ json: { waiting: [reply] } }));
+  const live: { waiting: unknown[]; arrivals: unknown[] } = { waiting: [reply], arrivals: [] };
+  await page.route("**/api/dashboard/live", (route) => route.fulfill({ json: live }));
   const notice = page.getByRole("article", { name: "Sofia wrote back" });
   // Coming back to the tab checks at once, rather than at the next tick. Once the page is live, that is.
   await expect(async () => {
@@ -240,6 +252,45 @@ test("a reply that lands while the dashboard is open rises in, and its Answer op
   // Seen once, shown once: the next check doesn't bring it back.
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await expect(page.getByRole("article", { name: "Sofia wrote back" })).toHaveCount(0);
+
+  // Someone scans themselves in on their phone, from the dashboard's code (D-090).
+  live.arrivals = [{ clientId: priya, name: "Joshua Reed", first: "Joshua", at: new Date().toISOString() }];
+  const arrival = page.getByRole("article", { name: "Joshua just scanned" });
+  await expect(async () => {
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await expect(arrival).toBeVisible({ timeout: 1000 });
+  }).toPass();
+  await expect(arrival).toContainText("Joshua Reed · First scan · Just now");
+  await arrival.getByRole("link", { name: "Open Joshua's brief" }).click();
+  await expect(page).toHaveURL(new RegExp(`/dashboard/clients/${priya}$`));
+});
+
+test("the dashboard's code carries the demo to a phone, to scan in as a new client", async ({ page, browser }) => {
+  const scanIn = page.getByRole("region", { name: "Scan yourself in" });
+  const code = scanIn.getByRole("img", { name: "Code to scan yourself in to Maison Verre on your phone" });
+  // On a phone already, no code to point a phone at: the scan starts right here.
+  await expect(scanIn.getByRole("link", { name: "Start a scan" })).toHaveAttribute("href", "/c/maison-verre");
+  await expect(code).toBeHidden();
+  // On a laptop, the code.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(code).toBeVisible();
+  await expect(scanIn.getByRole("link", { name: "Or scan on this device" })).toHaveAttribute("href", "/c/maison-verre");
+  const sandbox = (await page.context().cookies()).find((c) => c.name === "rb_sandbox")!.value;
+
+  // The phone joins this demo and opens the clinic's scan page; what it scans lands in this dashboard.
+  const phone = await browser.newContext();
+  const tab = await phone.newPage();
+  await tab.goto(`/scan/${handoffToken(sandbox, MAISON_VERRE_ID, { purpose: "scan" })}`);
+  await expect(tab).toHaveURL(/\/c\/maison-verre$/);
+  expect((await phone.cookies()).find((c) => c.name === "rb_sandbox")?.value).toBe(sandbox);
+
+  // A code made for something else opens the scan page in a demo of its own.
+  const stranger = await browser.newContext();
+  const other = await stranger.newPage();
+  await other.goto(`/scan/${handoffToken(sandbox, MAISON_VERRE_ID, { purpose: "brief" })}`);
+  await expect(other).toHaveURL(/\/#try$/);
+  expect((await stranger.cookies()).some((c) => c.name === "rb_sandbox")).toBe(false);
+  await Promise.all([phone.close(), stranger.close()]);
 });
 
 test("a reply alert's Answer link opens the same demo on another device, and nothing else", async ({ page, browser }) => {
@@ -260,7 +311,7 @@ test("a reply alert's Answer link opens the same demo on another device, and not
   const token = handoffToken(sandbox, brief.split("/").pop()!);
   await door.goto(`/dashboard/open/${token.slice(0, -2)}${token.endsWith("AA") ? "BB" : "AA"}`);
   await expect(door).toHaveURL(/\/dashboard\/enter$/);
-  await door.goto(`/dashboard/open/${handoffToken(sandbox, brief.split("/").pop()!, -60)}`);
+  await door.goto(`/dashboard/open/${handoffToken(sandbox, brief.split("/").pop()!, { secondsLeft: -60 })}`);
   await expect(door).toHaveURL(/\/dashboard\/enter$/);
   expect((await stranger.cookies()).some((c) => c.name === "rb_sandbox")).toBe(false);
   await Promise.all([phone.close(), stranger.close()]);

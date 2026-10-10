@@ -35,6 +35,9 @@ export const escapeHtml = (s: string) =>
 /** Typed by the client: one line, no control characters, so it can't reshape a header. */
 export const oneLine = (s: string) => s.replace(/[\u0000-\u001f\u007f]+/g, " ").trim();
 
+/** In the demo, for someone who scanned themselves: they're now in the clinic's book, and can see it from there. */
+const demoLine = (clinic: Pick<Clinic, "name">) => `Rebloom demo: you're now a new client in ${clinic.name}'s dashboard.`;
+
 /** Said once, in the first email: what else is coming, and that it can stop. */
 const updatesLine = (clinic: Pick<Clinic, "name">) => `${clinic.name} will also email you reminders and progress updates. Rather not get them?`;
 
@@ -49,7 +52,20 @@ export interface ReportEmail {
  * The email itself, in the clinic's voice (brief 7.7). Pure, so it can be tested without sending anything. Their yes
  * to email updates came with the details they gave (D-083), so the first email already carries the way out (D-086).
  */
-export function reportEmail({ clinic, firstName, url, unsubscribeUrl }: { clinic: Clinic; firstName: string; url: string; unsubscribeUrl?: string }): ReportEmail {
+export function reportEmail({
+  clinic,
+  firstName,
+  url,
+  unsubscribeUrl,
+  clinicSideUrl,
+}: {
+  clinic: Clinic;
+  firstName: string;
+  url: string;
+  unsubscribeUrl?: string;
+  /** Demo only: the judge's own scan in the clinic's dashboard, from whatever device opens this email (D-090). */
+  clinicSideUrl?: string;
+}): ReportEmail {
   const name = oneLine(firstName);
   const subject = `${name}, your skin report from ${clinic.name}`;
   const lines = [
@@ -58,6 +74,7 @@ export function reportEmail({ clinic, firstName, url, unsubscribeUrl }: { clinic
     `Open your report: ${url}`,
     "The link is private and yours to keep. Come back to it after every visit to see your progress.",
     `When you're ready, book your first visit from your report, or call us on ${clinic.phone}.`,
+    ...(clinicSideUrl ? [`${demoLine(clinic)} See it from the clinic's side: ${clinicSideUrl}`] : []),
     `${clinic.name}\n${clinic.address}`,
     "You're receiving this because you asked for your results after your skin scan. You can delete your photo and details at any time from your report.",
     ...(unsubscribeUrl ? [`${updatesLine(clinic)} Unsubscribe: ${unsubscribeUrl}`] : []),
@@ -78,7 +95,11 @@ export function reportEmail({ clinic, firstName, url, unsubscribeUrl }: { clinic
 <a href="${e(url)}" style="display:inline-block;background:#d9ae62;background-image:linear-gradient(100deg,#c99645 0%,#f1d49a 45%,#d9ae62 70%,#b98a3c 100%);color:#1a1206;text-decoration:none;font-size:16px;padding:16px 28px;border-radius:14px;">Open my report</a>
 </td></tr>
 <tr><td style="padding:24px 32px 0;font-size:14px;line-height:1.6;">The link is private and yours to keep. Come back to it after every visit to see your progress. When you're ready, book your first visit from your report, or call us on ${e(clinic.phone)}.</td></tr>
-<tr><td style="padding:24px 32px 0;font-size:13px;line-height:1.5;color:#556773;">If the button doesn't work, copy this link into your browser:<br><a href="${e(url)}" style="color:#1e5a78;word-break:break-all;">${e(url)}</a></td></tr>
+${
+    clinicSideUrl
+      ? `<tr><td style="padding:24px 32px 0;"><div style="background:#0f2433;border-radius:14px;padding:18px 20px;font-size:14px;line-height:1.55;color:#dbe8ef;">${e(demoLine(clinic))}<br><a href="${e(clinicSideUrl)}" style="display:inline-block;margin-top:10px;color:#f1d49a;text-decoration:underline;">See it from the clinic's side</a></div></td></tr>\n`
+      : ""
+  }<tr><td style="padding:24px 32px 0;font-size:13px;line-height:1.5;color:#556773;">If the button doesn't work, copy this link into your browser:<br><a href="${e(url)}" style="color:#1e5a78;word-break:break-all;">${e(url)}</a></td></tr>
 <tr><td style="padding:28px 32px 28px;font-size:13px;line-height:1.5;color:#556773;border-top:1px solid #e3ebef;">${e(clinic.name)} · ${e(clinic.address)}<br>You're receiving this because you asked for your results after your skin scan. You can delete your photo and details at any time from your report.${
     unsubscribeUrl ? `<br>${e(updatesLine(clinic))} <a href="${e(unsubscribeUrl)}" style="color:#556773;text-decoration:underline;">Unsubscribe</a>` : ""
   }<br><br>Powered by Rebloom</td></tr>
@@ -107,6 +128,8 @@ export async function sendReportEmail(input: {
   url: string;
   /** The client's unsubscribe page (D-086). */
   unsubscribeUrl?: string;
+  /** Demo only (D-090). */
+  clinicSideUrl?: string;
   now: Date;
 }): Promise<ReportDelivery> {
   if (!reportEmailLive()) return "off";
@@ -116,7 +139,7 @@ export async function sendReportEmail(input: {
   const earlier = await reportDelivery(input.clinic.id, input.clientId, input.sandboxId, input.scanId).catch(() => "not_sent");
   if (earlier === "sent") return "sent";
 
-  const message = reportEmail({ clinic: input.clinic, firstName: input.firstName, url: input.url, unsubscribeUrl: input.unsubscribeUrl });
+  const message = reportEmail({ clinic: input.clinic, firstName: input.firstName, url: input.url, unsubscribeUrl: input.unsubscribeUrl, clinicSideUrl: input.clinicSideUrl });
   let delivered = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {

@@ -1,5 +1,6 @@
 import { Bloom } from "@/components/dashboard/Bloom";
 import { LightField } from "@/components/dashboard/LightField";
+import { ClinicSide } from "@/components/flow/ClinicSide";
 import { DeleteData } from "@/components/report/DeleteData";
 import { FaceMap, FaceMapFocus, FaceMapPriority } from "@/components/report/FaceMap";
 import { BookingLine, HomeCare, Investment, PlanTimeline, ReadyWhenYouAre } from "@/components/report/PlanSections";
@@ -9,6 +10,7 @@ import { IconPlus } from "@/components/ui/Icons";
 import { ScoreNumber } from "@/components/ui/Typography";
 import { ScoreRuler } from "@/components/ui/ScoreRuler";
 import { addDays, formatLongDate } from "@/lib/clock";
+import { clinicSideLink } from "@/lib/dashboard/handoff";
 import { EVENT_OPTIONS } from "@/lib/flow/intake-options";
 import { rankPriorities, statedConcerns } from "@/lib/plan/build";
 import { bookingSummary } from "@/lib/booking/summary";
@@ -60,6 +62,8 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
   const hasPlan = plan.recommended.lines.length > 0;
   const booking = await bookingSummary(token);
   const asked = mentions(result, stated, top, plan);
+  // Demo only: someone who scanned themselves can open it as the clinic sees it, on any device (D-090).
+  const clinicSide = clinicSideLink("", client);
 
   let event: { name: string; date: string; weeks: number } | null = null;
   if (intake?.hasEvent && intake.eventDate && intake.eventType) {
@@ -257,6 +261,8 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
           </div>
         </section>
       )}
+
+      {clinicSide && <ClinicSide href={clinicSide} clinicName={clinic.name} className="mt-16" />}
 
       <div className="mt-16 border-t border-[#0c1a22]/[0.08] pt-6">
         <p className="t-caption">
