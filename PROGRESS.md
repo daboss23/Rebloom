@@ -1,5 +1,23 @@
 # Progress
 
+## Session 12 · Saturday October 10, 2026 · Replies in the dashboard, and alerts that open anywhere
+
+**A reply now shows up inside the dashboard the moment it lands** (DECISIONS D-089), **and an alert's Answer button opens the same demo on any device** (D-088).
+
+### What's done
+- **Applied the reply alerts database change** (`20261010120000_reply_alerts`) to the live project, and ran the Supabase integration test there: 19 of 19 pass.
+- **In the dashboard:** while it's open, a new reply rises in at the corner: "Sofia wrote back.", how and when, her words, and a gold "Answer Sofia". Today's list and the menu update with it. The menu's Today carries a gold count of replies waiting, on every page.
+- **On any device:** the alert's "Answer" link carries a signed token for the demo and the client. Opened on a phone, it joins the same demo and lands on the conversation. Altered or expired links go to the front door.
+- **Tests:** 450 unit tests (4 new: the token holds, can't be altered, runs out after 14 days, and who counts as waiting) and two new browser tests (a reply rises in and its Answer opens the conversation; the alert's link opens the same demo in a second browser, and a tampered or expired one doesn't). Lint, typecheck and the build pass. All browser tests pass except "Delete my data", which fails the same way on `main` without these changes.
+
+### What Joshua needs to do
+Nothing new. Alerts sent before this deploy still carry the old link; send a fresh one to try it on your phone.
+
+### What's next
+1. **"Delete my data"** browser test: find why it fails on `main`.
+2. **Clinic login** by magic link, for clinics' own clients.
+
+---
 ## Session 11 · Friday October 9, 2026 · The way out of emails, and reply alerts
 
 **Every reminder and progress email now carries a working unsubscribe, and the clinic honours it everywhere** (DECISIONS D-086). **And the clinic hears the moment a client writes back** (D-087).
@@ -26,7 +44,7 @@
 5. **To see an alert:** Settings, Replies, put in your own email and Save. Send yourself a demo copy of a queue email, reply to it, and the alert arrives within seconds (with the webhook on www). Open its button in the same browser.
 
 ### What's next
-1. **Clinic login** by magic link, so an alert's link opens on any device.
+1. **Clinic login** by magic link, so an alert's link opens on any device. (Done for the demo in session 12, D-088.)
 2. **The intake options** (dark circles, dryness), if wanted.
 
 ---

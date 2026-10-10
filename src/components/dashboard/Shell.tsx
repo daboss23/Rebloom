@@ -2,8 +2,10 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { signOut } from "@/app/dashboard/actions";
 import { RebloomWordmark } from "@/components/ui/Wordmarks";
+import type { WaitingReply } from "@/lib/dashboard/replies";
 import type { Clinic, Staff } from "@/lib/domain";
 import { SideNav, TabNav, type NavItem } from "./Nav";
+import { ReplyNotice } from "./ReplyNotice";
 import { TimeTravel } from "./TimeTravel";
 
 interface ShellProps {
@@ -14,13 +16,15 @@ interface ShellProps {
   demo: boolean;
   queueCount: number;
   clientCount: number;
+  /** Clients who wrote back and wait on an answer (D-081, D-089). */
+  waiting: WaitingReply[];
   children: ReactNode;
 }
 
 /** The dashboard frame: a deep-sea menu carrying the gold logo, glass across the top. */
-export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, clientCount, children }: ShellProps) {
+export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, clientCount, waiting, children }: ShellProps) {
   const items: NavItem[] = [
-    { href: "/dashboard", label: "Today" },
+    { href: "/dashboard", label: "Today", attention: waiting.length },
     { href: "/dashboard/clients", label: "Clients", count: clientCount },
     { href: "/dashboard/rebook", label: "Rebook", count: queueCount },
     { href: "/dashboard/insights", label: "Insights" },
@@ -97,6 +101,7 @@ export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, 
         <main id="main" tabIndex={-1} className="px-4 pb-24 pt-8 sm:px-6 lg:px-12 lg:pt-10">
           <div className="mx-auto max-w-[1220px]">{children}</div>
         </main>
+        <ReplyNotice waiting={waiting} />
       </div>
     </div>
   );
