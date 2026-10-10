@@ -195,7 +195,7 @@ export function LiveCamera({
         </svg>
         {status === "starting" && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[0.6875rem] uppercase tracking-[0.18em] text-white/80" style={{ animation: "breathe 2.4s ease-in-out infinite" }}>
+            <span className="text-[0.75rem] uppercase tracking-[0.18em] text-white/80" style={{ animation: "breathe 2.4s ease-in-out infinite" }}>
               Preparing the camera
             </span>
           </div>

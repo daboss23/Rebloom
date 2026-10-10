@@ -80,7 +80,7 @@ export default async function SettingsPage() {
           <h2 id="menu-title" className="font-display text-[2.125rem] font-light text-ink">
             Menu
           </h2>
-          <p className="t-caption !text-[0.78125rem]">The only list the AI may recommend from. Demo prices.</p>
+          <p className="t-caption !text-[0.8125rem]">The only list the AI may recommend from. Demo prices.</p>
         </div>
         <table className="mt-5 w-full border-collapse text-left">
           <caption className="sr-only">Treatments</caption>
@@ -101,9 +101,9 @@ export default async function SettingsPage() {
                 </td>
                 <td className="hidden py-4 pr-4 text-[0.875rem] text-text-2 md:table-cell">
                   {t.sessionsTypical ? `${t.sessionsTypical} sessions` : "Ongoing"}
-                  <span className="t-caption block !text-[0.78125rem]">{interval(t.intervalDaysMin, t.intervalDaysMax)}</span>
+                  <span className="t-caption block !text-[0.8125rem]">{interval(t.intervalDaysMin, t.intervalDaysMax)}</span>
                 </td>
-                <td className="hidden py-4 pr-4 text-[0.84375rem] text-text-2 lg:table-cell">{t.concerns.map(concernLabel).join(", ")}</td>
+                <td className="hidden py-4 pr-4 text-[0.875rem] text-text-2 lg:table-cell">{t.concerns.map(concernLabel).join(", ")}</td>
                 <td className="py-4 text-right font-display text-[1.625rem] font-light text-ink">{formatPrice(t.priceCents)}</td>
               </tr>
             ))}
@@ -126,7 +126,7 @@ export default async function SettingsPage() {
                   <p className="text-[0.9375rem] text-ink">{p.name}</p>
                   <p className="t-caption mt-0.5 max-w-md !text-[0.8125rem]">{p.description}</p>
                 </td>
-                <td className="hidden py-4 pr-4 text-[0.84375rem] text-text-2 lg:table-cell">{p.concerns.map(concernLabel).join(", ")}</td>
+                <td className="hidden py-4 pr-4 text-[0.875rem] text-text-2 lg:table-cell">{p.concerns.map(concernLabel).join(", ")}</td>
                 <td className="py-4 text-right font-display text-[1.375rem] font-light text-ink tabular-nums">{formatPrice(p.priceCents)}</td>
               </tr>
             ))}
@@ -139,7 +139,7 @@ export default async function SettingsPage() {
         <h2 id="brand-title" className="font-display text-[2.125rem] font-light text-ink">
           Brand
         </h2>
-        <p className="t-caption mt-1 !text-[0.78125rem]">
+        <p className="t-caption mt-1 !text-[0.8125rem]">
           What clients see on their scan and report: your name, logo and accent. Rebloom is one small line at the foot of
           the page.
         </p>
@@ -152,7 +152,7 @@ export default async function SettingsPage() {
               ["Accent", clinic.accentHex.toUpperCase()],
             ].map(([term, value]) => (
               <div key={term} className="flex items-baseline justify-between gap-4 border-b border-[#0c1a22]/[0.06] py-3 last:border-0">
-                <dt className="t-label !text-[0.65625rem]">{term}</dt>
+                <dt className="t-label !text-[0.75rem]">{term}</dt>
                 <dd className="flex items-center gap-2 text-[0.875rem] text-ink">
                   {term === "Accent" && <span aria-hidden className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: clinic.accentHex }} />}
                   {value}
@@ -168,7 +168,7 @@ export default async function SettingsPage() {
         <h2 id="booking-title" className="font-display text-[2.125rem] font-light text-ink">
           Booking
         </h2>
-        <p className="t-caption mt-1 !text-[0.78125rem]">How clients book from their report. Times come from your hours and the menu.</p>
+        <p className="t-caption mt-1 !text-[0.8125rem]">How clients book from their report. Times come from your hours and the menu.</p>
         <div className="mt-6 rounded-[16px] bg-white/70 p-6 ring-1 ring-inset ring-white">
           <DepositSwitch initial={settings.depositRequired} amount={formatPrice(clinic.depositCents)} />
           {settings.depositRequired && !env.STRIPE_SECRET_KEY && (
@@ -182,7 +182,7 @@ export default async function SettingsPage() {
             ["Cancelling", `Online, up to ${NOTICE_HOURS} hours before. After that, clients call you.`],
           ].map(([term, value]) => (
             <div key={term} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-[#0c1a22]/[0.06] py-3.5 last:border-0">
-              <dt className="t-label !text-[0.65625rem]">{term}</dt>
+              <dt className="t-label !text-[0.75rem]">{term}</dt>
               <dd className="text-[0.875rem] text-ink">{value}</dd>
             </div>
           ))}
@@ -194,7 +194,7 @@ export default async function SettingsPage() {
         <h2 id="replies-title" className="font-display text-[2.125rem] font-light text-ink">
           Replies
         </h2>
-        <p className="t-caption mt-1 max-w-2xl !text-[0.78125rem]">
+        <p className="t-caption mt-1 max-w-2xl !text-[0.8125rem]">
           When a client writes back, hear about it straight away, with their words and a link to answer. A few lines in a row
           send one alert.
         </p>
@@ -203,7 +203,7 @@ export default async function SettingsPage() {
           {!features.email && <p className="t-caption mt-1 !text-[0.8125rem] text-[#7a4210]">Email isn&apos;t connected yet, so alerts can&apos;t be emailed until it is.</p>}
         </div>
         {env.DEMO_MODE && (
-          <p className="t-caption mt-4 !text-[0.78125rem]">
+          <p className="t-caption mt-4 !text-[0.8125rem]">
             Demo: alerts cover this browser&apos;s clients, including replies to the copies you send yourself.
           </p>
         )}
@@ -237,7 +237,7 @@ export default async function SettingsPage() {
             <li key={name} className="lift sheen relative rounded-[16px] bg-white/70 p-6 ring-1 ring-inset ring-white shadow-[0_16px_32px_-24px_rgba(12,44,62,0.4)]">
               <p className="text-[0.9375rem] text-ink">{name}</p>
               <p className="t-caption mt-1 !text-[0.8125rem]">{what}</p>
-              <p className="mt-6 inline-flex rounded-full bg-[#9fc9dd]/30 px-2.5 py-1 text-[0.65625rem] uppercase tracking-[0.14em] text-[#174a63]">Coming soon</p>
+              <p className="mt-6 inline-flex rounded-full bg-[#9fc9dd]/30 px-2.5 py-1 text-[0.75rem] uppercase tracking-[0.14em] text-[#174a63]">Coming soon</p>
             </li>
           ))}
         </ul>

@@ -27,7 +27,7 @@ export function Portrait({ src, initials, caption }: { src: string | null; initi
       )}
       {/* A soft fall of shade at the foot, so the caption sits on the photo rather than over a face. */}
       {src && !failed && <span aria-hidden className="fade pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-[linear-gradient(180deg,transparent,rgba(12,26,34,0.28))]" />}
-      <span className="absolute bottom-4 left-4 rounded-full bg-white/75 px-3 py-1 text-[0.65625rem] uppercase tracking-[0.14em] text-text-2 backdrop-blur">{caption}</span>
+      <span className="absolute bottom-4 left-4 rounded-full bg-white/75 px-3 py-1 text-[0.75rem] uppercase tracking-[0.14em] text-text-2 backdrop-blur">{caption}</span>
     </div>
   );
 }

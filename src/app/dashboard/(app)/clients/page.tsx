@@ -52,7 +52,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/dashboar
                       className={pill(active)}
                     >
                       {f.label}
-                      <span className={cx("tabular-nums text-[0.75rem]", active ? "text-white/70" : "text-text-3")}>{count(f)}</span>
+                      <span className={cx("tabular-nums text-[0.8125rem]", active ? "text-white/70" : "text-text-3")}>{count(f)}</span>
                     </Link>
                   </li>
                 );
@@ -89,10 +89,10 @@ export default async function ClientsPage({ searchParams }: PageProps<"/dashboar
                       </span>
                       <span className="min-w-0">
                         <span className="block font-display text-[1.3125rem] leading-tight text-ink">{fullName(client)}</span>
-                    <span className="t-caption block !text-[0.78125rem] md:hidden">
+                    <span className="t-caption block !text-[0.8125rem] md:hidden">
                       {STATUS_LABEL[row.status]}
                     </span>
-                    <span className="t-caption hidden !text-[0.78125rem] xl:block">{client.email}</span>
+                    <span className="t-caption hidden !text-[0.8125rem] xl:block">{client.email}</span>
                       </span>
                     </span>
                   </Link>
@@ -109,11 +109,11 @@ export default async function ClientsPage({ searchParams }: PageProps<"/dashboar
                 <td className="py-4 pr-4">
                   {row.trend ? (
                     <span className="flex items-center justify-end gap-4 sm:justify-start">
-                      <span className="w-28 text-[0.84375rem] text-text-2 hidden sm:block">{row.trend.label}</span>
+                      <span className="w-28 text-[0.875rem] text-text-2 hidden sm:block">{row.trend.label}</span>
                       <span className="w-14 text-right font-display text-[1.625rem] font-light text-ink tabular-nums">
                         {row.trend.series[row.trend.series.length - 1]}
                       </span>
-                      <span className={cx("w-10 text-[0.78125rem] tabular-nums", row.trend.delta && row.trend.delta > 0 ? "font-medium text-[color:var(--growth)]" : "text-text-3")}>
+                      <span className={cx("w-10 text-[0.8125rem] tabular-nums", row.trend.delta && row.trend.delta > 0 ? "font-medium text-[color:var(--growth)]" : "text-text-3")}>
                         {row.trend.delta === null ? "" : row.trend.delta > 0 ? `+${row.trend.delta}` : row.trend.delta}
                       </span>
                       <Sparkline values={row.trend.series} className="max-[1439px]:hidden" />
@@ -125,7 +125,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/dashboar
                     <span className="t-caption">No scan yet</span>
                   )}
                 </td>
-                <td className="hidden whitespace-nowrap py-4 text-[0.84375rem] text-text-2 2xl:table-cell">{row.item ? <WaitingOn row={row} /> : <span className="text-text-3">Nothing</span>}</td>
+                <td className="hidden whitespace-nowrap py-4 text-[0.875rem] text-text-2 2xl:table-cell">{row.item ? <WaitingOn row={row} /> : <span className="text-text-3">Nothing</span>}</td>
               </tr>
             );
           })}

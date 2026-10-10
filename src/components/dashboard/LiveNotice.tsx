@@ -106,12 +106,12 @@ export function LiveNotice(live: Live) {
             data-leaving={n.leaving || undefined}
             className="reply-notice sea pointer-events-auto relative overflow-hidden rounded-[20px] p-5 pr-14 ring-1 ring-white/10"
           >
-            <p className="flex items-center gap-2.5 text-[0.6875rem] uppercase tracking-[0.22em] text-[#e2c07a]">
+            <p className="flex items-center gap-2.5 text-[0.75rem] uppercase tracking-[0.22em] text-[#e2c07a]">
               <span aria-hidden className="reply-dot relative h-1.5 w-1.5 rounded-full bg-[#e2c07a]" />
               {reply ? "New reply" : "New prospect"}
             </p>
             <p className="mt-3 font-display text-[1.75rem] font-light leading-none text-white">{label}.</p>
-            <p className="mt-2 text-[0.78125rem] text-ink-soft">
+            <p className="mt-2 text-[0.8125rem] text-ink-soft">
               {name} · {reply ? (reply.channel === "sms" ? "By text" : "By email") : "First scan"} · Just now
             </p>
             {reply ? (

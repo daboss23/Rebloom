@@ -76,7 +76,7 @@ export default async function TodayPage() {
         <LightField variant="ice" />
         <div aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,rgba(246,251,253,0.72)_0%,rgba(246,251,253,0.2)_48%,rgba(246,251,253,0)_75%)]" />
         <div className="relative px-6 pb-6 pt-10 sm:px-10 sm:pt-14 lg:px-12">
-          <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">{date}</p>
+          <p className="text-[0.75rem] uppercase tracking-[0.22em] text-[#1e5a78]">{date}</p>
           <h1 className="mt-4 max-w-3xl font-display text-[clamp(46px,6.4vw,88px)] font-light leading-[0.95] tracking-[-0.025em] text-ink">
             {greeting(now, clinic.timezone)}, {book.staff.name}.
           </h1>
@@ -106,7 +106,7 @@ export default async function TodayPage() {
         {replies.length > 0 && (
           <section aria-labelledby="wrote-back">
             <div className="mb-5">
-              <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-text-3">Replies</p>
+              <p className="text-[0.75rem] uppercase tracking-[0.22em] text-text-3">Replies</p>
               <h2 id="wrote-back" className="mt-2 font-display text-[2.25rem] font-light leading-none text-ink">
                 Waiting on your answer
               </h2>
@@ -121,11 +121,11 @@ export default async function TodayPage() {
                     <span className="min-w-0">
                       <span className="block truncate font-display text-[1.375rem] leading-tight text-ink">{fullName(f.client)}</span>
                       <span className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                        <span className="signal signal-urgent signal-live h-6 px-2.5 text-[0.71875rem]">
+                        <span className="signal signal-urgent signal-live h-6 px-2.5 text-[0.75rem]">
                           <span aria-hidden className="signal-dot" />
                           Waiting · {waited(days)}
                         </span>
-                        <span className="inline-flex items-center gap-1 text-[0.75rem] text-text-3">
+                        <span className="inline-flex items-center gap-1 text-[0.8125rem] text-text-3">
                           {reply.channel === "sms" ? <IconMessage width={13} height={13} aria-hidden /> : <IconMail width={13} height={13} aria-hidden />}
                           {reply.channel === "sms" ? "Text" : "Email"}
                         </span>
@@ -146,12 +146,12 @@ export default async function TodayPage() {
         <section aria-labelledby="contact">
           <div className="mb-5 flex items-end justify-between gap-6">
             <div>
-              <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-text-3">The rebook queue</p>
+              <p className="text-[0.75rem] uppercase tracking-[0.22em] text-text-3">The rebook queue</p>
               <h2 id="contact" className="mt-2 font-display text-[2.25rem] font-light leading-none text-ink">
                 Who to contact, and why
               </h2>
             </div>
-            <Link href="/dashboard/rebook" className="group hidden items-center gap-2 text-[0.84375rem] text-text-3 hover:text-ink sm:inline-flex">
+            <Link href="/dashboard/rebook" className="group hidden items-center gap-2 text-[0.875rem] text-text-3 hover:text-ink sm:inline-flex">
               Outbox and history
               <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
@@ -168,7 +168,7 @@ export default async function TodayPage() {
               <h2 id="visits" className="font-display text-[1.5rem] font-light text-ink">
                 Today&apos;s visits
               </h2>
-              <span className="text-[0.75rem] text-text-3">{visits.length ? `${visits.length} booked` : ""}</span>
+              <span className="text-[0.8125rem] text-text-3">{visits.length ? `${visits.length} booked` : ""}</span>
             </div>
             <Visits
               visits={visits}
@@ -192,7 +192,7 @@ export default async function TodayPage() {
                     <p className="text-ink">
                       {fullName(byId.get(item.clientId)!.client)} <span className="text-text-3">· {TRIGGER_LABEL[item.kind]}</span>
                     </p>
-                    <p className="t-caption !text-[0.78125rem]">{message.status !== "sent" ? message.body : message.channel === "sms" ? `Texted: ${message.body}` : `Email sent: ${message.subject}`}</p>
+                    <p className="t-caption !text-[0.8125rem]">{message.status !== "sent" ? message.body : message.channel === "sms" ? `Texted: ${message.body}` : `Email sent: ${message.subject}`}</p>
                   </li>
                 ))}
               </ul>

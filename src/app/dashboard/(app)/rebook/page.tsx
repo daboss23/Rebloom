@@ -59,7 +59,7 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
                   <li key={v.key}>
                     <Link href={v.key === "all" ? "/dashboard/rebook" : `/dashboard/rebook?show=${v.key}`} aria-current={active ? "page" : undefined} scroll={false} className={pill(active)}>
                       {v.label}
-                      <span className={cx("tabular-nums text-[0.75rem]", active ? "text-white/70" : "text-text-3")}>{n}</span>
+                      <span className={cx("tabular-nums text-[0.8125rem]", active ? "text-white/70" : "text-text-3")}>{n}</span>
                     </Link>
                   </li>
                 );
@@ -80,7 +80,7 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
           <h2 id="outbox" className="font-display text-[2.125rem] font-light text-ink">
             Outbox
           </h2>
-          {env.DEMO_MODE && <p className="t-caption !text-[0.78125rem]">Demo mode: messages are logged here, never emailed or texted.</p>}
+          {env.DEMO_MODE && <p className="t-caption !text-[0.8125rem]">Demo mode: messages are logged here, never emailed or texted.</p>}
         </div>
         {outbox.length === 0 ? (
           <p className="t-caption mt-4 pt-1">Nothing sent yet. Messages you send from the queue land here, word for word.</p>
@@ -97,11 +97,11 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
                         {m.channel === "sms" && <span className="text-text-3">Text · </span>}
                         {m.subject ?? m.body}
                       </span>
-                      <span className="t-label hidden items-center gap-2 !text-[0.65625rem] md:flex">
+                      <span className="t-label hidden items-center gap-2 !text-[0.75rem] md:flex">
                         <KindMarkStatic kind={m.type as TriggerKind} />
                         {TRIGGER_LABEL[m.type as TriggerKind]}
                       </span>
-                      <span className="t-caption text-right !text-[0.78125rem]">
+                      <span className="t-caption text-right !text-[0.8125rem]">
                         {m.status === "sent" ? (env.DEMO_MODE ? "Logged" : "Sent") : m.status === "skipped" ? "Done" : "Failed"} ·{" "}
                         {relativeDay(local(m.createdAt), book.today)}
                       </span>
@@ -113,16 +113,16 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
                       <div className="pb-6 md:pl-[11rem]">
                         {m.channel === "sms" ? (
                           <>
-                            <p className="t-caption !text-[0.78125rem]">Text to {client?.phone}</p>
+                            <p className="t-caption !text-[0.8125rem]">Text to {client?.phone}</p>
                             {/* As it reads on their phone. */}
-                            <p className="mt-3 w-fit max-w-md whitespace-pre-wrap break-words rounded-[18px] rounded-bl-[6px] bg-white/80 px-4 py-2.5 text-[0.90625rem] leading-[1.45] text-ink ring-1 ring-inset ring-white">
+                            <p className="mt-3 w-fit max-w-md whitespace-pre-wrap break-words rounded-[18px] rounded-bl-[6px] bg-white/80 px-4 py-2.5 text-[0.9375rem] leading-[1.45] text-ink ring-1 ring-inset ring-white">
                               {m.body}
                             </p>
                           </>
                         ) : (
                           <>
-                            <p className="t-caption !text-[0.78125rem]">To {client?.email}</p>
-                            <pre className="mt-3 max-w-2xl whitespace-pre-wrap rounded-[14px] bg-white/70 p-5 font-sans text-[0.90625rem] leading-relaxed text-text-2 ring-1 ring-inset ring-white">{m.body}</pre>
+                            <p className="t-caption !text-[0.8125rem]">To {client?.email}</p>
+                            <pre className="mt-3 max-w-2xl whitespace-pre-wrap rounded-[14px] bg-white/70 p-5 font-sans text-[0.9375rem] leading-relaxed text-text-2 ring-1 ring-inset ring-white">{m.body}</pre>
                           </>
                         )}
                       </div>
@@ -146,7 +146,7 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
                 <KindMarkStatic kind={kind} />
                 {TRIGGER_LABEL[kind]}
               </dt>
-              <dd className="mt-1 text-[0.84375rem] leading-relaxed text-text-2">{rule}</dd>
+              <dd className="mt-1 text-[0.875rem] leading-relaxed text-text-2">{rule}</dd>
             </div>
           ))}
         </dl>

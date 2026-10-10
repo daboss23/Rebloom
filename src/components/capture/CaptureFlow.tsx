@@ -242,7 +242,7 @@ export function CaptureFlow({ clinicSlug, rescan }: { clinicSlug: string; rescan
             {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview */}
             <img src={phase.shot.url} alt="Your photo" className="absolute inset-0 h-full w-full object-cover" />
             {phase.shot.quality.passedGate && (
-              <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1 text-[0.6875rem] uppercase tracking-[0.14em] text-ink backdrop-blur-sm">
+              <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1 text-[0.75rem] uppercase tracking-[0.14em] text-ink backdrop-blur-sm">
                 <IconCheckCircle aria-hidden width={14} height={14} className="text-[var(--growth)]" />
                 Quality checked
               </span>

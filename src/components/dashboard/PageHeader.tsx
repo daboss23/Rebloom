@@ -5,7 +5,7 @@ export function PageHeader({ kicker, title, children, aside }: { kicker: ReactNo
   return (
     <header className="focus-in flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
       <div className="min-w-0">
-        <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">{kicker}</p>
+        <p className="text-[0.75rem] uppercase tracking-[0.22em] text-[#1e5a78]">{kicker}</p>
         <h1 className="mt-3 font-display text-[clamp(44px,5.6vw,72px)] font-light leading-[0.95] tracking-[-0.025em] text-ink">{title}</h1>
         {children && <div className="mt-4 max-w-xl text-[1rem] leading-relaxed text-text-2">{children}</div>}
       </div>

@@ -45,7 +45,7 @@ export function Shell({ clinic, staff, dateLabel, clock, demo, queueCount, clien
         <Link href="/dashboard" className="px-4" aria-label="Rebloom, today">
           <RebloomWordmark height={22} />
         </Link>
-        <p className="mt-3 px-4 text-[0.65625rem] uppercase tracking-[0.22em] text-ink-soft/80">{clinic.name}</p>
+        <p className="mt-3 px-4 text-[0.75rem] uppercase tracking-[0.22em] text-ink-soft/80">{clinic.name}</p>
         <nav aria-label="Dashboard" className="mt-12">
           <SideNav items={items} />
         </nav>
@@ -59,11 +59,11 @@ export function Shell({ clinic, staff, dateLabel, clock, demo, queueCount, clien
             </span>
             <div className="min-w-0">
               <p className="text-[0.875rem] text-white">{staff.name}</p>
-              <p className="text-[0.75rem] text-ink-soft">{staff.title}</p>
+              <p className="text-[0.8125rem] text-ink-soft">{staff.title}</p>
             </div>
           </div>
           <form action={signOut} className="px-4">
-            <button type="submit" className="mt-4 text-[0.75rem] text-ink-soft underline decoration-white/20 underline-offset-4 transition-colors duration-200 hover:text-white hover:decoration-white/60">
+            <button type="submit" className="mt-4 text-[0.8125rem] text-ink-soft underline decoration-white/20 underline-offset-4 transition-colors duration-200 hover:text-white hover:decoration-white/60">
               Sign out
             </button>
           </form>

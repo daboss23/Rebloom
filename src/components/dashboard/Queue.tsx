@@ -68,7 +68,7 @@ export function Queue({
   const toastRegion = (
     <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
       {toast && (
-        <div key={toast.id} className="toast sea on-dark pointer-events-auto flex max-w-md items-center gap-6 rounded-[14px] py-3.5 pl-5 pr-4 text-[0.84375rem] shadow-[0_24px_48px_-20px_rgba(12,26,34,0.6)]">
+        <div key={toast.id} className="toast sea on-dark pointer-events-auto flex max-w-md items-center gap-6 rounded-[14px] py-3.5 pl-5 pr-4 text-[0.875rem] shadow-[0_24px_48px_-20px_rgba(12,26,34,0.6)]">
           {toast.bloom && <Bloom size={22} unfurl className="text-[#f1d49a]" />}
           <p>{toast.text}</p>
           {toast.undo && (
@@ -133,7 +133,7 @@ export function Queue({
                 <p className="max-w-[52ch] text-[0.9375rem] leading-relaxed text-text-2 md:mt-1.5">{row.reason}</p>
                 {row.reply && (
                   // They wrote back (D-081): a pre-written message now would talk past them.
-                  <p className="mt-3 max-w-[56ch] border-t border-[#0c1a22]/[0.06] pt-3 text-[0.84375rem] leading-relaxed text-text-2">
+                  <p className="mt-3 max-w-[56ch] border-t border-[#0c1a22]/[0.06] pt-3 text-[0.875rem] leading-relaxed text-text-2">
                     <span className="font-medium text-[#7a5014]">Wrote back: </span>
                     &ldquo;{row.reply}&rdquo;{" "}
                     {onBrief ? (
@@ -151,10 +151,10 @@ export function Queue({
                 {row.value ? (
                   <>
                     <p className="gold-foil font-display text-[2rem] font-light leading-none">{row.value}</p>
-                    <p className="t-caption !text-[0.75rem] md:mt-1.5">{row.valueNote}</p>
+                    <p className="t-caption !text-[0.8125rem] md:mt-1.5">{row.valueNote}</p>
                   </>
                 ) : (
-                  row.valueNote && <p className="t-caption !text-[0.75rem]">{row.valueNote}</p>
+                  row.valueNote && <p className="t-caption !text-[0.8125rem]">{row.valueNote}</p>
                 )}
               </div>
 
@@ -171,7 +171,7 @@ export function Queue({
                       <IconPhone width={16} height={16} />
                       Call {row.phone}
                     </a>
-                    <button type="button" disabled={pending} onClick={() => done(row)} className="text-[0.78125rem] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 hover:text-ink hover:decoration-ink">
+                    <button type="button" disabled={pending} onClick={() => done(row)} className="text-[0.8125rem] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 hover:text-ink hover:decoration-ink">
                       Mark as called
                     </button>
                   </>
@@ -188,7 +188,7 @@ export function Queue({
                         Open brief
                         <IconArrowUpRight width={15} height={15} />
                       </Link>
-                      <button type="button" disabled={pending} onClick={() => done(row)} className="text-[0.78125rem] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 hover:text-ink hover:decoration-ink">
+                      <button type="button" disabled={pending} onClick={() => done(row)} className="text-[0.8125rem] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 hover:text-ink hover:decoration-ink">
                         Mark as reviewed
                       </button>
                     </>
@@ -337,7 +337,7 @@ function SendSheet({
           <LightField variant="sea" className="opacity-70" />
           <div className="relative flex items-start justify-between gap-6">
             <div>
-              <p className="flex items-center gap-2 text-[0.65625rem] uppercase tracking-[0.16em] text-ink-soft">
+              <p className="flex items-center gap-2 text-[0.75rem] uppercase tracking-[0.16em] text-ink-soft">
                 <KindMark kind={row.kind} atRisk={row.atRisk} />
                 {row.label}
               </p>
@@ -400,7 +400,7 @@ function SendSheet({
                     aria-describedby={`${titleId}-copy`}
                     className={cx(field, "mt-2 h-12 px-4 text-[1rem] placeholder:text-text-3")}
                   />
-                  <span id={`${titleId}-copy`} className="t-caption mt-2 block !text-[0.78125rem]">
+                  <span id={`${titleId}-copy`} className="t-caption mt-2 block !text-[0.8125rem]">
                     {firstName} is a sample client, so this message stays in the outbox. Add your address to receive the email exactly as {firstName} would.
                   </span>
                 </label>
@@ -416,7 +416,7 @@ function SendSheet({
 
         <footer className="border-t border-[#0c1a22]/[0.07] bg-white/50 px-7 py-5">
           {demo && (
-            <p className="t-caption mb-4 !text-[0.78125rem]">
+            <p className="t-caption mb-4 !text-[0.8125rem]">
               {isText
                 ? "Demo mode: this text is logged in the outbox, not sent."
                 : realCopy && copyTo.trim()
@@ -515,7 +515,7 @@ function TextDraft({
       <figure className="mt-7">
         <figcaption className="t-label">On {firstName}&apos;s phone</figcaption>
         <div className="mt-2 rounded-[18px] bg-[linear-gradient(180deg,#ffffff_0%,#f3f7f9_100%)] px-4 pb-5 pt-4 shadow-[0_18px_40px_-28px_rgba(12,26,34,0.5)] ring-1 ring-inset ring-[#0c1a22]/[0.06]">
-          <p className="text-center text-[0.71875rem] text-text-3">{sender}</p>
+          <p className="text-center text-[0.75rem] text-text-3">{sender}</p>
           <p className="mt-3 w-fit max-w-[86%] whitespace-pre-wrap break-words rounded-[18px] rounded-bl-[6px] bg-[#e9eef1] px-4 py-2.5 text-[0.9375rem] leading-[1.45] text-ink">
             {text.trim()
               ? text.split(LINK).map((part, i) =>
@@ -543,7 +543,7 @@ function TextDraft({
           className={cx(field, "mt-2 resize-y p-4 text-[0.9375rem] leading-relaxed")}
         />
       </label>
-      <p id={countId} aria-live="polite" className={cx("t-caption mt-2 !text-[0.78125rem]", tooLong && "!text-ink")}>
+      <p id={countId} aria-live="polite" className={cx("t-caption mt-2 !text-[0.8125rem]", tooLong && "!text-ink")}>
         {tooLong
           ? `${text.trim().length} characters. Keep it under ${TEXT_MAX_CHARS}.`
           : `${text.trim().length} characters, sent as ${parts === 1 ? "one text" : `${parts} parts`}${unicode ? ". An emoji or curly quote makes each part shorter" : ""}.`}

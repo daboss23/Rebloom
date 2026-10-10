@@ -110,9 +110,9 @@ export function TimeTravel({ dateLabel, clock, compact }: { dateLabel: string; c
         </span>
         <span>
           <span className="flex items-center gap-2">
-            <span className="t-label whitespace-nowrap !text-[0.625rem]">Demo clock</span>
+            <span className="t-label whitespace-nowrap !text-[0.75rem]">Demo clock</span>
             {lead && (
-              <span className="rounded-full bg-[#e2c07a]/25 px-1.5 text-[0.625rem] font-medium tabular-nums text-[#7a5014] ring-1 ring-inset ring-[#c99645]/30">{lead}</span>
+              <span className="rounded-full bg-[#e2c07a]/25 px-1.5 text-[0.75rem] font-medium tabular-nums text-[#7a5014] ring-1 ring-inset ring-[#c99645]/30">{lead}</span>
             )}
           </span>
           <span key={dateLabel} className="clock-flash focus-in block whitespace-nowrap text-[0.875rem] text-ink tabular-nums">
@@ -133,7 +133,7 @@ export function TimeTravel({ dateLabel, clock, compact }: { dateLabel: string; c
           disabled={pending}
           onClick={() => run(() => travelToOpening())}
           className={cx(
-            "h-8 whitespace-nowrap rounded-[9px] px-3 text-[0.78125rem] font-medium text-[#5a3a08] transition-[filter,transform] duration-150 ease-out",
+            "h-8 whitespace-nowrap rounded-[9px] px-3 text-[0.8125rem] font-medium text-[#5a3a08] transition-[filter,transform] duration-150 ease-out",
             "bg-[linear-gradient(180deg,#fff4dc,#f1d49a)] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_0_0_1px_rgba(201,150,69,0.4)] hover:brightness-105 active:scale-[0.96] disabled:opacity-50",
             compact && "flex-1",
           )}
@@ -147,7 +147,7 @@ export function TimeTravel({ dateLabel, clock, compact }: { dateLabel: string; c
             disabled={pending}
             onClick={() => run(() => travel(step.days))}
             className={cx(
-              "h-8 whitespace-nowrap rounded-[9px] px-2.5 text-[0.78125rem] text-text-2 transition-[background-color,color,transform] duration-150 ease-out sm:px-3",
+              "h-8 whitespace-nowrap rounded-[9px] px-2.5 text-[0.8125rem] text-text-2 transition-[background-color,color,transform] duration-150 ease-out sm:px-3",
               "hover:bg-white hover:text-ink hover:shadow-[0_4px_10px_-6px_rgba(12,44,62,0.4)] active:scale-[0.96] disabled:opacity-50",
               compact && "flex-1",
             )}

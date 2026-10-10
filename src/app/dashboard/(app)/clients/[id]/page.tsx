@@ -178,7 +178,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
         <h2 id="conversation-title" className="font-display text-[2.125rem] font-light leading-none text-ink">
           {facts.reply ? `${name} wrote back` : "Conversation"}
         </h2>
-        <p className="t-caption !text-[0.78125rem]">Their replies to the clinic&apos;s emails and texts land here.</p>
+        <p className="t-caption !text-[0.8125rem]">Their replies to the clinic&apos;s emails and texts land here.</p>
       </div>
       <div className="mx-auto max-w-[46rem]">
         <Conversation
@@ -207,9 +207,9 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
 
       <header className="focus-in mt-6 flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
         <div className="min-w-0">
-          <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">{kicker}</p>
+          <p className="text-[0.75rem] uppercase tracking-[0.22em] text-[#1e5a78]">{kicker}</p>
           <h1 className="mt-3 font-display text-[clamp(52px,7vw,88px)] font-light leading-[0.95] tracking-[-0.025em] text-ink">{shortName(client)}</h1>
-          <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.90625rem] text-text-2">
+          <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.9375rem] text-text-2">
             <StatusMark status={status} />
             {info.age && <span className="text-text-3">· {info.age}</span>}
             {first && <span className="text-text-3">· First scan {monthDay(local(first.createdAt))}</span>}
@@ -253,14 +253,14 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
             {scores.map((s, i) => (
               <li key={s.score.key} className="grid grid-cols-[minmax(0,1fr)_auto_52px] items-center gap-4 border-b border-[#0c1a22]/[0.06] py-3 last:border-0">
                 <span className="min-w-0">
-                  <span className="block text-[0.90625rem] text-ink">{s.label}</span>
+                  <span className="block text-[0.9375rem] text-ink">{s.label}</span>
                   <span aria-hidden className={cx("meter mt-2 block", s.delta !== null && s.delta > 0 && "meter-growth")}>
                     <span style={{ width: `${Math.max(0, Math.min(100, s.score.ui))}%`, animationDelay: `${320 + i * 70}ms` }} />
                   </span>
                 </span>
                 <span className="flex items-center gap-3">
                   {s.delta !== null && (
-                    <span className={cx("text-[0.75rem] tabular-nums", s.delta > 0 ? "font-medium text-[color:var(--growth)]" : "text-text-3")}>
+                    <span className={cx("text-[0.8125rem] tabular-nums", s.delta > 0 ? "font-medium text-[color:var(--growth)]" : "text-text-3")}>
                       {s.delta > 0 ? `+${s.delta}` : s.delta}
                     </span>
                   )}
@@ -271,7 +271,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
             ))}
           </ul>
           {info.skinAge !== null && (
-            <p className="t-caption mt-3 px-2 pb-2 !text-[0.78125rem]">
+            <p className="t-caption mt-3 px-2 pb-2 !text-[0.8125rem]">
               Skin age reads {info.skinAge}. For you only, never shown to the client.
             </p>
           )}
@@ -303,7 +303,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
               ["Texts", texts],
             ].map(([term, value]) => (
               <div key={term} className="border-t border-[#0c1a22]/[0.07] py-4">
-                <dt className="t-label !text-[0.65625rem]">{term}</dt>
+                <dt className="t-label !text-[0.75rem]">{term}</dt>
                 <dd className={cx("mt-1.5 text-[0.9375rem]", term === "Budget" && info.budget ? "font-medium text-[color:var(--gold)]" : "text-ink")}>
                   {value}
                   {term === "Emails" && facts.canEmail && <StopEmails clientId={client.id} firstName={name} />}
@@ -319,7 +319,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
                   <IconAlert width={17} height={17} />
                 </span>
                 <span className="font-display text-[1.375rem] leading-tight text-ink">Review before treatment</span>
-                <span className="ml-auto rounded-full bg-white/80 px-2.5 py-0.5 text-[0.71875rem] font-medium tabular-nums text-[#8a4b12] ring-1 ring-inset ring-[#e98c3c]/30">
+                <span className="ml-auto rounded-full bg-white/80 px-2.5 py-0.5 text-[0.75rem] font-medium tabular-nums text-[#8a4b12] ring-1 ring-inset ring-[#e98c3c]/30">
                   {info.flags.length}
                 </span>
               </p>
@@ -331,7 +331,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
                   </li>
                 ))}
               </ul>
-              <p className="mt-1 text-[0.75rem] text-[#7a4a1c]">Flags are prompts for your judgement, not decisions.</p>
+              <p className="mt-1 text-[0.8125rem] text-[#7a4a1c]">Flags are prompts for your judgement, not decisions.</p>
             </div>
           )}
 
@@ -350,7 +350,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
                 <li key={a.id} className="grid grid-cols-[104px_minmax(0,1fr)_auto] items-baseline gap-4 border-b border-[#0c1a22]/[0.06] py-3 text-[0.875rem] last:border-0">
                   <span className={cx("tabular-nums", a.status === "booked" ? "text-ink" : "text-text-3")}>{shortDay(local(a.startsAt))}</span>
                   <span className="truncate text-text-2">{a.treatmentId ? treatmentName(a.treatmentId) : "First consultation"}</span>
-                  <span className="t-caption !text-[0.75rem]">{a.status === "booked" ? `Booked · ${time(a.startsAt)}` : a.status === "completed" ? "Done" : "Missed"}</span>
+                  <span className="t-caption !text-[0.8125rem]">{a.status === "booked" ? `Booked · ${time(a.startsAt)}` : a.status === "completed" ? "Done" : "Missed"}</span>
                 </li>
               ))}
             </ol>
@@ -365,7 +365,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
         >
           <LightField variant="sea" className="opacity-45" />
           <div className="relative">
-          <h2 id="plan" className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#e2c07a]">
+          <h2 id="plan" className="text-[0.75rem] uppercase tracking-[0.22em] text-[#e2c07a]">
             {planLabel}
           </h2>
           {lines.length === 0 ? (
@@ -391,7 +391,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
               {budgetFit && (
                 <p
                   className={cx(
-                    "mt-5 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[0.75rem] font-medium",
+                    "mt-5 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[0.8125rem] font-medium",
                     budgetFit === "fits" ? "bg-[#1f7a63]/25 text-[#a8ecd2] ring-1 ring-inset ring-[#7fd1b4]/40" : "bg-[#f49543]/20 text-[#ffd2a8] ring-1 ring-inset ring-[#f49543]/45",
                   )}
                 >

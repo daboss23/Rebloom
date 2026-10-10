@@ -24,7 +24,7 @@ export function ClinicShell({
     <div style={clinicThemeStyle(clinic.accentHex)} className="rebloom client relative flex min-h-dvh flex-col overflow-x-clip">
       <ShellLight />
       {ephemeral && (
-        <p className="relative bg-white/70 px-4 py-2 text-center text-[0.75rem] text-text-2">
+        <p className="relative bg-white/70 px-4 py-2 text-center text-[0.8125rem] text-text-2">
           Preview without a database. Data may reset between visits.
         </p>
       )}
@@ -34,7 +34,7 @@ export function ClinicShell({
             <ClinicWordmark clinic={clinic} />
           </Link>
           {/* On the narrowest phones the clinic's name needs the whole bar. */}
-          {section && <span className="whitespace-nowrap text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78] max-[359px]:hidden">{section}</span>}
+          {section && <span className="whitespace-nowrap text-[0.75rem] uppercase tracking-[0.22em] text-[#1e5a78] max-[359px]:hidden">{section}</span>}
         </div>
       </header>
       <main className="relative mx-auto w-full max-w-[600px] flex-1 px-5">{children}</main>

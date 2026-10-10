@@ -86,7 +86,7 @@ export default function RebloomHome() {
               ))}
             </ul>
           </nav>
-          <Link href={enter} className="btn-gold !hidden !h-11 whitespace-nowrap px-3.5 text-[0.8125rem] min-[390px]:!inline-flex sm:!h-10 sm:px-4 sm:text-[0.84375rem]">
+          <Link href={enter} className="btn-gold !hidden !h-11 whitespace-nowrap px-3.5 text-[0.8125rem] min-[390px]:!inline-flex sm:!h-10 sm:px-4 sm:text-[0.875rem]">
             Enter the clinic dashboard
           </Link>
         </div>
@@ -144,7 +144,7 @@ function Hero({ p }: { p: LandingPreview }) {
 
       <div className={`${wrap} relative grid gap-12 pb-20 pt-8 sm:pt-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-center lg:gap-14 lg:pb-28 lg:pt-6 xl:gap-20`}>
         <div className="min-w-0 lg:-mt-16">
-          <p className="focus-in flex items-center gap-2.5 text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">
+          <p className="focus-in flex items-center gap-2.5 text-[0.75rem] uppercase tracking-[0.22em] text-[#1e5a78]">
             <Bloom size={16} unfurl className="text-[#9e4a5d]" />
             The retention engine for skin clinics
           </p>
@@ -230,7 +230,7 @@ function Today({ p }: { p: LandingPreview }) {
                 <span className={cx("block font-display text-[clamp(32px,3.4vw,44px)] font-light leading-none tracking-[-0.02em]", f.gold ? "gold-foil" : "text-ink")}>
                   <CountUp value={f.value} format={f.gold ? "money" : "int"} delay={200 + i * 120} />
                 </span>
-                <span className="mt-2 block text-[0.78125rem] leading-snug text-text-2 sm:text-[0.84375rem]">{f.words}</span>
+                <span className="mt-2 block text-[0.8125rem] leading-snug text-text-2 sm:text-[0.875rem]">{f.words}</span>
               </li>
             ))}
           </ul>
@@ -265,12 +265,12 @@ function QueuePreviewRow({ row, delay }: { row: PreviewRow; delay: number }) {
           <span className="font-display text-[1.375rem] leading-tight text-ink">{row.name}</span>
           <KindChip row={row} />
         </p>
-        <p className="mt-1.5 text-[0.90625rem] leading-relaxed text-text-2">{row.reason}</p>
+        <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-text-2">{row.reason}</p>
       </div>
       {row.valueCents ? (
         <div className="col-start-2 flex items-baseline gap-2 sm:col-start-auto sm:block sm:text-right">
           <p className="gold-foil font-display text-[1.75rem] font-light leading-none">{formatPrice(row.valueCents)}</p>
-          <p className="t-caption !text-[0.75rem] sm:mt-1.5">{row.valueNote}</p>
+          <p className="t-caption !text-[0.8125rem] sm:mt-1.5">{row.valueNote}</p>
         </div>
       ) : (
         <span className="hidden sm:block" />
@@ -325,7 +325,7 @@ function Problem({ p }: { p: LandingPreview }) {
                       "bg-[linear-gradient(180deg,rgba(226,192,122,0.24),rgba(226,192,122,0.08))] shadow-[0_14px_30px_-18px_rgba(226,192,122,0.7)] ring-1 ring-inset ring-[#e2c07a]/80",
                     )}
                   >
-                    <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-[#f3dca6]">Session {i + 1}</span>
+                    <span className="text-[0.75rem] uppercase tracking-[0.14em] text-[#f3dca6]">Session {i + 1}</span>
                     <span className="flex items-baseline gap-3 sm:block">
                       <span className="flex items-center gap-1.5 text-[0.875rem] font-medium text-white">
                         <IconCheckCircle width={15} height={15} className="text-[#e2c07a]" />
@@ -338,14 +338,14 @@ function Problem({ p }: { p: LandingPreview }) {
                   <li key={i} className="relative h-16 sm:h-32">
                     {/* Planned, then never booked: the change plays as the course scrolls into view. */}
                     <span className={cx(tile, "lapse-planned absolute inset-0 bg-white/[0.07] opacity-0 ring-1 ring-inset ring-white/25", i === 2 && "lapse-late")} aria-hidden>
-                      <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-[#dbe8ef]">Session {i + 1}</span>
+                      <span className="text-[0.75rem] uppercase tracking-[0.14em] text-[#dbe8ef]">Session {i + 1}</span>
                       <span className="flex items-baseline gap-3 sm:block">
                         <span className="block text-[0.875rem] text-white">Planned</span>
                         <span className="block font-display text-[1.625rem] leading-none text-white sm:mt-0.5">{formatPrice(course.priceCents)}</span>
                       </span>
                     </span>
                     <span className={cx(tile, "lapse-lost absolute inset-0 border border-dashed border-[#f49543]/70 bg-[#f49543]/[0.08]", i === 2 && "lapse-late")}>
-                      <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-[#ffd2a8]/85">Session {i + 1}</span>
+                      <span className="text-[0.75rem] uppercase tracking-[0.14em] text-[#ffd2a8]/85">Session {i + 1}</span>
                       <span className="flex items-baseline gap-3 sm:block">
                         <span className="block text-[0.875rem] font-medium text-[#ffb27a]">Never booked</span>
                         <span className="block font-display text-[1.625rem] leading-none text-[#ffd2a8]/80 line-through decoration-[#f49543] decoration-1 sm:mt-0.5">
@@ -365,7 +365,7 @@ function Problem({ p }: { p: LandingPreview }) {
                 of a {formatPrice(total)} course, gone when a client stops after session one.
               </span>
             </p>
-            <p className="mt-5 text-[0.78125rem] text-[#a9bcc8]">Prices from the demo clinic&apos;s menu.</p>
+            <p className="mt-5 text-[0.8125rem] text-[#a9bcc8]">Prices from the demo clinic&apos;s menu.</p>
           </figure>
         </div>
       </div>
@@ -429,7 +429,7 @@ function ScanCell() {
           </li>
         ))}
       </ul>
-      <p className="mt-7 inline-flex h-10 items-center rounded-full bg-[#0e2230] px-5 text-[0.84375rem] text-white shadow-[0_12px_24px_-14px_rgba(12,26,34,0.8)]">
+      <p className="mt-7 inline-flex h-10 items-center rounded-full bg-[#0e2230] px-5 text-[0.875rem] text-white shadow-[0_12px_24px_-14px_rgba(12,26,34,0.8)]">
         That&apos;s it. Hold still
       </p>
     </Cell>
@@ -456,7 +456,7 @@ function ReportCell({ p }: { p: LandingPreview }) {
             <ul className="mt-4 space-y-2.5">
               {r.priorities.map((pr) => (
                 <li key={pr.label} className="rounded-[12px] bg-white/75 px-3 py-2.5 ring-1 ring-inset ring-white">
-                  <span className="flex items-baseline justify-between text-[0.84375rem] text-text-2">
+                  <span className="flex items-baseline justify-between text-[0.875rem] text-text-2">
                     {pr.label}
                     <span className="font-display text-[1.25rem] leading-none text-ink">{pr.score}</span>
                   </span>
@@ -466,7 +466,7 @@ function ReportCell({ p }: { p: LandingPreview }) {
                 </li>
               ))}
             </ul>
-            <div className="mt-4 flex items-end justify-between gap-4 text-[0.78125rem] text-text-3">
+            <div className="mt-4 flex items-end justify-between gap-4 text-[0.8125rem] text-text-3">
               <span>
                 {r.treatments.map((t) => (
                   <span key={t.name} className="block">
@@ -503,7 +503,7 @@ function ProofCell({ p }: { p: LandingPreview }) {
               over {s.weeks}&nbsp;weeks and {s.series.length}&nbsp;scans
             </span>
           </p>
-          <p className="mt-4 text-[0.84375rem] font-normal leading-relaxed text-text-3">
+          <p className="mt-4 text-[0.875rem] font-normal leading-relaxed text-text-3">
             Raw measurement {s.raw.from} to {s.raw.to}. A raw rise of {PROGRESS_MOMENT_RAW_DELTA} or more counts as progress.
           </p>
           {/* On wide screens the chart takes whatever height the two cells beside it give the row. */}
@@ -525,12 +525,12 @@ function MomentCell({ p }: { p: LandingPreview }) {
       {m && (
         <figure className="rounded-[16px] bg-white/90 p-5 shadow-[0_18px_36px_-24px_rgba(12,44,62,0.45)] ring-1 ring-[#0c1a22]/[0.06]">
           <figcaption className="sr-only">The drafted email, as the practitioner sees it before sending.</figcaption>
-          <p className="flex items-center gap-2 text-[0.78125rem] text-text-3">
+          <p className="flex items-center gap-2 text-[0.8125rem] text-text-3">
             <IconMail aria-hidden width={15} height={15} />
             To {m.name}
           </p>
           <p className="mt-2 text-[0.9375rem] text-ink">{m.subject}</p>
-          <div className="mt-3 space-y-2 text-[0.84375rem] leading-relaxed text-text-2">
+          <div className="mt-3 space-y-2 text-[0.875rem] leading-relaxed text-text-2">
             {m.paragraphs.slice(0, 2).map((para) => (
               <p key={para}>{para}</p>
             ))}
@@ -570,7 +570,7 @@ function CatchCell({ p }: { p: LandingPreview }) {
         <ul className="mt-6 space-y-3">
           {rules.map((r) => (
             <li key={r.label} className="flex flex-col items-start gap-1.5 text-[0.875rem] text-[#dbe8ef] sm:flex-row sm:items-center sm:gap-3">
-              <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-[#e9a35f]/15 px-2.5 text-[0.65625rem] uppercase tracking-[0.12em] text-[#f0bd85]">
+              <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-[#e9a35f]/15 px-2.5 text-[0.75rem] uppercase tracking-[0.12em] text-[#f0bd85]">
                 <span aria-hidden className="inline-block h-[7px] w-[7px] rounded-[2px] border border-[#f0bd85]" />
                 {r.label}
               </span>
@@ -602,7 +602,7 @@ function Honest() {
     <section aria-labelledby="honest-title" className={`${wrap} pt-28 lg:pt-40`}>
       <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
         <div className="lg:col-span-6">
-          <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">Built on YouCam</p>
+          <p className="text-[0.75rem] uppercase tracking-[0.22em] text-[#1e5a78]">Built on YouCam</p>
           <h2 id="honest-title" className={`${sectionTitle} mt-5`}>
             Progress on the raw data, not the flattering number.
           </h2>
@@ -689,7 +689,7 @@ function Try() {
                 <ClientPagePreview clinic={clinic} className="flex-1" />
                 <span className="flex items-center justify-between gap-4 px-3.5 pb-2 pt-4">
                   <span className="text-[0.8125rem] text-text-3">{clinic.city}</span>
-                  <span className="inline-flex items-center gap-2 whitespace-nowrap text-[0.90625rem] text-ink">
+                  <span className="inline-flex items-center gap-2 whitespace-nowrap text-[0.9375rem] text-ink">
                     Start a scan
                     <IconArrowRight width={17} height={17} className="transition-transform duration-300 ease-out group-hover:translate-x-1" />
                   </span>

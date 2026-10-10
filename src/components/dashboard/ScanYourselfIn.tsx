@@ -21,7 +21,7 @@ export function ScanYourselfIn({ url, clinic }: { url: string; clinic: { name: s
 
   return (
     <section aria-labelledby="scan-in" className="glass focus-in overflow-hidden px-6 py-6" style={{ animationDelay: "120ms" }}>
-      <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">For judges</p>
+      <p className="text-[0.75rem] uppercase tracking-[0.22em] text-[#1e5a78]">For judges</p>
       <h2 id="scan-in" className="mt-2 font-display text-[1.625rem] font-light leading-tight text-ink">
         Scan yourself in
       </h2>

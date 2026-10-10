@@ -34,7 +34,7 @@ export default async function InsightsPage() {
         <div className="sea on-dark focus-in relative overflow-hidden rounded-[28px] p-8 shadow-[0_40px_80px_-40px_rgba(12,26,34,0.7)] sm:p-10" style={{ animationDelay: "60ms" }}>
           <LightField variant="sea" className="opacity-60" />
           <div className="relative flex h-full flex-col">
-            <h2 id="kept" className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#e2c07a]">
+            <h2 id="kept" className="text-[0.75rem] uppercase tracking-[0.22em] text-[#e2c07a]">
               Revenue kept through rebooking
             </h2>
             <p className="gold-foil mt-6 font-display text-[clamp(72px,9vw,128px)] font-light leading-[0.9] tracking-[-0.035em]">
@@ -83,7 +83,7 @@ export default async function InsightsPage() {
             <dd className="mt-4 max-w-xs text-[0.875rem] leading-relaxed text-text-2">{stat.note}</dd>
             {stat.href && (
               <dd className="mt-3">
-                <Link href={stat.href} className="group inline-flex items-center gap-2 text-[0.84375rem] text-ink">
+                <Link href={stat.href} className="group inline-flex items-center gap-2 text-[0.875rem] text-ink">
                   Open the queue
                   <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
                 </Link>
@@ -93,7 +93,7 @@ export default async function InsightsPage() {
         ))}
       </dl>
 
-      <p className="t-caption mt-6 !text-[0.78125rem]">Demo data: twelve demo clients, dated around today, plus anyone who scans in this browser.</p>
+      <p className="t-caption mt-6 !text-[0.8125rem]">Demo data: twelve demo clients, dated around today, plus anyone who scans in this browser.</p>
     </div>
   );
 }

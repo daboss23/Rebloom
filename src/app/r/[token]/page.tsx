@@ -76,7 +76,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
 
   return (
     <article className="pb-4 pt-10">
-      <p className="focus-in flex items-center gap-3 text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">
+      <p className="focus-in flex items-center gap-3 text-[0.75rem] uppercase tracking-[0.22em] text-[#1e5a78]">
         <span aria-hidden className="block h-[2px] w-8 rounded-full bg-accent" />
         {formatLongDate(latest.completedAt ?? latest.createdAt, tz)} · {scanLabel}
         {weekLabel}
@@ -107,7 +107,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
               <span className="t-caption block">{event.date}</span>
             </span>
           </span>
-          <span className="whitespace-nowrap text-[0.84375rem] text-[#1e5a78]">
+          <span className="whitespace-nowrap text-[0.875rem] text-[#1e5a78]">
             {event.weeks === 1 ? "1 week away" : `${event.weeks} weeks away`}
           </span>
         </div>
@@ -191,7 +191,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
       </FaceMapFocus>
 
       <details className="glass group mt-3 overflow-hidden">
-        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 text-[0.90625rem] text-ink [&::-webkit-details-marker]:hidden">
+        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 text-[0.9375rem] text-ink [&::-webkit-details-marker]:hidden">
           <span>
             Full analysis <span className="text-text-3">· {rest.length} more concerns</span>
           </span>
@@ -228,7 +228,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
               </span>
               <span>
                 {practitioner.name}
-                <span className="block text-[0.78125rem] text-text-3">{practitioner.title}</span>
+                <span className="block text-[0.8125rem] text-text-3">{practitioner.title}</span>
               </span>
             </p>
           )}

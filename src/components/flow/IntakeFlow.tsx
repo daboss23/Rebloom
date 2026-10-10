@@ -144,7 +144,7 @@ export function IntakeFlow({ clinicSlug, initial, today }: { clinicSlug: string;
         ) : (
           <span />
         )}
-        <span className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">
+        <span className="text-[0.75rem] uppercase tracking-[0.22em] text-[#1e5a78]">
           {index + 1} of {INTAKE_STEPS.length}
         </span>
       </div>
@@ -409,7 +409,7 @@ function Step({
             <div>
               <p className="t-label mb-3 flex justify-between">
                 <span>Age range</span>
-                <span className="normal-case tracking-normal text-[0.75rem]">Optional</span>
+                <span className="normal-case tracking-normal text-[0.8125rem]">Optional</span>
               </p>
               <div role="group" aria-label="Age range" className="flex flex-wrap gap-2">
                 {AGE_OPTIONS.map(([value, label]) => (

@@ -14,7 +14,7 @@ export function CancelVisit({ token, appointmentId, refund, noticeHours }: { tok
   if (!asking) {
     return (
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="t-caption !text-[0.84375rem]">
+        <p className="t-caption !text-[0.875rem]">
           Need a different time? Cancel up to {noticeHours} hours before and choose another.{refund ? " Your deposit comes back in full." : ""}
         </p>
         <button

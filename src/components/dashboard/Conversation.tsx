@@ -145,7 +145,7 @@ export function Conversation({
               <button
                 type="button"
                 onClick={() => setAll(true)}
-                className="rounded-full bg-white/70 px-4 py-1.5 text-[0.78125rem] text-text-3 ring-1 ring-inset ring-[#0c1a22]/[0.06] transition-colors duration-150 hover:text-ink"
+                className="rounded-full bg-white/70 px-4 py-1.5 text-[0.8125rem] text-text-3 ring-1 ring-inset ring-[#0c1a22]/[0.06] transition-colors duration-150 hover:text-ink"
               >
                 Show {hidden} earlier {hidden === 1 ? "message" : "messages"}
               </button>
@@ -188,7 +188,7 @@ export function Conversation({
             )}
           </div>
           <p className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 border-t border-[#0c1a22]/[0.07] pt-3 text-[0.8125rem]">
-            <span className="t-label !text-[0.65625rem]">To</span>
+            <span className="t-label !text-[0.75rem]">To</span>
             <span className="text-ink">{isText ? phone : email}</span>
             {isText ? (
               unsubscribed && !channels.email && <span className="text-text-3">· {firstName} unsubscribed from emails</span>
@@ -214,7 +214,7 @@ export function Conversation({
             className={cx(field, "mt-3 resize-y p-4 focus-visible:outline-none! text-[0.9375rem] leading-relaxed placeholder:text-text-3")}
           />
           {isText && (
-            <p id={countId} aria-live="polite" className={cx("t-caption mt-2 !text-[0.78125rem]", tooLong && "!text-ink")}>
+            <p id={countId} aria-live="polite" className={cx("t-caption mt-2 !text-[0.8125rem]", tooLong && "!text-ink")}>
               {tooLong
                 ? `${trimmed.length} characters. Keep it under ${TEXT_MAX_CHARS}.`
                 : `${trimmed.length} characters${trimmed ? `, sent as ${parts === 1 ? "one text" : `${parts} parts`}` : ""}${unicode ? ". An emoji or curly quote makes each part shorter" : ""}.`}
@@ -226,7 +226,7 @@ export function Conversation({
             </p>
           )}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-            <p className="t-caption !text-[0.78125rem]">
+            <p className="t-caption !text-[0.8125rem]">
               {demo ? `Demo mode: logged here, not ${isText ? "texted" : "emailed"}.` : `${firstName}'s answer comes back here.`}
             </p>
             <div className="flex items-center gap-5">
@@ -256,7 +256,7 @@ export function Conversation({
 
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
         {toast && (
-          <div key={toast.id} className="toast sea on-dark pointer-events-auto flex max-w-md items-center gap-6 rounded-[14px] py-3.5 pl-5 pr-4 text-[0.84375rem] shadow-[0_24px_48px_-20px_rgba(12,26,34,0.6)]">
+          <div key={toast.id} className="toast sea on-dark pointer-events-auto flex max-w-md items-center gap-6 rounded-[14px] py-3.5 pl-5 pr-4 text-[0.875rem] shadow-[0_24px_48px_-20px_rgba(12,26,34,0.6)]">
             <p>{toast.text}</p>
             {toast.undo && (
               <button type="button" onClick={toast.undo} className="text-[0.8125rem] text-[#e2c07a] underline underline-offset-4 hover:text-white">
@@ -295,7 +295,7 @@ function Entry({ entry, firstName, arriving }: { entry: ConversationEntry; first
 
   if (entry.side === "note") {
     return (
-      <li className={cx("flex items-center gap-4 text-[0.78125rem] text-text-3", arriving && "focus-in")}>
+      <li className={cx("flex items-center gap-4 text-[0.8125rem] text-text-3", arriving && "focus-in")}>
         <span aria-hidden className="h-px flex-1 bg-[#0c1a22]/[0.08]" />
         <span>
           {entry.body} · {entry.when}
@@ -338,9 +338,9 @@ function Entry({ entry, firstName, arriving }: { entry: ConversationEntry; first
           )}
         >
           {(entry.automatic || (entry.channel === "email" && entry.subject)) && (
-            <p className={cx("mb-1.5 flex flex-wrap items-center gap-x-2 text-[0.75rem] tracking-[0.01em]", quiet ? "text-text-3" : "text-ink-soft")}>
+            <p className={cx("mb-1.5 flex flex-wrap items-center gap-x-2 text-[0.8125rem] tracking-[0.01em]", quiet ? "text-text-3" : "text-ink-soft")}>
               {entry.automatic && (
-                <span className="rounded-full bg-white/80 px-2 py-px text-[0.65625rem] font-medium uppercase tracking-[0.1em] text-[#1e5a78] ring-1 ring-inset ring-[#1e5a78]/15">
+                <span className="rounded-full bg-white/80 px-2 py-px text-[0.75rem] font-medium uppercase tracking-[0.1em] text-[#1e5a78] ring-1 ring-inset ring-[#1e5a78]/15">
                   Automatic
                 </span>
               )}
@@ -355,15 +355,15 @@ function Entry({ entry, firstName, arriving }: { entry: ConversationEntry; first
               type="button"
               onClick={() => setOpen((o) => !o)}
               aria-expanded={open}
-              className={cx("mt-2 text-[0.78125rem] underline underline-offset-4", quiet ? "text-text-3 decoration-[#0c1a22]/20 hover:text-ink" : "text-ink-soft decoration-white/25 hover:text-white")}
+              className={cx("mt-2 text-[0.8125rem] underline underline-offset-4", quiet ? "text-text-3 decoration-[#0c1a22]/20 hover:text-ink" : "text-ink-soft decoration-white/25 hover:text-white")}
             >
               {open ? "Show less" : "Read all"}
             </button>
           )}
         </div>
-        <p className={cx("mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 px-1 text-[0.75rem] text-text-3", !fromClient && "justify-end")}>
+        <p className={cx("mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 px-1 text-[0.8125rem] text-text-3", !fromClient && "justify-end")}>
           {entry.waiting && (
-            <span className="signal signal-urgent signal-live h-6 px-2.5 text-[0.71875rem]">
+            <span className="signal signal-urgent signal-live h-6 px-2.5 text-[0.75rem]">
               <span aria-hidden className="signal-dot" />
               Waiting on you · {entry.waiting}
             </span>

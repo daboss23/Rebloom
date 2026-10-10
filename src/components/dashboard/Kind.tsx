@@ -27,7 +27,7 @@ export function KindChip({ row }: { row: Kind }) {
   return (
     <span
       className={cx(
-        "inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[0.65625rem] uppercase tracking-[0.12em]",
+        "inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[0.75rem] uppercase tracking-[0.12em]",
         cx("signal", moment ? "signal-moment signal-live" : signal),
       )}
     >

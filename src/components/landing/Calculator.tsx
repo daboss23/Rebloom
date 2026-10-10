@@ -18,7 +18,7 @@ export function Calculator({ price: defaultPrice }: { price: number }) {
 
   return (
     <div>
-      <p className="mb-5 text-[0.84375rem] font-normal text-text-3">Example figures. Tap any number to make it yours.</p>
+      <p className="mb-5 text-[0.875rem] font-normal text-text-3">Example figures. Tap any number to make it yours.</p>
       <p className="font-display text-[clamp(26px,2.6vw,36px)] font-light leading-[1.5] text-ink">
         You see{" "}
         <Field id={`${id}-clients`} label="New clients a month" value={clients} onChange={(v) => setClients(digits(v, 4))} fallback="40" />{" "}

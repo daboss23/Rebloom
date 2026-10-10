@@ -20,7 +20,7 @@ export function ScanPair({ token, progress, tz }: { token: string; progress: Pro
               <img src={`/r/${token}/photo/${s.id}`} alt={`${scanLabel(s.scanNumber)} photo`} className="absolute inset-0 h-full w-full object-cover" />
               {/* A soft shade under the label, so it reads on a white shirt as well as a dark one. */}
               <span aria-hidden className="absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(180deg,rgba(12,26,34,0)_0%,rgba(12,26,34,0.42)_100%)]" />
-              <span className="absolute bottom-2.5 left-3 text-[0.65625rem] uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
+              <span className="absolute bottom-2.5 left-3 text-[0.75rem] uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
                 {scanLabel(s.scanNumber)}
               </span>
             </div>
@@ -109,11 +109,11 @@ function Sparkline({ values, tone }: { values: number[]; tone: "growth" | "sea" 
 export function RescanInvite({ token, again }: { token: string; again: boolean }) {
   return (
     <div className="glass mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-4">
-      <p className="text-[0.90625rem] leading-snug text-ink">
+      <p className="text-[0.9375rem] leading-snug text-ink">
         {again ? "Ready for your next progress scan?" : "Between sessions, see what's changed."}
         <span className="t-caption block">Two minutes from home, the same steps as your first scan.</span>
       </p>
-      <Link href={`/r/${token}/rescan`} className="btn-ghost !h-11 shrink-0 text-[0.90625rem]">
+      <Link href={`/r/${token}/rescan`} className="btn-ghost !h-11 shrink-0 text-[0.9375rem]">
         Take a progress scan
       </Link>
     </div>
