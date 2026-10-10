@@ -9,7 +9,11 @@ export interface NavItem {
   label: string;
   /** A quiet count beside the label: people waiting, clients on the books. */
   count?: number;
+  /** Replies waiting on an answer (D-089): a gold count that asks to be opened. */
+  attention?: number;
 }
+
+const waitingLabel = (n: number) => `, ${n} ${n === 1 ? "reply" : "replies"} waiting`;
 
 const isActive = (pathname: string, href: string) => (href === "/dashboard" ? pathname === href : pathname.startsWith(href));
 
@@ -40,8 +44,16 @@ export function SideNav({ items }: { items: NavItem[] }) {
                 />
                 {item.label}
               </span>
-              {item.count !== undefined && (
-                <span className={cx("tabular-nums text-[12px]", active ? "text-[#e2c07a]" : "text-ink-soft/80")}>{item.count}</span>
+              {item.attention ? (
+                <span className="flex items-center gap-1.5 text-[12px] tabular-nums text-[#e2c07a]">
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#e2c07a] shadow-[0_0_0_3px_rgb(226_192_122/0.18)]" />
+                  {item.attention}
+                  <span className="sr-only">{waitingLabel(item.attention)}</span>
+                </span>
+              ) : (
+                item.count !== undefined && (
+                  <span className={cx("tabular-nums text-[12px]", active ? "text-[#e2c07a]" : "text-ink-soft/80")}>{item.count}</span>
+                )
               )}
             </Link>
           </li>
@@ -69,7 +81,15 @@ export function TabNav({ items }: { items: NavItem[] }) {
               )}
             >
               {item.label}
-              {item.count !== undefined && <span className="tabular-nums text-[12px] text-text-3">{item.count}</span>}
+              {item.attention ? (
+                <span className="flex items-center gap-1 text-[12px] font-medium tabular-nums text-[#7a5014]">
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#c99645]" />
+                  {item.attention}
+                  <span className="sr-only">{waitingLabel(item.attention)}</span>
+                </span>
+              ) : (
+                item.count !== undefined && <span className="tabular-nums text-[12px] text-text-3">{item.count}</span>
+              )}
             </Link>
           </li>
         );

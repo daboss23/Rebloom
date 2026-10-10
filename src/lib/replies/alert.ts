@@ -4,6 +4,7 @@ import "server-only";
 // through saveReply, which calls this once the reply is kept: the webhooks and the dashboard's catch-up alike.
 
 import type { Client, Clinic, Message } from "@/lib/domain";
+import { answerLink } from "@/lib/dashboard/handoff";
 import { escapeHtml as e, oneLine, senderAddress } from "@/lib/email/report";
 import { resend } from "@/lib/email/resend";
 import { env, features } from "@/lib/env";
@@ -151,7 +152,7 @@ export async function alertClinic(input: { client: Client; reply: Message; befor
     const clinic = await store.getClinic(client.clinicId);
     if (!clinic) return "skipped";
     const home = await origin();
-    const link = home ? `${home}/dashboard/clients/${client.id}#conversation` : null;
+    const link = home ? answerLink(home, client) : null;
     const sent = new Date(at(reply));
     const day = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: clinic.timezone }).format(sent);
     const time = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: clinic.timezone }).format(sent).replace(/\s/g, "").toLowerCase();

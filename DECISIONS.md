@@ -527,4 +527,15 @@ A client who writes "Can I come Thursday?" and waits two days is a booking lost.
 - **Never in the way:** an alert that can't be sent is logged and the reply is kept as always. A safety valve pauses alerts past 25 replies a day in one clinic's book.
 - **Sent for real, demo or not:** the alert goes to the clinic's own address, which it asked for, as answers to real clients do (D-085). Texts need Twilio set up; a number saved before is used once it is.
 - **Needs the webhook:** alerts are as fast as replies arrive. With Resend's webhook on `https://www.rebloom.skin/api/resend/inbound`, that's seconds; otherwise only when someone opens the dashboard, which defeats the point.
-- **Not yet:** the link opens the brief in the browser that holds the demo; on another device, the demo starts a new sandbox. Clinic login fixes that.
+- **On any device:** the link once opened only in the browser that held the demo. It now joins that demo wherever it is opened (D-088).
+
+### D-088 · An alert's Answer link opens the same demo on any device (J + C, Oct 10)
+A demo lives in the browser that opened it (D-013), and judges read alerts on their phones. Opened there, the old link started a fresh demo without the client in it. The alert's link is now `/dashboard/open/<token>`: a signed token naming the demo's sandbox and the client, valid 14 days. Opening it joins that sandbox, signs in as the clinic's practitioner, and lands on the client's conversation. An altered, expired or cleared token goes to the front door and joins nothing.
+- **Why it's safe enough:** only the alert carries the link, and the alert only goes to the address the clinic typed into Settings, as a magic link would. It reaches one demo's sample clients and that demo's own scans, nothing else.
+- **What it replaces:** for a demo, clinic login. A clinic's own clients (no sandbox) keep the plain link to the brief, which login will cover.
+
+### D-089 · A reply shows up in the dashboard the moment it lands (J + C, Oct 10)
+The email alert reaches Dana away from the desk; at the desk she shouldn't need it. While the dashboard is on screen it asks who is waiting every 15 seconds, and at once when the tab comes back into view. A new reply rises in at the corner on deep sea: "Sofia wrote back.", how and when, her words, and a gold "Answer Sofia". The page underneath refreshes, so Today's list and the menu count it too.
+- **The menu:** Today carries a gold count of replies waiting, on every page.
+- **Only news:** replies already waiting when the dashboard opened don't pop up (Today lists them), each reply is shown once, and none is shown while Dana is already on that client's brief. At most three at once. A notice stays until answered or dismissed: it asks for something.
+- **Why polling, not a push:** it needs nothing new from Supabase or Vercel, costs one small query per open dashboard, and 15 seconds is well inside how fast a client expects an answer.

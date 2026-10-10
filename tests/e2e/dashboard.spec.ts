@@ -134,6 +134,15 @@ const unsubscribeToken = (clientId: string) => {
   return hex + createHmac("sha256", secret).update(hex).digest("hex").slice(0, 16);
 };
 
+/** The signed token in a reply alert's Answer link, made as the server makes it (D-088): sandbox, client, expiry. */
+const handoffToken = (sandboxId: string, clientId: string, secondsLeft = 14 * 86_400) => {
+  const expires = Buffer.alloc(4);
+  expires.writeUInt32BE(Math.floor(Date.now() / 1000) + secondsLeft);
+  const payload = Buffer.concat([Buffer.from(sandboxId.replace(/-/g, ""), "hex"), Buffer.from(clientId.replace(/-/g, ""), "hex"), expires]);
+  const secret = `${process.env.IP_HASH_SALT || "rebloom-local-development-secret"}:dashboard-handoff`;
+  return Buffer.concat([payload, createHmac("sha256", secret).update(payload).digest().subarray(0, 12)]).toString("base64url");
+};
+
 test("Sofia unsubscribes from the link in an email: the queue texts her instead, and her brief says so", async ({ page, request }) => {
   const brief = await briefOf(page, "Sofia Morales");
   const token = unsubscribeToken(brief.split("/").pop()!);
@@ -204,6 +213,57 @@ test("Settings says where reply alerts go, and checks the address", async ({ pag
   await phone.fill("");
   await save.click();
   await expect(replies.getByRole("status")).toHaveText("Reply alerts are off.");
+});
+
+test("a reply that lands while the dashboard is open rises in, and its Answer opens the conversation", async ({ page }) => {
+  // Daniel and Priya were already waiting when Dana came in: Today lists them, the menu counts them, nothing pops up.
+  await expect(page.getByRole("link", { name: /^Today.*2 replies waiting/ }).first()).toBeVisible();
+  const sofia = (await briefOf(page, "Sofia Morales")).split("/").pop()!;
+  await page.goto("/dashboard");
+  await expect(page.getByRole("article")).toHaveCount(0);
+
+  // Sofia writes back while the dashboard is open (the webhook's side is covered by the unit tests).
+  const reply = { id: "e2e-reply", clientId: sofia, name: "Sofia Morales", first: "Sofia", channel: "email", body: "Is Thursday free?", at: new Date().toISOString() };
+  await page.route("**/api/dashboard/replies", (route) => route.fulfill({ json: { waiting: [reply] } }));
+  const notice = page.getByRole("article", { name: "Sofia wrote back" });
+  // Coming back to the tab checks at once, rather than at the next tick. Once the page is live, that is.
+  await expect(async () => {
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await expect(notice).toBeVisible({ timeout: 1000 });
+  }).toPass();
+  await expect(notice).toContainText("Sofia Morales · By email · Just now");
+  await expect(notice).toContainText("Is Thursday free?");
+  await notice.getByRole("link", { name: "Answer Sofia" }).click();
+  await expect(page).toHaveURL(new RegExp(`/dashboard/clients/${sofia}#conversation$`));
+  await expect(notice).toHaveCount(0);
+
+  // Seen once, shown once: the next check doesn't bring it back.
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(page.getByRole("article", { name: "Sofia wrote back" })).toHaveCount(0);
+});
+
+test("a reply alert's Answer link opens the same demo on another device, and nothing else", async ({ page, browser }) => {
+  const brief = await briefOf(page, "Sofia Morales");
+  const sandbox = (await page.context().cookies()).find((c) => c.name === "rb_sandbox")!.value;
+
+  // The phone: a browser that has never seen this demo.
+  const phone = await browser.newContext();
+  const tab = await phone.newPage();
+  await tab.goto(`/dashboard/open/${handoffToken(sandbox, brief.split("/").pop()!)}`);
+  await expect(tab).toHaveURL(new RegExp(`${brief}#conversation$`));
+  await expect(tab.getByRole("heading", { level: 1 })).toContainText("Sofia");
+  expect((await phone.cookies()).find((c) => c.name === "rb_sandbox")?.value).toBe(sandbox);
+
+  // A token that's been altered, or has run out, goes to the front door with no demo joined.
+  const stranger = await browser.newContext();
+  const door = await stranger.newPage();
+  const token = handoffToken(sandbox, brief.split("/").pop()!);
+  await door.goto(`/dashboard/open/${token.slice(0, -2)}${token.endsWith("AA") ? "BB" : "AA"}`);
+  await expect(door).toHaveURL(/\/dashboard\/enter$/);
+  await door.goto(`/dashboard/open/${handoffToken(sandbox, brief.split("/").pop()!, -60)}`);
+  await expect(door).toHaveURL(/\/dashboard\/enter$/);
+  expect((await stranger.cookies()).some((c) => c.name === "rb_sandbox")).toBe(false);
+  await Promise.all([phone.close(), stranger.close()]);
 });
 
 test("closing the sheet keeps Dana's edits, and focus goes back to the row", async ({ page }) => {

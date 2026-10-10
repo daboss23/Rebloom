@@ -37,6 +37,11 @@ export async function ensureSandboxId(): Promise<string> {
   return id;
 }
 
+/** Route Handlers only: makes this browser part of an existing sandbox, from a signed link (DECISIONS D-088). */
+export async function joinSandbox(id: string): Promise<void> {
+  (await cookies()).set(SANDBOX_COOKIE, id, cookieOptions);
+}
+
 /** The client this browser is currently scanning as, for one clinic. */
 export async function readVisitClientId(clinicSlug: string): Promise<string | null> {
   return (await cookies()).get(visitCookie(clinicSlug))?.value ?? null;
