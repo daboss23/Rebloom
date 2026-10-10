@@ -132,8 +132,8 @@ test("a scan runs end to end in fixture mode, opens from the clinic's side on an
   await expect(page.getByRole("complementary", { name: "Rebloom demo" })).toContainText("You're now a new client of Maison Verre.");
   await page.getByRole("link", { name: "Open my report" }).click();
 
-  // The dev server builds the report page on its first visit, which can take a while. A deployed site doesn't.
-  await expect(page.getByRole("heading", { name: "Amelia, your skin is telling a clear story." })).toBeVisible({ timeout: 30_000 });
+  // The dev server builds the report page on its first visit (about 4 seconds when measured). A deployed site doesn't.
+  await expect(page.getByRole("heading", { name: "Amelia, your skin is telling a clear story." })).toBeVisible({ timeout: 8_000 });
   await expect(page.getByText("Demo analysis.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Your three priorities" })).toBeVisible();
   const reportUrl = page.url();
