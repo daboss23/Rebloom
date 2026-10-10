@@ -226,8 +226,8 @@ export function FaceMap({
                 onStage(target.anchor, plane)[0] < 0.62 ? "left-6" : "right-6",
               )}
             >
-              <span className="text-[10.5px] uppercase tracking-[0.14em]">{target.label}</span>
-              <span className="font-display text-[20px] leading-none">{playing ? <CountUp to={target.score} /> : target.score}</span>
+              <span className="text-[0.65625rem] uppercase tracking-[0.14em]">{target.label}</span>
+              <span className="font-display text-[1.25rem] leading-none">{playing ? <CountUp to={target.score} /> : target.score}</span>
             </span>
           </div>
         )}
@@ -236,25 +236,25 @@ export function FaceMap({
         {current && !located && (
           <span aria-hidden className="absolute right-3 top-3 rounded-full bg-white/85 py-1.5 pl-3 pr-3.5 shadow-[0_6px_16px_-10px_rgba(12,26,34,0.6)] backdrop-blur-sm">
             <span key={current.key} className="fade flex items-baseline gap-2 text-ink">
-              <span className="text-[11px] uppercase tracking-[0.14em]">{current.label}</span>
-              <span className="font-display text-[20px] leading-none">{current.score}</span>
+              <span className="text-[0.6875rem] uppercase tracking-[0.14em]">{current.label}</span>
+              <span className="font-display text-[1.25rem] leading-none">{current.score}</span>
             </span>
           </span>
         )}
-        <span className="absolute bottom-3 left-3 text-[11px] uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
+        <span className="absolute bottom-3 left-3 text-[0.6875rem] uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
           {caption}
         </span>
         {stage === "done" && located && !failed && (
           <button
             type="button"
             onClick={play}
-            className="fade absolute bottom-0 right-0 min-h-11 px-3 text-[11px] uppercase tracking-[0.14em] text-white/95 underline decoration-white/40 underline-offset-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] hover:decoration-white"
+            className="fade absolute bottom-0 right-0 min-h-11 px-3 text-[0.6875rem] uppercase tracking-[0.14em] text-white/95 underline decoration-white/40 underline-offset-4 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)] hover:decoration-white"
           >
             Replay
           </button>
         )}
       </div>
-      <p className="mt-4 text-[13.5px] leading-snug text-text-2">
+      <p className="mt-4 text-[0.84375rem] leading-snug text-text-2">
         {located ? "Choose a priority to see where it shows on your face." : "Choose a priority to see its score."}
       </p>
       <div role="group" aria-label="Show a priority on your photo" className="mt-2.5 grid grid-cols-3 gap-2">

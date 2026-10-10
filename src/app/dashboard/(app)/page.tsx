@@ -76,11 +76,11 @@ export default async function TodayPage() {
         <LightField variant="ice" />
         <div aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,rgba(246,251,253,0.72)_0%,rgba(246,251,253,0.2)_48%,rgba(246,251,253,0)_75%)]" />
         <div className="relative px-6 pb-6 pt-10 sm:px-10 sm:pt-14 lg:px-12">
-          <p className="text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">{date}</p>
+          <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">{date}</p>
           <h1 className="mt-4 max-w-3xl font-display text-[clamp(46px,6.4vw,88px)] font-light leading-[0.95] tracking-[-0.025em] text-ink">
             {greeting(now, clinic.timezone)}, {book.staff.name}.
           </h1>
-          <p className="mt-5 flex max-w-xl gap-3 text-[17px] leading-relaxed text-text-2">
+          <p className="mt-5 flex max-w-xl gap-3 text-[1.0625rem] leading-relaxed text-text-2">
             {moment && <Bloom size={22} unfurl className="mt-0.5 text-[#9e4a5d]" />}
             <span>{story}</span>
           </p>
@@ -91,20 +91,20 @@ export default async function TodayPage() {
                 <span className={`font-display text-[clamp(44px,5vw,64px)] font-light leading-none tracking-[-0.02em] ${f.gold ? "gold-foil" : "text-ink"}`}>
                   <CountUp value={f.value} format={f.gold ? "money" : "int"} delay={250 + i * 120} />
                 </span>
-                <span className="whitespace-nowrap text-[15px] text-text-2">{f.words}</span>
+                <span className="whitespace-nowrap text-[0.9375rem] text-text-2">{f.words}</span>
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      <div className="mt-12 grid gap-x-10 gap-y-12 xl:grid-cols-[minmax(0,1fr)_21rem]">
+      <div className="mt-12 grid gap-x-10 gap-y-12 xl:grid-cols-[minmax(0,1fr)_336px]">
         <div className="min-w-0 space-y-12">
         {replies.length > 0 && (
           <section aria-labelledby="wrote-back">
             <div className="mb-5">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-text-3">Replies</p>
-              <h2 id="wrote-back" className="mt-2 font-display text-[36px] font-light leading-none text-ink">
+              <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-text-3">Replies</p>
+              <h2 id="wrote-back" className="mt-2 font-display text-[2.25rem] font-light leading-none text-ink">
                 Waiting on your answer
               </h2>
             </div>
@@ -113,16 +113,16 @@ export default async function TodayPage() {
                 <li key={reply.id}>
                   <Link
                     href={`/dashboard/clients/${f.client.id}#conversation`}
-                    className="group grid gap-x-6 gap-y-3 px-5 py-5 transition-colors duration-200 hover:bg-white/50 sm:grid-cols-[11rem_minmax(0,1fr)_auto] sm:items-center sm:px-6"
+                    className="group grid gap-x-6 gap-y-3 px-5 py-5 transition-colors duration-200 hover:bg-white/50 sm:grid-cols-[176px_minmax(0,1fr)_auto] sm:items-center sm:px-6"
                   >
                     <span className="min-w-0">
-                      <span className="block truncate font-display text-[22px] leading-tight text-ink">{fullName(f.client)}</span>
-                      <span className={`mt-1 flex items-center gap-1.5 text-[12.5px] ${days >= 3 ? "font-medium text-[#7a5014]" : "text-text-3"}`}>
+                      <span className="block truncate font-display text-[1.375rem] leading-tight text-ink">{fullName(f.client)}</span>
+                      <span className={`mt-1 flex items-center gap-1.5 text-[0.78125rem] ${days >= 3 ? "font-medium text-[#7a5014]" : "text-text-3"}`}>
                         <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#c99645]" />
                         {reply.channel === "sms" ? "Text" : "Email"} · {waited(days)}
                       </span>
                     </span>
-                    <span className="min-w-0 font-display text-[19px] font-light italic leading-snug text-text-2">&ldquo;{excerpt(reply.body, 140)}&rdquo;</span>
+                    <span className="min-w-0 font-display text-[1.1875rem] font-light italic leading-snug text-text-2">&ldquo;{excerpt(reply.body, 140)}&rdquo;</span>
                     <span className="btn-sea justify-self-start sm:justify-self-end">
                       Answer
                       <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -137,12 +137,12 @@ export default async function TodayPage() {
         <section aria-labelledby="contact">
           <div className="mb-5 flex items-end justify-between gap-6">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.22em] text-text-3">The rebook queue</p>
-              <h2 id="contact" className="mt-2 font-display text-[36px] font-light leading-none text-ink">
+              <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-text-3">The rebook queue</p>
+              <h2 id="contact" className="mt-2 font-display text-[2.25rem] font-light leading-none text-ink">
                 Who to contact, and why
               </h2>
             </div>
-            <Link href="/dashboard/rebook" className="group hidden items-center gap-2 text-[13.5px] text-text-3 hover:text-ink sm:inline-flex">
+            <Link href="/dashboard/rebook" className="group hidden items-center gap-2 text-[0.84375rem] text-text-3 hover:text-ink sm:inline-flex">
               Outbox and history
               <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
@@ -156,10 +156,10 @@ export default async function TodayPage() {
 
           <section aria-labelledby="visits" className="glass focus-in overflow-hidden" style={{ animationDelay: "160ms" }}>
             <div className="flex items-baseline justify-between px-6 pt-6">
-              <h2 id="visits" className="font-display text-[24px] font-light text-ink">
+              <h2 id="visits" className="font-display text-[1.5rem] font-light text-ink">
                 Today&apos;s visits
               </h2>
-              <span className="text-[12px] text-text-3">{visits.length ? `${visits.length} booked` : ""}</span>
+              <span className="text-[0.75rem] text-text-3">{visits.length ? `${visits.length} booked` : ""}</span>
             </div>
             <Visits
               visits={visits}
@@ -174,16 +174,16 @@ export default async function TodayPage() {
 
           {recent.length > 0 && (
             <section aria-labelledby="done" className="glass focus-in px-6 py-6">
-              <h2 id="done" className="font-display text-[24px] font-light text-ink">
+              <h2 id="done" className="font-display text-[1.5rem] font-light text-ink">
                 Done
               </h2>
               <ul className="mt-3 space-y-3">
                 {recent.map(({ item, message }) => (
-                  <li key={message.id} className="text-[14px]">
+                  <li key={message.id} className="text-[0.875rem]">
                     <p className="text-ink">
                       {fullName(byId.get(item.clientId)!.client)} <span className="text-text-3">· {TRIGGER_LABEL[item.kind]}</span>
                     </p>
-                    <p className="t-caption !text-[12.5px]">{message.status !== "sent" ? message.body : message.channel === "sms" ? `Texted: ${message.body}` : `Email sent: ${message.subject}`}</p>
+                    <p className="t-caption !text-[0.78125rem]">{message.status !== "sent" ? message.body : message.channel === "sms" ? `Texted: ${message.body}` : `Email sent: ${message.subject}`}</p>
                   </li>
                 ))}
               </ul>

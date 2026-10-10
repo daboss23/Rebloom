@@ -44,7 +44,7 @@ export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, 
         <Link href="/dashboard" className="px-4" aria-label="Rebloom, today">
           <RebloomWordmark height={22} />
         </Link>
-        <p className="mt-3 px-4 text-[10.5px] uppercase tracking-[0.22em] text-ink-soft/80">{clinic.name}</p>
+        <p className="mt-3 px-4 text-[0.65625rem] uppercase tracking-[0.22em] text-ink-soft/80">{clinic.name}</p>
         <nav aria-label="Dashboard" className="mt-12">
           <SideNav items={items} />
         </nav>
@@ -53,16 +53,16 @@ export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, 
             <SideNav items={settings} />
           </nav>
           <div className="mt-6 flex items-center gap-3 border-t border-white/10 px-4 pt-6">
-            <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#e2c07a]/50 font-display text-[18px] text-[#e2c07a]">
+            <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#e2c07a]/50 font-display text-[1.125rem] text-[#e2c07a]">
               {staff.name[0]}
             </span>
             <div className="min-w-0">
-              <p className="text-[14px] text-white">{staff.name}</p>
-              <p className="text-[12px] text-ink-soft">{staff.title}</p>
+              <p className="text-[0.875rem] text-white">{staff.name}</p>
+              <p className="text-[0.75rem] text-ink-soft">{staff.title}</p>
             </div>
           </div>
           <form action={signOut} className="px-4">
-            <button type="submit" className="mt-4 text-[12px] text-ink-soft underline decoration-white/20 underline-offset-4 transition-colors duration-200 hover:text-white hover:decoration-white/60">
+            <button type="submit" className="mt-4 text-[0.75rem] text-ink-soft underline decoration-white/20 underline-offset-4 transition-colors duration-200 hover:text-white hover:decoration-white/60">
               Sign out
             </button>
           </form>
@@ -78,8 +78,8 @@ export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, 
                 <RebloomWordmark height={16} />
               </Link>
               <span aria-hidden className="h-5 w-px bg-mist lg:hidden" />
-              <p className="min-w-0 truncate text-[14px] text-text-2">
-                <span className="font-display text-[17px] font-medium tracking-[0.2em] text-ink">{clinic.wordmark}</span>
+              <p className="min-w-0 truncate text-[0.875rem] text-text-2">
+                <span className="font-display text-[1.0625rem] font-medium tracking-[0.2em] text-ink">{clinic.wordmark}</span>
                 <span className="hidden sm:inline text-text-3"> · {clinic.city}</span>
               </p>
             </div>

@@ -18,7 +18,7 @@ export function Calculator({ price: defaultPrice }: { price: number }) {
 
   return (
     <div>
-      <p className="mb-5 text-[13.5px] font-normal text-text-3">Example figures. Tap any number to make it yours.</p>
+      <p className="mb-5 text-[0.84375rem] font-normal text-text-3">Example figures. Tap any number to make it yours.</p>
       <p className="font-display text-[clamp(26px,2.6vw,36px)] font-light leading-[1.5] text-ink">
         You see{" "}
         <Field id={`${id}-clients`} label="New clients a month" value={clients} onChange={(v) => setClients(digits(v, 4))} fallback="40" />{" "}
@@ -42,13 +42,13 @@ export function Calculator({ price: defaultPrice }: { price: number }) {
       <output htmlFor={`${id}-clients ${id}-price ${id}-share`} aria-live="polite" className="mt-8 block border-t border-[#0c1a22]/10 pt-8">
         <span className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
           <span className="gold-foil font-display text-[clamp(56px,6.4vw,88px)] font-light leading-none tracking-[-0.03em]">{money(monthly)}</span>
-          <span className="text-[17px] text-text-2">a month</span>
+          <span className="text-[1.0625rem] text-text-2">a month</span>
         </span>
         <span className="mt-3 block font-display text-[clamp(24px,2.4vw,30px)] font-light text-ink">
-          {money(monthly * 12)} <span className="font-sans text-[15px] text-text-2">a year</span>
+          {money(monthly * 12)} <span className="font-sans text-[0.9375rem] text-text-2">a year</span>
         </span>
       </output>
-      <p className="t-caption mt-6 max-w-[34rem] !text-[13px]">
+      <p className="t-caption mt-6 max-w-[34rem] !text-[0.8125rem]">
         Simple arithmetic on your own figures, not a forecast. It counts one extra visit per client, nothing more.
       </p>
     </div>

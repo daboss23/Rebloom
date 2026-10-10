@@ -72,7 +72,7 @@ export default function RebloomHome() {
             <RebloomWordmark height={22} className="!h-[19px] sm:!h-[22px]" shine />
           </Link>
           <nav aria-label="On this page" className="hidden lg:block">
-            <ul className="flex items-center gap-9 text-[14px] text-white/70">
+            <ul className="flex items-center gap-9 text-[0.875rem] text-white/70">
               {[
                 ["#how", "How it works"],
                 ["#numbers", "The numbers"],
@@ -86,7 +86,7 @@ export default function RebloomHome() {
               ))}
             </ul>
           </nav>
-          <Link href={enter} className="btn-gold !hidden !h-11 whitespace-nowrap px-3.5 text-[13px] min-[390px]:!inline-flex sm:!h-10 sm:px-4 sm:text-[13.5px]">
+          <Link href={enter} className="btn-gold !hidden !h-11 whitespace-nowrap px-3.5 text-[0.8125rem] min-[390px]:!inline-flex sm:!h-10 sm:px-4 sm:text-[0.84375rem]">
             Enter the clinic dashboard
           </Link>
         </div>
@@ -104,21 +104,21 @@ export default function RebloomHome() {
         <Close />
       </main>
 
-      <footer className="border-t border-[#0c1a22]/[0.08]">
+      <footer className="footer-deep on-dark">
         <div className={`${wrap} flex flex-col gap-5 py-10 sm:flex-row sm:items-center sm:justify-between`}>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-            <RebloomWordmark height={15} />
-            <span className="text-[13px] text-text-3">A demo built for the YouCam API Skin AI hackathon.</span>
+            <RebloomWordmark height={15} onDark />
+            <span className="text-[0.8125rem] text-[#a9bcc8]">A demo built for the YouCam API Skin AI hackathon.</span>
           </div>
           <nav aria-label="Legal">
-            <ul className="flex gap-6 text-[13px] text-text-3">
+            <ul className="flex gap-6 text-[0.8125rem] text-[#a9bcc8]">
               <li>
-                <Link href="/privacy" className="underline decoration-[#0c1a22]/20 underline-offset-4 hover:text-ink hover:decoration-ink">
+                <Link href="/privacy" className="underline underline-offset-4">
                   Privacy
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="underline decoration-[#0c1a22]/20 underline-offset-4 hover:text-ink hover:decoration-ink">
+                <Link href="/terms" className="underline underline-offset-4">
                   Terms
                 </Link>
               </li>
@@ -144,13 +144,13 @@ function Hero({ p }: { p: LandingPreview }) {
 
       <div className={`${wrap} relative grid gap-12 pb-20 pt-12 sm:pt-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center lg:gap-14 lg:pb-28 lg:pt-14 xl:gap-20`}>
         <div className="min-w-0">
-          <p className="focus-in flex items-center gap-2.5 text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">
+          <p className="focus-in flex items-center gap-2.5 text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">
             <Bloom size={16} unfurl className="text-[#9e4a5d]" />
             The retention engine for skin clinics
           </p>
           <h1
             id="hero-title"
-            className="focus-in mt-6 font-display text-[37px] font-light leading-[1.04] tracking-[-0.025em] text-ink min-[400px]:text-[40px] sm:text-[54px] lg:text-[clamp(44px,4.3vw,62px)]"
+            className="focus-in mt-6 font-display text-[2.3125rem] font-light leading-[1.04] tracking-[-0.025em] text-ink min-[400px]:text-[2.5rem] sm:text-[3.375rem] lg:text-[clamp(44px,4.3vw,62px)]"
             style={{ animationDelay: "80ms" }}
           >
             <span className="block">Everyone sells the scan.</span>{" "}
@@ -159,13 +159,13 @@ function Hero({ p }: { p: LandingPreview }) {
             </span>
           </h1>
           <div className="focus-in mt-8" style={{ animationDelay: "180ms" }}>
-            <p className="max-w-[31rem] text-[18px] leading-relaxed text-text-2 sm:text-[19px]">
+            <p className="max-w-[31rem] text-[1.125rem] leading-relaxed text-text-2 sm:text-[1.1875rem]">
               Rebloom measures each client&apos;s skin with YouCam&apos;s AI, shows them what changed, and tells your team
               who to rebook today.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <EnterDemo buttonClassName="!h-14 px-6 text-[15.5px]" />
-              <a href="#try" className="btn-ghost !h-14 w-full px-6 text-[15px] sm:w-auto">
+              <EnterDemo buttonClassName="!h-14 px-6 text-[0.96875rem]" />
+              <a href="#try" className="btn-ghost !h-14 w-full px-6 text-[0.9375rem] sm:w-auto">
                 Try the client experience
               </a>
             </div>
@@ -216,11 +216,11 @@ function Today({ p }: { p: LandingPreview }) {
           <h2 id="today-title" className="font-display text-[clamp(34px,4vw,52px)] font-light leading-[1.05] tracking-[-0.02em] text-ink [text-wrap:balance]">
             Then it tells the clinic who to rebook, and why.
           </h2>
-          <p className="mt-5 max-w-[31rem] text-[16.5px] leading-relaxed text-text-2">
+          <p className="mt-5 max-w-[31rem] text-[1.03125rem] leading-relaxed text-text-2">
             Every morning the same engine reads each client&apos;s scans and visits, and puts the people worth a call at
             the top, each with one plain reason.
           </p>
-          <p className="mt-5 text-[13px] text-text-3">{date}</p>
+          <p className="mt-5 text-[0.8125rem] text-text-3">{date}</p>
         </div>
 
         <div className="min-w-0">
@@ -230,7 +230,7 @@ function Today({ p }: { p: LandingPreview }) {
                 <span className={cx("block font-display text-[clamp(32px,3.4vw,44px)] font-light leading-none tracking-[-0.02em]", f.gold ? "gold-foil" : "text-ink")}>
                   <CountUp value={f.value} format={f.gold ? "money" : "int"} delay={200 + i * 120} />
                 </span>
-                <span className="mt-2 block text-[12.5px] leading-snug text-text-2 sm:text-[13.5px]">{f.words}</span>
+                <span className="mt-2 block text-[0.78125rem] leading-snug text-text-2 sm:text-[0.84375rem]">{f.words}</span>
               </li>
             ))}
           </ul>
@@ -239,7 +239,7 @@ function Today({ p }: { p: LandingPreview }) {
               <QueuePreviewRow key={row.name} row={row} delay={120 + i * 90} />
             ))}
           </ol>
-          <p className="mt-5 text-[13px] font-normal leading-relaxed text-text-3">
+          <p className="mt-5 text-[0.8125rem] font-normal leading-relaxed text-text-3">
             {more > 0 && `${more} more in the queue. `}
             {capital(words(p.clientCount))} sample clients at {p.clinicName}, run through the same engine as the dashboard.
           </p>
@@ -259,18 +259,18 @@ function QueuePreviewRow({ row, delay }: { row: PreviewRow; delay: number }) {
         row.kind === "progress_moment" ? "moment !border-[#f4b9a3]/60" : "focus-in",
       )}
     >
-      <Monogram row={row} className="!h-12 !w-12 !rounded-[14px] !text-[18px]" />
+      <Monogram row={row} className="!h-12 !w-12 !rounded-[14px] !text-[1.125rem]" />
       <div className="min-w-0">
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          <span className="font-display text-[22px] leading-tight text-ink">{row.name}</span>
+          <span className="font-display text-[1.375rem] leading-tight text-ink">{row.name}</span>
           <KindChip row={row} />
         </p>
-        <p className="mt-1.5 text-[14.5px] leading-relaxed text-text-2">{row.reason}</p>
+        <p className="mt-1.5 text-[0.90625rem] leading-relaxed text-text-2">{row.reason}</p>
       </div>
       {row.valueCents ? (
         <div className="col-start-2 flex items-baseline gap-2 sm:col-start-auto sm:block sm:text-right">
-          <p className="gold-foil font-display text-[28px] font-light leading-none">{formatPrice(row.valueCents)}</p>
-          <p className="t-caption !text-[12px] sm:mt-1.5">{row.valueNote}</p>
+          <p className="gold-foil font-display text-[1.75rem] font-light leading-none">{formatPrice(row.valueCents)}</p>
+          <p className="t-caption !text-[0.75rem] sm:mt-1.5">{row.valueNote}</p>
         </div>
       ) : (
         <span className="hidden sm:block" />
@@ -296,12 +296,12 @@ function Problem({ p }: { p: LandingPreview }) {
             <h2 id="problem-title" className="font-display text-[clamp(40px,5vw,68px)] font-light leading-[1.02] tracking-[-0.02em] text-white">
               One session, then silence.
             </h2>
-            <p className="mt-6 max-w-[33rem] text-[17px] leading-relaxed text-[#dbe8ef]">
+            <p className="mt-6 max-w-[33rem] text-[1.0625rem] leading-relaxed text-[#dbe8ef]">
               Peels, microneedling and light treatments are sold as courses. When clients can&apos;t see the first session
               working, they don&apos;t complain. They simply don&apos;t book the second, and it&apos;s weeks before anyone
               notices.
             </p>
-            <p className="mt-4 max-w-[33rem] text-[17px] leading-relaxed text-[#dbe8ef]">
+            <p className="mt-4 max-w-[33rem] text-[1.0625rem] leading-relaxed text-[#dbe8ef]">
               Clinics already know clients should come back. What&apos;s missing is proof the client can see, and a
               system that notices when someone drifts.
             </p>
@@ -309,8 +309,8 @@ function Problem({ p }: { p: LandingPreview }) {
 
           <figure>
             <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-white/15 pb-4">
-              <span className="font-display text-[24px] font-light text-white">{course.name}</span>
-              <span className="text-[13.5px] text-ink-soft">
+              <span className="font-display text-[1.5rem] font-light text-white">{course.name}</span>
+              <span className="text-[0.84375rem] text-ink-soft">
                 {course.sessions} sessions at {formatPrice(course.priceCents)}
               </span>
             </figcaption>
@@ -318,27 +318,27 @@ function Problem({ p }: { p: LandingPreview }) {
               {Array.from({ length: course.sessions }, (_, i) =>
                 i === 0 ? (
                   <li key={i} className={cx(tile, "bg-white/[0.09] ring-1 ring-inset ring-[#e2c07a]/55")}>
-                    <span className="text-[11px] uppercase tracking-[0.14em] text-ink-soft">Session {i + 1}</span>
+                    <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-soft">Session {i + 1}</span>
                     <span className="flex items-baseline gap-3 sm:block">
-                      <span className="block text-[14px] text-white">Done</span>
-                      <span className="gold-foil-bright block font-display text-[26px] leading-none sm:mt-0.5">{formatPrice(course.priceCents)}</span>
+                      <span className="block text-[0.875rem] text-white">Done</span>
+                      <span className="gold-foil-bright block font-display text-[1.625rem] leading-none sm:mt-0.5">{formatPrice(course.priceCents)}</span>
                     </span>
                   </li>
                 ) : (
                   <li key={i} className="relative h-16 sm:h-32">
                     {/* Planned, then never booked: the change plays as the course scrolls into view. */}
                     <span className={cx(tile, "lapse-planned absolute inset-0 bg-white/[0.07] opacity-0 ring-1 ring-inset ring-white/25", i === 2 && "lapse-late")} aria-hidden>
-                      <span className="text-[11px] uppercase tracking-[0.14em] text-ink-soft">Session {i + 1}</span>
+                      <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-soft">Session {i + 1}</span>
                       <span className="flex items-baseline gap-3 sm:block">
-                        <span className="block text-[14px] text-white">Planned</span>
-                        <span className="block font-display text-[26px] leading-none text-white sm:mt-0.5">{formatPrice(course.priceCents)}</span>
+                        <span className="block text-[0.875rem] text-white">Planned</span>
+                        <span className="block font-display text-[1.625rem] leading-none text-white sm:mt-0.5">{formatPrice(course.priceCents)}</span>
                       </span>
                     </span>
                     <span className={cx(tile, "lapse-lost absolute inset-0 border border-dashed border-white/25", i === 2 && "lapse-late")}>
-                      <span className="text-[11px] uppercase tracking-[0.14em] text-ink-soft/80">Session {i + 1}</span>
+                      <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-soft/80">Session {i + 1}</span>
                       <span className="flex items-baseline gap-3 sm:block">
-                        <span className="block text-[14px] text-ink-soft">Never booked</span>
-                        <span className="block font-display text-[26px] leading-none text-ink-soft/70 sm:mt-0.5">{formatPrice(course.priceCents)}</span>
+                        <span className="block text-[0.875rem] text-ink-soft">Never booked</span>
+                        <span className="block font-display text-[1.625rem] leading-none text-ink-soft/70 sm:mt-0.5">{formatPrice(course.priceCents)}</span>
                       </span>
                     </span>
                   </li>
@@ -349,11 +349,11 @@ function Problem({ p }: { p: LandingPreview }) {
               <span className="gold-foil-bright font-display text-[clamp(60px,6.4vw,92px)] font-light leading-none tracking-[-0.03em]">
                 {formatPrice(lost)}
               </span>
-              <span className="max-w-[17rem] text-[15.5px] leading-snug text-[#dbe8ef]">
+              <span className="max-w-[17rem] text-[0.96875rem] leading-snug text-[#dbe8ef]">
                 of a {formatPrice(total)} course, gone when a client stops after session one.
               </span>
             </p>
-            <p className="mt-5 text-[12.5px] text-ink-soft">Prices from the demo clinic&apos;s menu.</p>
+            <p className="mt-5 text-[0.78125rem] text-ink-soft">Prices from the demo clinic&apos;s menu.</p>
           </figure>
         </div>
       </div>
@@ -369,7 +369,7 @@ function How({ p }: { p: LandingPreview }) {
       <h2 id="how-title" className={`${sectionTitle} max-w-3xl`}>
         From first scan to second visit.
       </h2>
-      <p className="mt-5 max-w-[36rem] text-[17px] leading-relaxed text-text-2">
+      <p className="mt-5 max-w-[36rem] text-[1.0625rem] leading-relaxed text-text-2">
         Each step hands the next one a reason. By the time a client might drift, your team already knows what to say.
       </p>
 
@@ -385,7 +385,7 @@ function How({ p }: { p: LandingPreview }) {
         <p className="max-w-xl font-display text-[clamp(24px,2.4vw,30px)] font-light leading-snug text-ink">
           Every example above comes from the demo clinic. See the rest of its morning.
         </p>
-        <EnterDemo className="w-full shrink-0 sm:w-auto" buttonClassName="!h-14 px-6 text-[15.5px]" />
+        <EnterDemo className="w-full shrink-0 sm:w-auto" buttonClassName="!h-14 px-6 text-[0.96875rem]" />
       </div>
     </section>
   );
@@ -397,7 +397,7 @@ function Cell({ className, children }: { className?: string; children: ReactNode
 }
 
 function CellTitle({ children, onDark }: { children: ReactNode; onDark?: boolean }) {
-  return <h3 className={cx("font-display text-[30px] font-light leading-[1.1] sm:text-[34px]", onDark ? "text-white" : "text-ink")}>{children}</h3>;
+  return <h3 className={cx("font-display text-[1.875rem] font-light leading-[1.1] sm:text-[2.125rem]", onDark ? "text-white" : "text-ink")}>{children}</h3>;
 }
 
 function ScanCell() {
@@ -405,19 +405,19 @@ function ScanCell() {
   return (
     <Cell className="glass !rounded-[22px] lg:col-span-5">
       <CellTitle>A fair scan, every time.</CellTitle>
-      <p className="mt-3 max-w-[30rem] text-[15.5px] leading-relaxed text-text-2">
+      <p className="mt-3 max-w-[30rem] text-[0.96875rem] leading-relaxed text-text-2">
         Clients scan on their phone, in your clinic&apos;s brand. A live check waits for even light and a straight-on
         face, so every rescan compares like with like.
       </p>
       <ul className="mt-7 grid gap-x-5 gap-y-3 sm:grid-cols-2">
         {checks.map((c) => (
-          <li key={c} className="flex items-center gap-2.5 text-[14px] text-text-2">
+          <li key={c} className="flex items-center gap-2.5 text-[0.875rem] text-text-2">
             <IconCheckCircle width={18} height={18} className="shrink-0 text-[#1e5a78]" />
             {c}
           </li>
         ))}
       </ul>
-      <p className="mt-7 inline-flex h-10 items-center rounded-full bg-[#0e2230] px-5 text-[13.5px] text-white shadow-[0_12px_24px_-14px_rgba(12,26,34,0.8)]">
+      <p className="mt-7 inline-flex h-10 items-center rounded-full bg-[#0e2230] px-5 text-[0.84375rem] text-white shadow-[0_12px_24px_-14px_rgba(12,26,34,0.8)]">
         That&apos;s it. Hold still
       </p>
     </Cell>
@@ -431,7 +431,7 @@ function ReportCell({ p }: { p: LandingPreview }) {
       <div className="grid gap-8 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div>
           <CellTitle>A report in your clinic&apos;s name.</CellTitle>
-          <p className="mt-3 text-[15.5px] leading-relaxed text-text-2">
+          <p className="mt-3 text-[0.96875rem] leading-relaxed text-text-2">
             Their own face, the {r ? words(r.priorities.length) : "few"} areas most likely to show change, and a plan priced
             from your menu, all under your clinic&apos;s name.
           </p>
@@ -440,13 +440,13 @@ function ReportCell({ p }: { p: LandingPreview }) {
           // The client's view (D-061): Rebloom's light and glass under the clinic's name, logo and accent.
           <div style={clinicThemeStyle(MAISON_VERRE.accentHex)} className="rounded-[18px] bg-[radial-gradient(90%_60%_at_100%_0%,rgba(255,210,191,0.55)_0%,rgba(255,210,191,0)_60%),linear-gradient(180deg,#f8fbfd_0%,#e1edf3_100%)] px-6 py-6 shadow-[0_24px_40px_-30px_rgba(12,26,34,0.45)] ring-1 ring-white/80">
             <ClinicWordmark clinic={MAISON_VERRE} />
-            <p className="mt-6 font-display text-[23px] font-light leading-snug text-ink">{r.firstName}, here&apos;s where we&apos;d begin.</p>
+            <p className="mt-6 font-display text-[1.4375rem] font-light leading-snug text-ink">{r.firstName}, here&apos;s where we&apos;d begin.</p>
             <ul className="mt-4 space-y-2.5">
               {r.priorities.map((pr) => (
                 <li key={pr.label} className="rounded-[12px] bg-white/75 px-3 py-2.5 ring-1 ring-inset ring-white">
-                  <span className="flex items-baseline justify-between text-[13.5px] text-text-2">
+                  <span className="flex items-baseline justify-between text-[0.84375rem] text-text-2">
                     {pr.label}
-                    <span className="font-display text-[20px] leading-none text-ink">{pr.score}</span>
+                    <span className="font-display text-[1.25rem] leading-none text-ink">{pr.score}</span>
                   </span>
                   <span aria-hidden className="mt-2 block h-1 overflow-hidden rounded-full bg-[#0c1a22]/[0.07]">
                     <span className="block h-full rounded-full bg-[linear-gradient(90deg,#9fc9dd,#1e5a78)]" style={{ width: `${pr.score}%` }} />
@@ -454,7 +454,7 @@ function ReportCell({ p }: { p: LandingPreview }) {
                 </li>
               ))}
             </ul>
-            <div className="mt-4 flex items-end justify-between gap-4 text-[12.5px] text-text-3">
+            <div className="mt-4 flex items-end justify-between gap-4 text-[0.78125rem] text-text-3">
               <span>
                 {r.treatments.map((t) => (
                   <span key={t.name} className="block">
@@ -462,7 +462,7 @@ function ReportCell({ p }: { p: LandingPreview }) {
                   </span>
                 ))}
               </span>
-              <span className="gold-foil font-display text-[24px] leading-none">{formatPrice(r.totalCents)}</span>
+              <span className="gold-foil font-display text-[1.5rem] leading-none">{formatPrice(r.totalCents)}</span>
             </div>
           </div>
         )}
@@ -476,7 +476,7 @@ function ProofCell({ p }: { p: LandingPreview }) {
   return (
     <Cell className="border border-white/80 bg-[radial-gradient(120%_70%_at_100%_0%,rgba(255,214,196,0.6)_0%,rgba(255,214,196,0)_58%),linear-gradient(180deg,#f9fcfd_0%,#e4f0f5_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_22px_44px_-26px_rgba(12,44,62,0.32)] lg:col-span-7 lg:row-span-2 lg:flex lg:flex-col">
       <CellTitle>Proof they can see.</CellTitle>
-      <p className="mt-3 max-w-[36rem] text-[15.5px] leading-relaxed text-text-2">
+      <p className="mt-3 max-w-[36rem] text-[0.96875rem] leading-relaxed text-text-2">
         Progress scans between sessions measure what changed. Rebloom judges progress on YouCam&apos;s raw measurement,
         not the friendlier display score, and only compares scans taken the same way.
       </p>
@@ -484,21 +484,21 @@ function ProofCell({ p }: { p: LandingPreview }) {
         <>
           <p className="mt-9 flex items-center gap-4">
             <span className="font-display text-[clamp(72px,8vw,112px)] font-light leading-[0.85] tracking-[-0.03em] text-[var(--growth)]">+{s.delta}</span>
-            <span className="text-[15px] leading-snug text-text-2">
+            <span className="text-[0.9375rem] leading-snug text-text-2">
               <Bloom size={22} className="mb-2 text-[#9e4a5d]" />
               {s.label}, {s.name} (a sample client),
               <br />
               over {s.weeks}&nbsp;weeks and {s.series.length}&nbsp;scans
             </span>
           </p>
-          <p className="mt-4 text-[13.5px] font-normal leading-relaxed text-text-3">
+          <p className="mt-4 text-[0.84375rem] font-normal leading-relaxed text-text-3">
             Raw measurement {s.raw.from} to {s.raw.to}. A raw rise of {PROGRESS_MOMENT_RAW_DELTA} or more counts as progress.
           </p>
           {/* On wide screens the chart takes whatever height the two cells beside it give the row. */}
           <ScoreLine series={s.series} label={`${s.name}'s ${s.label.toLowerCase()}`} className="mt-6 lg:flex lg:flex-1 lg:flex-col" plotClassName="lg:min-h-60 lg:flex-1" />
         </>
       )}
-      <p className="mt-6 flex items-center gap-2.5 text-[14px] text-text-2">
+      <p className="mt-6 flex items-center gap-2.5 text-[0.875rem] text-text-2">
         <IconCheckCircle width={18} height={18} className="shrink-0 text-[#1e5a78]" />
         Rescans count only when both passed the same capture checks.
       </p>
@@ -513,19 +513,19 @@ function MomentCell({ p }: { p: LandingPreview }) {
       {m && (
         <figure className="rounded-[16px] bg-white/90 p-5 shadow-[0_18px_36px_-24px_rgba(12,44,62,0.45)] ring-1 ring-[#0c1a22]/[0.06]">
           <figcaption className="sr-only">The drafted email, as the practitioner sees it before sending.</figcaption>
-          <p className="flex items-center gap-2 text-[12.5px] text-text-3">
+          <p className="flex items-center gap-2 text-[0.78125rem] text-text-3">
             <IconMail aria-hidden width={15} height={15} />
             To {m.name}
           </p>
-          <p className="mt-2 text-[15px] text-ink">{m.subject}</p>
-          <div className="mt-3 space-y-2 text-[13.5px] leading-relaxed text-text-2">
+          <p className="mt-2 text-[0.9375rem] text-ink">{m.subject}</p>
+          <div className="mt-3 space-y-2 text-[0.84375rem] leading-relaxed text-text-2">
             {m.paragraphs.slice(0, 2).map((para) => (
               <p key={para}>{para}</p>
             ))}
           </div>
           <div className="mt-4 flex items-center justify-between">
-            <span className="text-[13px] text-text-3">{p.practitioner}</span>
-            <span aria-hidden className="btn-gold pointer-events-none !h-9 px-4 text-[13px]">
+            <span className="text-[0.8125rem] text-text-3">{p.practitioner}</span>
+            <span aria-hidden className="btn-gold pointer-events-none !h-9 px-4 text-[0.8125rem]">
               Send email
             </span>
           </div>
@@ -533,7 +533,7 @@ function MomentCell({ p }: { p: LandingPreview }) {
       )}
       <div className="mt-7">
         <CellTitle>The message, already written.</CellTitle>
-        <p className="mt-3 text-[15.5px] leading-relaxed text-text-2">
+        <p className="mt-3 text-[0.96875rem] leading-relaxed text-text-2">
           When the change is real, Rebloom drafts the note. Your practitioner reads it, edits it if they like, and
           sends. Nothing goes out on its own.
         </p>
@@ -552,13 +552,13 @@ function CatchCell({ p }: { p: LandingPreview }) {
     <Cell className="sea on-dark lg:col-span-5">
       <div>
         <CellTitle onDark>Drift, caught early.</CellTitle>
-        <p className="mt-3 text-[15.5px] leading-relaxed text-[#dbe8ef]">
+        <p className="mt-3 text-[0.96875rem] leading-relaxed text-[#dbe8ef]">
           Each one becomes a flag with the reason in one sentence, before the client quietly leaves.
         </p>
         <ul className="mt-6 space-y-3">
           {rules.map((r) => (
-            <li key={r.label} className="flex flex-col items-start gap-1.5 text-[14px] text-[#dbe8ef] sm:flex-row sm:items-center sm:gap-3">
-              <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-[#e9a35f]/15 px-2.5 text-[10.5px] uppercase tracking-[0.12em] text-[#f0bd85]">
+            <li key={r.label} className="flex flex-col items-start gap-1.5 text-[0.875rem] text-[#dbe8ef] sm:flex-row sm:items-center sm:gap-3">
+              <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-[#e9a35f]/15 px-2.5 text-[0.65625rem] uppercase tracking-[0.12em] text-[#f0bd85]">
                 <span aria-hidden className="inline-block h-[7px] w-[7px] rounded-[2px] border border-[#f0bd85]" />
                 {r.label}
               </span>
@@ -566,8 +566,8 @@ function CatchCell({ p }: { p: LandingPreview }) {
             </li>
           ))}
         </ul>
-        <p className="mt-7 border-t border-white/10 pt-5 text-[14px] text-ink-soft">
-          At the demo clinic today: <span className="font-display text-[22px] text-[#f0bd85]">{p.atRisk}</span> clients at risk,
+        <p className="mt-7 border-t border-white/10 pt-5 text-[0.875rem] text-ink-soft">
+          At the demo clinic today: <span className="font-display text-[1.375rem] text-[#f0bd85]">{p.atRisk}</span> clients at risk,
           each with the reason.
         </p>
       </div>
@@ -590,11 +590,11 @@ function Honest() {
     <section aria-labelledby="honest-title" className={`${wrap} pt-28 lg:pt-40`}>
       <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
         <div className="lg:col-span-6">
-          <p className="text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">Built on YouCam</p>
+          <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">Built on YouCam</p>
           <h2 id="honest-title" className={`${sectionTitle} mt-5`}>
             Progress on the raw data, not the flattering number.
           </h2>
-          <p className="mt-6 max-w-[34rem] text-[17px] leading-relaxed text-text-2">
+          <p className="mt-6 max-w-[34rem] text-[1.0625rem] leading-relaxed text-text-2">
             Skin analysis comes from Perfect Corp&apos;s YouCam API. Clients see YouCam&apos;s friendly display scores.
             Every progress claim and every rebook trigger runs on the raw measurement underneath, and only when both
             scans passed the same capture checks.
@@ -602,9 +602,9 @@ function Honest() {
         </div>
         <dl className="self-end lg:col-span-6">
           {apis.map((a) => (
-            <div key={a.name} className="border-t border-[#0c1a22]/10 py-6 first:border-t-0 first:pt-0 sm:grid sm:grid-cols-[13rem_minmax(0,1fr)] sm:gap-6">
-              <dt className="font-display text-[24px] font-light leading-tight text-ink">{a.name}</dt>
-              <dd className="mt-2 text-[15px] leading-relaxed text-text-2 sm:mt-1">{a.detail}</dd>
+            <div key={a.name} className="border-t border-[#0c1a22]/10 py-6 first:border-t-0 first:pt-0 sm:grid sm:grid-cols-[208px_minmax(0,1fr)] sm:gap-6">
+              <dt className="font-display text-[1.5rem] font-light leading-tight text-ink">{a.name}</dt>
+              <dd className="mt-2 text-[0.9375rem] leading-relaxed text-text-2 sm:mt-1">{a.detail}</dd>
             </div>
           ))}
         </dl>
@@ -633,18 +633,18 @@ function Numbers({ p }: { p: LandingPreview }) {
         <div className="sea on-dark relative overflow-clip rounded-[22px] p-7 sm:p-10 lg:col-span-5">
           <LightField variant="sea" className="opacity-45" />
           <div className="relative">
-            <h3 className="text-[14px] text-ink-soft">What the owner sees</h3>
+            <h3 className="text-[0.875rem] text-ink-soft">What the owner sees</h3>
             <p className="gold-foil-bright mt-4 font-display text-[clamp(56px,6vw,84px)] font-light leading-none tracking-[-0.03em]">
               {formatPrice(p.keptCents)}
             </p>
-            <p className="mt-3 max-w-[22rem] text-[15px] leading-relaxed text-[#dbe8ef]">
+            <p className="mt-3 max-w-[22rem] text-[0.9375rem] leading-relaxed text-[#dbe8ef]">
               kept through rebooking at the demo clinic, {monthName(first)} to {monthName(last)}: every treatment visit after
               a client&apos;s first.
             </p>
             <div className="mt-8">
               <MiniBars months={months} title="Revenue kept through rebooking at the demo clinic, by month" />
             </div>
-            <p className="mt-6 text-[13px] font-normal leading-relaxed text-ink-soft">
+            <p className="mt-6 text-[0.8125rem] font-normal leading-relaxed text-ink-soft">
               {p.rebook.yes} of {p.rebook.of} sample clients came back after their first treatment, or are booked to.
               Gold is this month so far.
             </p>
@@ -665,7 +665,7 @@ function Try() {
           <h2 id="try-title" className={sectionTitle}>
             One platform. Each clinic&apos;s own brand.
           </h2>
-          <p className="mt-6 max-w-[30rem] text-[17px] leading-relaxed text-text-2">
+          <p className="mt-6 max-w-[30rem] text-[1.0625rem] leading-relaxed text-text-2">
             Scan your face as a client of either demo clinic. Clients see the clinic&apos;s name, logo and voice. Rebloom is
             one small line at the foot of the page.
           </p>
@@ -676,8 +676,8 @@ function Try() {
               <Link href={`/c/${clinic.slug}`} className="glass lift sheen group flex w-full flex-col p-2.5">
                 <ClientPagePreview clinic={clinic} className="flex-1" />
                 <span className="flex items-center justify-between gap-4 px-3.5 pb-2 pt-4">
-                  <span className="text-[13px] text-text-3">{clinic.city}</span>
-                  <span className="inline-flex items-center gap-2 whitespace-nowrap text-[14.5px] text-ink">
+                  <span className="text-[0.8125rem] text-text-3">{clinic.city}</span>
+                  <span className="inline-flex items-center gap-2 whitespace-nowrap text-[0.90625rem] text-ink">
                     Start a scan
                     <IconArrowRight width={17} height={17} className="transition-transform duration-300 ease-out group-hover:translate-x-1" />
                   </span>
@@ -733,11 +733,11 @@ function Questions({ p }: { p: LandingPreview }) {
         <div className="glass !rounded-[22px] px-6 sm:px-9 lg:col-span-8">
           {faqs.map(([q, a]) => (
             <details key={q} className="faq group border-t border-[#0c1a22]/[0.08] first:border-t-0">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-6 font-display text-[22px] leading-snug text-ink sm:text-[24px] [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-6 font-display text-[1.375rem] leading-snug text-ink sm:text-[1.5rem] [&::-webkit-details-marker]:hidden">
                 {q}
                 <IconPlus width={20} height={20} className="shrink-0 text-text-3 transition-transform duration-300 ease-out group-open:rotate-45" />
               </summary>
-              <p className="faq-answer max-w-[60ch] pb-7 text-[15.5px] leading-relaxed text-text-2">{a}</p>
+              <p className="faq-answer max-w-[60ch] pb-7 text-[0.96875rem] leading-relaxed text-text-2">{a}</p>
             </details>
           ))}
         </div>
@@ -757,14 +757,14 @@ function Close() {
           <h2 id="close-title" className="font-display text-[clamp(40px,5.2vw,72px)] font-light leading-[1.02] tracking-[-0.02em] text-white [text-wrap:balance]">
             Your next bookings are already in your client list.
           </h2>
-          <p className="mx-auto mt-6 max-w-xl text-[17px] leading-relaxed text-[#dbe8ef]">
+          <p className="mx-auto mt-6 max-w-xl text-[1.0625rem] leading-relaxed text-[#dbe8ef]">
             No sign-up. Open the demo and see who Rebloom would have your team contact this morning, and why.
           </p>
           <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-            <EnterDemo className="w-full sm:w-auto" buttonClassName="!h-14 px-7 text-[15.5px]" />
+            <EnterDemo className="w-full sm:w-auto" buttonClassName="!h-14 px-7 text-[0.96875rem]" />
             <a
               href="#try"
-              className="inline-flex h-14 items-center justify-center rounded-[12px] border border-white/25 px-7 text-[15px] text-white transition-[background-color,border-color,transform] duration-200 hover:border-white/45 hover:bg-white/10 active:scale-[0.97]"
+              className="inline-flex h-14 items-center justify-center rounded-[12px] border border-white/25 px-7 text-[0.9375rem] text-white transition-[background-color,border-color,transform] duration-200 hover:border-white/45 hover:bg-white/10 active:scale-[0.97]"
             >
               Try the client experience
             </a>

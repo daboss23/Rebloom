@@ -42,7 +42,7 @@ export function ScoreLine({ series, label, className, plotClassName }: { series:
               <span
                 className={cx(
                   "absolute bottom-3 left-0 -translate-x-1/2 font-display font-light leading-none",
-                  isLast ? "text-[34px] text-[var(--growth)]" : "text-[22px] text-text-2",
+                  isLast ? "text-[2.125rem] text-[var(--growth)]" : "text-[1.375rem] text-text-2",
                 )}
               >
                 {p.v}
@@ -51,7 +51,7 @@ export function ScoreLine({ series, label, className, plotClassName }: { series:
           );
         })}
       </div>
-      <div aria-hidden className="mt-3 flex justify-between px-[2%] text-[11px] uppercase tracking-[0.14em] text-text-3">
+      <div aria-hidden className="mt-3 flex justify-between px-[2%] text-[0.6875rem] uppercase tracking-[0.14em] text-text-3">
         <span>First scan</span>
         <span>Latest</span>
       </div>

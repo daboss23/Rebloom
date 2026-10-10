@@ -23,7 +23,7 @@ export function ConfirmPlan({ clientId, label = "Confirm plan with client" }: { 
         {pending ? "Confirming" : label}
       </button>
       {error && (
-        <p role="alert" className="mt-3 text-[13px] text-porcelain">
+        <p role="alert" className="mt-3 text-[0.8125rem] text-porcelain">
           {error}
         </p>
       )}

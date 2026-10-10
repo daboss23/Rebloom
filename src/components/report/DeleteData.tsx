@@ -18,7 +18,7 @@ export function DeleteData({ token }: { token: string }) {
   }
   return (
     <div className="glass fade mt-4 px-5 py-5" role="alertdialog" aria-labelledby="delete-title">
-      <p id="delete-title" className="font-display text-[22px] font-light leading-snug text-ink">
+      <p id="delete-title" className="font-display text-[1.375rem] font-light leading-snug text-ink">
         Delete your photos and details?
       </p>
       <p className="t-body mt-2">

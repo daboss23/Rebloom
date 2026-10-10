@@ -104,7 +104,7 @@ export function ProcessingView({
         <Label>Your scan</Label>
         <h1 className="t-h2 mt-4">{view.error.title}</h1>
         <p className="t-body mt-4">{view.error.instruction}</p>
-        <ButtonLink href={`/c/${clinicSlug}/capture`} block className="mt-10 !min-h-14 text-[16px]">
+        <ButtonLink href={`/c/${clinicSlug}/capture`} block className="mt-10 !min-h-14 text-[1rem]">
           Take a new photo
         </ButtonLink>
       </div>

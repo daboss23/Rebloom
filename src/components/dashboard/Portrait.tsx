@@ -22,10 +22,10 @@ export function Portrait({ src, initials, caption }: { src: string | null; initi
       ) : (
         <div aria-hidden className="absolute inset-0 grid place-items-center">
           <LightField variant="ice" />
-          <span className="relative font-display text-[104px] font-light tracking-[0.04em] text-[#1e5a78]/70">{initials}</span>
+          <span className="relative font-display text-[6.5rem] font-light tracking-[0.04em] text-[#1e5a78]/70">{initials}</span>
         </div>
       )}
-      <span className="absolute bottom-4 left-4 rounded-full bg-white/75 px-3 py-1 text-[10.5px] uppercase tracking-[0.14em] text-text-2 backdrop-blur">{caption}</span>
+      <span className="absolute bottom-4 left-4 rounded-full bg-white/75 px-3 py-1 text-[0.65625rem] uppercase tracking-[0.14em] text-text-2 backdrop-blur">{caption}</span>
     </div>
   );
 }

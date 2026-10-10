@@ -52,7 +52,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/dashboar
                       className={pill(active)}
                     >
                       {f.label}
-                      <span className={cx("tabular-nums text-[12px]", active ? "text-white/70" : "text-text-3")}>{count(f)}</span>
+                      <span className={cx("tabular-nums text-[0.75rem]", active ? "text-white/70" : "text-text-3")}>{count(f)}</span>
                     </Link>
                   </li>
                 );
@@ -62,17 +62,17 @@ export default async function ClientsPage({ searchParams }: PageProps<"/dashboar
         }
       />
 
-      <div className="glass focus-in mt-10 overflow-hidden px-2 pb-2 sm:px-4" style={{ animationDelay: "120ms" }}>
+      <div className="glass focus-in mt-10 overflow-x-auto px-2 pb-2 sm:px-4" style={{ animationDelay: "120ms" }}>
       <table className="w-full border-collapse text-left">
         <caption className="sr-only">Clients, with status, visits and their lead concern over time</caption>
         <thead>
           <tr className="border-b border-[#0c1a22]/10">
             <th scope="col" className="t-label py-5 pl-4 pr-4 font-normal">Client</th>
             <th scope="col" className="t-label hidden py-3 pr-4 font-normal md:table-cell">Status</th>
-            <th scope="col" className="t-label hidden py-3 pr-4 font-normal lg:table-cell">Last visit</th>
-            <th scope="col" className="t-label hidden py-3 pr-4 font-normal lg:table-cell">Next visit</th>
+            <th scope="col" className="t-label hidden whitespace-nowrap py-3 pr-4 font-normal xl:table-cell">Last visit</th>
+            <th scope="col" className="t-label hidden whitespace-nowrap py-3 pr-4 font-normal xl:table-cell">Next visit</th>
             <th scope="col" className="t-label py-3 pr-4 text-right font-normal sm:text-left">Lead concern</th>
-            <th scope="col" className="t-label hidden py-3 font-normal xl:table-cell">Waiting on</th>
+            <th scope="col" className="t-label hidden whitespace-nowrap py-3 font-normal 2xl:table-cell">Waiting on</th>
           </tr>
         </thead>
         <tbody>
@@ -84,15 +84,15 @@ export default async function ClientsPage({ searchParams }: PageProps<"/dashboar
                 <td className="py-4 pl-4 pr-4 align-middle">
                   <Link href={href} className="block after:absolute after:inset-0 after:content-['']">
                     <span className="flex items-center gap-3">
-                      <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-[linear-gradient(140deg,#e6f2f8,#b9d7e6)] font-display text-[16px] text-[#1e5a78] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+                      <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-[linear-gradient(140deg,#e6f2f8,#b9d7e6)] font-display text-[1rem] text-[#1e5a78] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
                         {(client.firstName?.[0] ?? "") + (client.lastName?.[0] ?? "")}
                       </span>
                       <span className="min-w-0">
-                        <span className="block font-display text-[21px] leading-tight text-ink">{fullName(client)}</span>
-                    <span className="t-caption block !text-[12.5px] md:hidden">
+                        <span className="block font-display text-[1.3125rem] leading-tight text-ink">{fullName(client)}</span>
+                    <span className="t-caption block !text-[0.78125rem] md:hidden">
                       {STATUS_LABEL[row.status]}
                     </span>
-                    <span className="t-caption hidden !text-[12.5px] md:block">{client.email}</span>
+                    <span className="t-caption hidden !text-[0.78125rem] xl:block">{client.email}</span>
                       </span>
                     </span>
                   </Link>
@@ -100,23 +100,23 @@ export default async function ClientsPage({ searchParams }: PageProps<"/dashboar
                 <td className="hidden py-4 pr-4 md:table-cell">
                   <StatusMark status={row.status} />
                 </td>
-                <td className="hidden py-4 pr-4 text-[14px] text-text-2 lg:table-cell">
+                <td className="hidden whitespace-nowrap py-4 pr-4 text-[0.875rem] text-text-2 xl:table-cell">
                   {row.lastVisit ? relativeDay(row.lastVisit, book.today) : <span className="text-text-3">None yet</span>}
                 </td>
-                <td className="hidden py-4 pr-4 text-[14px] lg:table-cell">
+                <td className="hidden whitespace-nowrap py-4 pr-4 text-[0.875rem] xl:table-cell">
                   {row.nextVisit ? <span className="text-ink">{relativeDay(row.nextVisit, book.today)}</span> : <span className="text-text-3">Not booked</span>}
                 </td>
                 <td className="py-4 pr-4">
                   {row.trend ? (
                     <span className="flex items-center justify-end gap-4 sm:justify-start">
-                      <span className="w-28 text-[13.5px] text-text-2 hidden sm:block">{row.trend.label}</span>
-                      <span className="w-14 text-right font-display text-[26px] font-light text-ink tabular-nums">
+                      <span className="w-28 text-[0.84375rem] text-text-2 hidden sm:block">{row.trend.label}</span>
+                      <span className="w-14 text-right font-display text-[1.625rem] font-light text-ink tabular-nums">
                         {row.trend.series[row.trend.series.length - 1]}
                       </span>
-                      <span className={cx("w-10 text-[12.5px] tabular-nums", row.trend.delta && row.trend.delta > 0 ? "font-medium text-[color:var(--growth)]" : "text-text-3")}>
+                      <span className={cx("w-10 text-[0.78125rem] tabular-nums", row.trend.delta && row.trend.delta > 0 ? "font-medium text-[color:var(--growth)]" : "text-text-3")}>
                         {row.trend.delta === null ? "" : row.trend.delta > 0 ? `+${row.trend.delta}` : row.trend.delta}
                       </span>
-                      <Sparkline values={row.trend.series} className="hidden sm:block" />
+                      <Sparkline values={row.trend.series} className="max-[1439px]:hidden" />
                       <span className="sr-only">
                         {row.trend.delta === null ? "First scan" : `${row.trend.delta >= 0 ? "Up" : "Down"} ${Math.abs(row.trend.delta)} points since the first scan`}
                       </span>
@@ -125,7 +125,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/dashboar
                     <span className="t-caption">No scan yet</span>
                   )}
                 </td>
-                <td className="hidden py-4 text-[13.5px] text-text-2 xl:table-cell">{row.item ? <WaitingOn row={row} /> : <span className="text-text-3">Nothing</span>}</td>
+                <td className="hidden whitespace-nowrap py-4 text-[0.84375rem] text-text-2 2xl:table-cell">{row.item ? <WaitingOn row={row} /> : <span className="text-text-3">Nothing</span>}</td>
               </tr>
             );
           })}

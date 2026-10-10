@@ -26,8 +26,8 @@ export function TimeTravel({ dateLabel, offsetDays, compact }: { dateLabel: stri
           <span className="absolute left-1/2 top-1/2 h-px w-[7px] bg-[#9a6b22]" />
         </span>
         <span>
-          <span className="t-label block whitespace-nowrap !text-[10px]">Demo clock{offsetDays > 0 ? ` · +${offsetDays} days` : ""}</span>
-          <span key={dateLabel} className="focus-in block text-[14px] text-ink tabular-nums">
+          <span className="t-label block whitespace-nowrap !text-[0.625rem]">Demo clock{offsetDays > 0 ? ` · +${offsetDays} days` : ""}</span>
+          <span key={dateLabel} className="focus-in block text-[0.875rem] text-ink tabular-nums">
             {dateLabel}
           </span>
         </span>
@@ -46,7 +46,7 @@ export function TimeTravel({ dateLabel, offsetDays, compact }: { dateLabel: stri
               })
             }
             className={cx(
-              "h-9 whitespace-nowrap px-2.5 text-[12.5px] text-text-2 sm:px-3.5 transition-[background-color,color,transform] duration-150 ease-out",
+              "h-9 whitespace-nowrap px-2.5 text-[0.78125rem] text-text-2 sm:px-3.5 transition-[background-color,color,transform] duration-150 ease-out",
               "hover:bg-white hover:text-ink active:scale-[0.96] disabled:opacity-50",
               i > 0 && "border-l border-[#0c1a22]/[0.07]",
             )}

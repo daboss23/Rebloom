@@ -141,7 +141,7 @@ export function HeroFace({
               <span className="scan-target absolute -translate-x-1/2 -translate-y-1/2" />
             </span>
           )}
-          <span className="absolute bottom-3 left-4 text-[11px] uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
+          <span className="absolute bottom-3 left-4 text-[0.6875rem] uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
             Scan {scan} · Face map
           </span>
         </div>
@@ -150,17 +150,17 @@ export function HeroFace({
         <div
           ref={card}
           className={cx(
-            "glass !absolute left-3 top-3 w-[min(15.5rem,54%)] px-3.5 py-3 sm:top-[9%] sm:px-4 sm:py-3.5 sm:left-auto sm:right-[calc(100%-2.5rem)] lg:right-[calc(100%-3.5rem)]",
+            "glass !absolute left-3 top-3 w-[min(248px,54%)] px-3.5 py-3 sm:top-[9%] sm:px-4 sm:py-3.5 sm:left-auto sm:right-[calc(100%-2.5rem)] lg:right-[calc(100%-3.5rem)]",
             live ? "hero-card-in hero-float" : "opacity-0",
           )}
           style={{ "--d": "60ms" } as React.CSSProperties}
         >
           <p key={current.key} className="fade flex items-baseline justify-between gap-3">
-            <span className="text-[11px] uppercase tracking-[0.14em] text-[#1e5a78]">{current.label}</span>
-            <span className="font-display text-[34px] font-light leading-none text-ink">{current.score}</span>
+            <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-[#1e5a78]">{current.label}</span>
+            <span className="font-display text-[2.125rem] font-light leading-none text-ink">{current.score}</span>
           </p>
           <ScoreRuler value={current.score} from={current.from} tone={current.score > current.from ? "growth" : "sea"} className="mt-2.5" />
-          <p className="mt-2 text-[12px] text-text-2">
+          <p className="mt-2 text-[0.75rem] text-text-2">
             {current.from === current.score ? `Holding at ${current.score} since scan 01` : `${current.from} at scan 01`}
           </p>
         </div>
@@ -176,8 +176,8 @@ export function HeroFace({
           >
             <Bloom size={22} className="shrink-0 text-[#9e4a5d]" />
             <p>
-              <span className="block font-display text-[30px] font-light leading-none text-[var(--growth)]">+{change}</span>
-              <span className="mt-1 block text-[12px] leading-tight text-text-2">
+              <span className="block font-display text-[1.875rem] font-light leading-none text-[var(--growth)]">+{change}</span>
+              <span className="mt-1 block text-[0.75rem] leading-tight text-text-2">
                 {featured.label} since scan 01
               </span>
             </p>
@@ -204,7 +204,7 @@ export function HeroFace({
                 setActive(i);
               }}
               className={cx(
-                "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-2 text-[12.5px] transition-[background-color,color] duration-300 active:scale-[0.97] sm:text-[13px]",
+                "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-2 text-[0.78125rem] transition-[background-color,color] duration-300 active:scale-[0.97] sm:text-[0.8125rem]",
                 i === active ? "bg-[linear-gradient(180deg,#1e5a78,#0e2230)] text-white" : "text-ink hover:bg-white",
               )}
             >
@@ -214,7 +214,7 @@ export function HeroFace({
           ))}
         </div>
       </div>
-      <figcaption className="mx-auto mt-4 max-w-[560px] text-[12.5px] leading-relaxed text-text-3 lg:mr-0">
+      <figcaption className="mx-auto mt-4 max-w-[560px] text-[0.78125rem] leading-relaxed text-text-3 lg:mr-0">
         {firstName} is a sample client: an AI-generated portrait, read and scored exactly as her report shows it.
       </figcaption>
     </figure>

@@ -45,21 +45,21 @@ export function VisitCard({
         <IconCheckCircle aria-hidden width={16} height={16} />
         Confirmed
       </p>
-      <h2 id="visit-day" className="mt-3 font-display text-[34px] font-light leading-[1.1] text-ink">
+      <h2 id="visit-day" className="mt-3 font-display text-[2.125rem] font-light leading-[1.1] text-ink">
         {day}
       </h2>
-      <p className="mt-1.5 text-[18px] text-ink tabular-nums">
+      <p className="mt-1.5 text-[1.125rem] text-ink tabular-nums">
         {time} <span className="text-text-3">· {minutes} minutes</span>
       </p>
       <dl className="mt-6 border-t border-[#0c1a22]/[0.08]">
         {rows.map(([term, value]) => (
           <div key={term} className="grid grid-cols-[92px_1fr] gap-3 border-b border-[#0c1a22]/[0.06] py-3.5 last:border-0">
-            <dt className="t-label !text-[10.5px] leading-[1.9]">{term}</dt>
-            <dd className="text-[14.5px] leading-relaxed text-ink">{value}</dd>
+            <dt className="t-label !text-[0.65625rem] leading-[1.9]">{term}</dt>
+            <dd className="text-[0.90625rem] leading-relaxed text-ink">{value}</dd>
           </div>
         ))}
       </dl>
-      <a href={`/r/${token}/book/visit.ics`} download="visit.ics" className="btn-ghost mt-5 w-full !h-12 text-[15px]">
+      <a href={`/r/${token}/book/visit.ics`} download="visit.ics" className="btn-ghost mt-5 w-full !h-12 text-[0.9375rem]">
         <IconCalendar width={18} height={18} />
         Add to my calendar
       </a>
@@ -67,7 +67,7 @@ export function VisitCard({
         {canCancel ? (
           <CancelVisit token={token} appointmentId={appointment.id} refund={paid ? dollars(appointment.depositCents) : null} noticeHours={noticeHours} />
         ) : (
-          <p className="t-caption !text-[13.5px]">
+          <p className="t-caption !text-[0.84375rem]">
             Your visit is less than {noticeHours} hours away. To change it, please call us on{" "}
             <a href={`tel:${clinic.phone.replace(/[^\d+]/g, "")}`} className="text-ink underline decoration-[#0c1a22]/30 underline-offset-4">
               {clinic.phone}

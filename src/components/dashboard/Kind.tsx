@@ -17,17 +17,21 @@ export function KindMark({ kind, atRisk }: { kind: QueueRow["kind"]; atRisk: boo
   );
 }
 
-/** The kind, as a small tinted label. Never colour alone: the words are always there. */
+/**
+ * The kind, as a small label. Never colour alone: the words are always there. What needs someone now
+ * (at risk, a new lead) burns bright and pulses; the rest stays still.
+ */
 export function KindChip({ row }: { row: Kind }) {
-  const tone =
-    row.kind === "progress_moment"
-      ? "bg-[linear-gradient(90deg,rgba(255,214,196,0.55),rgba(244,185,163,0.35))] text-[#7d3447]"
-      : row.atRisk
-        ? "bg-[#e9a35f]/15 text-[#8a4b12]"
-        : "bg-white/70 text-text-3 ring-1 ring-inset ring-[#0c1a22]/[0.06]";
+  const moment = row.kind === "progress_moment";
+  const signal = row.atRisk ? "signal-urgent signal-live" : row.kind === "report_follow_up" ? "signal-lead signal-live" : "signal-calm";
   return (
-    <span className={cx("inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[10.5px] uppercase tracking-[0.12em]", tone)}>
-      {row.kind === "progress_moment" ? <Bloom size={13} unfurl className="text-[#9e4a5d]" /> : <KindMark kind={row.kind} atRisk={row.atRisk} />}
+    <span
+      className={cx(
+        "inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[0.65625rem] uppercase tracking-[0.12em]",
+        moment ? "bg-[linear-gradient(90deg,rgba(255,214,196,0.85),rgba(244,185,163,0.7))] font-medium text-[#7d3447] shadow-[0_4px_12px_-6px_rgba(158,74,93,0.6)]" : cx("signal", signal),
+      )}
+    >
+      {moment ? <Bloom size={13} unfurl className="text-[#9e4a5d]" /> : <span aria-hidden className="signal-dot" />}
       {row.label}
       {row.atRisk && row.kind !== "lapsed" && <span className="opacity-80">· At risk</span>}
     </span>
@@ -51,7 +55,7 @@ export function Monogram({ row, className }: { row: Pick<QueueRow, "kind" | "atR
     <span
       aria-hidden
       className={cx(
-        "grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[15px] font-display text-[20px] tracking-[0.04em] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_10px_20px_-14px_rgba(12,44,62,0.55)]",
+        "grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[15px] font-display text-[1.25rem] tracking-[0.04em] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_10px_20px_-14px_rgba(12,44,62,0.55)]",
         finish,
         className,
       )}

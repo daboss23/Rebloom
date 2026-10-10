@@ -175,10 +175,10 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
       style={{ animationDelay: facts.reply ? "60ms" : "300ms" }}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <h2 id="conversation-title" className="font-display text-[34px] font-light leading-none text-ink">
+        <h2 id="conversation-title" className="font-display text-[2.125rem] font-light leading-none text-ink">
           {facts.reply ? `${name} wrote back` : "Conversation"}
         </h2>
-        <p className="t-caption !text-[12.5px]">Their replies to the clinic&apos;s emails and texts land here.</p>
+        <p className="t-caption !text-[0.78125rem]">Their replies to the clinic&apos;s emails and texts land here.</p>
       </div>
       <div className="mx-auto max-w-[46rem]">
         <Conversation
@@ -200,16 +200,16 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
 
   return (
     <div>
-      <Link href="/dashboard/clients" className="group inline-flex items-center gap-2 text-[13px] text-text-3 hover:text-ink">
+      <Link href="/dashboard/clients" className="group inline-flex items-center gap-2 text-[0.8125rem] text-text-3 hover:text-ink">
         <IconArrowLeft width={15} height={15} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
         All clients
       </Link>
 
       <header className="focus-in mt-6 flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
         <div className="min-w-0">
-          <p className="text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">{kicker}</p>
+          <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">{kicker}</p>
           <h1 className="mt-3 font-display text-[clamp(52px,7vw,88px)] font-light leading-[0.95] tracking-[-0.025em] text-ink">{shortName(client)}</h1>
-          <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[14.5px] text-text-2">
+          <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.90625rem] text-text-2">
             <StatusMark status={status} />
             {info.age && <span className="text-text-3">· {info.age}</span>}
             {first && <span className="text-text-3">· First scan {monthDay(local(first.createdAt))}</span>}
@@ -242,7 +242,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
       <div className="flex flex-col">
       {conversation}
 
-      <div className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2 2xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_minmax(0,23rem)]">
+      <div className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2 2xl:grid-cols-[minmax(0,320px)_minmax(0,1fr)_minmax(0,368px)]">
         {/* ---------- Face and scores ---------- */}
         <section aria-labelledby="scores" className="glass focus-in min-w-0 self-start p-4" style={{ animationDelay: "80ms" }}>
           <Portrait src={photo} initials={initials} caption={latest ? `Scan ${String(latest.scanNumber).padStart(2, "0")} · ${monthDay(local(latest.createdAt))}` : "No scan yet"} />
@@ -251,22 +251,22 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
           </h2>
           <ul className="mt-1 px-2">
             {scores.map((s) => (
-              <li key={s.score.key} className="grid grid-cols-[minmax(0,1fr)_auto_3.25rem] items-center gap-4 border-b border-[#0c1a22]/[0.06] py-3 last:border-0">
-                <span className="text-[14.5px] text-ink">{s.label}</span>
+              <li key={s.score.key} className="grid grid-cols-[minmax(0,1fr)_auto_52px] items-center gap-4 border-b border-[#0c1a22]/[0.06] py-3 last:border-0">
+                <span className="text-[0.90625rem] text-ink">{s.label}</span>
                 <span className="flex items-center gap-3">
                   {s.delta !== null && (
-                    <span className={cx("text-[12px] tabular-nums", s.delta > 0 ? "font-medium text-[color:var(--growth)]" : "text-text-3")}>
+                    <span className={cx("text-[0.75rem] tabular-nums", s.delta > 0 ? "font-medium text-[color:var(--growth)]" : "text-text-3")}>
                       {s.delta > 0 ? `+${s.delta}` : s.delta}
                     </span>
                   )}
                   <Sparkline values={s.series} width={56} height={18} />
                 </span>
-                <span className="text-right font-display text-[26px] font-light leading-none text-ink tabular-nums">{s.score.ui}</span>
+                <span className="text-right font-display text-[1.625rem] font-light leading-none text-ink tabular-nums">{s.score.ui}</span>
               </li>
             ))}
           </ul>
           {info.skinAge !== null && (
-            <p className="t-caption mt-3 px-2 pb-2 !text-[12.5px]">
+            <p className="t-caption mt-3 px-2 pb-2 !text-[0.78125rem]">
               Skin age reads {info.skinAge}. For you only, never shown to the client.
             </p>
           )}
@@ -278,7 +278,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
             <figure>
               <figcaption className="t-label">In {name}&apos;s words</figcaption>
               <blockquote className="relative mt-3 pt-9 font-display text-[clamp(26px,2.6vw,34px)] font-light leading-snug text-ink">
-                <span aria-hidden className="gold-foil absolute -left-0.5 top-0 font-display text-[64px] leading-[0.8]">
+                <span aria-hidden className="gold-foil absolute -left-0.5 top-0 font-display text-[4rem] leading-[0.8]">
                   &ldquo;
                 </span>
                 <span className="relative">{intake.goalText}</span>
@@ -298,8 +298,8 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
               ["Texts", texts],
             ].map(([term, value]) => (
               <div key={term} className="border-t border-[#0c1a22]/[0.07] py-4">
-                <dt className="t-label !text-[10.5px]">{term}</dt>
-                <dd className="mt-1.5 text-[15px] text-ink">
+                <dt className="t-label !text-[0.65625rem]">{term}</dt>
+                <dd className="mt-1.5 text-[0.9375rem] text-ink">
                   {value}
                   {term === "Emails" && facts.canEmail && <StopEmails clientId={client.id} firstName={name} />}
                 </dd>
@@ -309,18 +309,18 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
 
           {info.flags.length > 0 && (
             <div className="mt-4 rounded-[16px] bg-[#e9a35f]/10 p-5 ring-1 ring-inset ring-[#e9a35f]/30">
-              <p className="flex items-center gap-2.5 text-[14.5px] text-ink">
+              <p className="flex items-center gap-2.5 text-[0.90625rem] text-ink">
                 <IconAlert width={17} height={17} className="text-[#b8691f]" />
                 Review before treatment
               </p>
               <ul className="mt-3 space-y-2.5">
                 {info.flags.map((flag) => (
-                  <li key={flag} className="text-[14px] leading-relaxed text-text-2">
+                  <li key={flag} className="text-[0.875rem] leading-relaxed text-text-2">
                     {flag}
                   </li>
                 ))}
               </ul>
-              <p className="t-caption mt-4 !text-[12px]">Flags are prompts for your judgement, not decisions.</p>
+              <p className="t-caption mt-4 !text-[0.75rem]">Flags are prompts for your judgement, not decisions.</p>
             </div>
           )}
 
@@ -336,10 +336,10 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
           ) : (
             <ol className="mt-2">
               {pastVisits.map((a) => (
-                <li key={a.id} className="grid grid-cols-[6.5rem_minmax(0,1fr)_auto] items-baseline gap-4 border-b border-[#0c1a22]/[0.06] py-3 text-[14px] last:border-0">
+                <li key={a.id} className="grid grid-cols-[104px_minmax(0,1fr)_auto] items-baseline gap-4 border-b border-[#0c1a22]/[0.06] py-3 text-[0.875rem] last:border-0">
                   <span className={cx("tabular-nums", a.status === "booked" ? "text-ink" : "text-text-3")}>{shortDay(local(a.startsAt))}</span>
                   <span className="truncate text-text-2">{a.treatmentId ? treatmentName(a.treatmentId) : "First consultation"}</span>
-                  <span className="t-caption !text-[12px]">{a.status === "booked" ? `Booked · ${time(a.startsAt)}` : a.status === "completed" ? "Done" : "Missed"}</span>
+                  <span className="t-caption !text-[0.75rem]">{a.status === "booked" ? `Booked · ${time(a.startsAt)}` : a.status === "completed" ? "Done" : "Missed"}</span>
                 </li>
               ))}
             </ol>
@@ -354,29 +354,29 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
         >
           <LightField variant="sea" className="opacity-45" />
           <div className="relative">
-          <h2 id="plan" className="text-[11px] uppercase tracking-[0.22em] text-[#e2c07a]">
+          <h2 id="plan" className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#e2c07a]">
             {planLabel}
           </h2>
           {lines.length === 0 ? (
-            <p className="mt-5 text-[15px] text-ink-soft">No plan yet. One appears here once {name} has a scan.</p>
+            <p className="mt-5 text-[0.9375rem] text-ink-soft">No plan yet. One appears here once {name} has a scan.</p>
           ) : (
             <>
               <ul className="mt-4">
                 {lines.map((line) => (
                   <li key={line.key} className="flex items-start justify-between gap-6 border-b border-white/10 py-4">
                     <span className="min-w-0">
-                      <span className="block text-[15.5px] text-porcelain">{line.name}</span>
-                      {line.detail && <span className="mt-1 block text-[13px] text-ink-soft">{line.detail}</span>}
+                      <span className="block text-[0.96875rem] text-porcelain">{line.name}</span>
+                      {line.detail && <span className="mt-1 block text-[0.8125rem] text-ink-soft">{line.detail}</span>}
                     </span>
-                    <span className="text-[15px] tabular-nums text-porcelain">{line.price}</span>
+                    <span className="text-[0.9375rem] tabular-nums text-porcelain">{line.price}</span>
                   </li>
                 ))}
               </ul>
               <div className="mt-8 flex items-baseline justify-between gap-6">
-                <span className="text-[14px] text-ink-soft">Plan value</span>
-                <span className="gold-foil font-display text-[56px] font-light leading-none">{formatPrice(total)}</span>
+                <span className="text-[0.875rem] text-ink-soft">Plan value</span>
+                <span className="gold-foil font-display text-[3.5rem] font-light leading-none">{formatPrice(total)}</span>
               </div>
-              <p className="mt-5 text-[13px] leading-relaxed text-ink-soft">{planNote}</p>
+              <p className="mt-5 text-[0.8125rem] leading-relaxed text-ink-soft">{planNote}</p>
               {(!facts.plan || facts.plan.status === "proposed") && (
                 <div className="mt-7">
                   <ConfirmPlan clientId={client.id} />

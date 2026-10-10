@@ -19,7 +19,7 @@ export function Visits({ visits, now, empty }: { visits: Visit[]; now: Date; emp
           <li key={appointment.id} className="focus-in" style={{ animationDelay: `${200 + i * 80}ms` }}>
             <Link
               href={`/dashboard/clients/${facts.client.id}`}
-              className="group relative grid grid-cols-[2rem_minmax(0,1fr)] gap-4 rounded-[14px] px-3 py-4 transition-colors duration-200 hover:bg-white/70"
+              className="group relative grid grid-cols-[32px_minmax(0,1fr)] gap-4 rounded-[14px] px-3 py-4 transition-colors duration-200 hover:bg-white/70"
             >
               <span className="relative flex justify-center pt-2">
                 <span
@@ -32,19 +32,19 @@ export function Visits({ visits, now, empty }: { visits: Visit[]; now: Date; emp
               </span>
               <span className="min-w-0">
                 <span className="flex items-baseline justify-between gap-3">
-                  <span className={cx("font-display text-[26px] font-light leading-none", past ? "text-text-3" : "text-ink")}>{time}</span>
-                  {next && <span className="text-[10.5px] uppercase tracking-[0.16em] text-[#9a6b22]">Next</span>}
-                  {past && <span className="text-[10.5px] uppercase tracking-[0.16em] text-text-3">Done</span>}
+                  <span className={cx("font-display text-[1.625rem] font-light leading-none", past ? "text-text-3" : "text-ink")}>{time}</span>
+                  {next && <span className="text-[0.65625rem] uppercase tracking-[0.16em] text-[#9a6b22]">Next</span>}
+                  {past && <span className="text-[0.65625rem] uppercase tracking-[0.16em] text-text-3">Done</span>}
                 </span>
-                <span className="mt-2 block text-[15px] text-ink">{fullName(facts.client)}</span>
-                <span className="mt-0.5 block text-[13.5px] text-text-2">
+                <span className="mt-2 block text-[0.9375rem] text-ink">{fullName(facts.client)}</span>
+                <span className="mt-0.5 block text-[0.84375rem] text-text-2">
                   {treatment?.name ?? "First consultation"} · {minutes} min
                 </span>
                 {(session || appointment.depositStatus === "paid") && (
                   <span className="mt-2 flex flex-wrap gap-1.5">
-                    {session && <span className="rounded-full bg-white/80 px-2 py-0.5 text-[11.5px] text-text-3 ring-1 ring-inset ring-[#0c1a22]/[0.06]">{session}</span>}
+                    {session && <span className="rounded-full bg-white/80 px-2 py-0.5 text-[0.71875rem] text-text-3 ring-1 ring-inset ring-[#0c1a22]/[0.06]">{session}</span>}
                     {appointment.depositStatus === "paid" && (
-                      <span className="rounded-full bg-[#e2c07a]/20 px-2 py-0.5 text-[11.5px] text-[#7a5014]">Deposit paid</span>
+                      <span className="rounded-full bg-[#e2c07a]/20 px-2 py-0.5 text-[0.71875rem] text-[#7a5014]">Deposit paid</span>
                     )}
                   </span>
                 )}

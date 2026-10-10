@@ -19,8 +19,8 @@ export function ClinicWordmark({ clinic, className }: { clinic: Pick<Clinic, "wo
         className={cx(
           "text-ink whitespace-nowrap",
           clinic.wordmarkStyle === "serif"
-            ? "font-display font-medium text-[16px] tracking-[0.32em]"
-            : "font-sans font-medium text-[13px] tracking-[0.3em]",
+            ? "font-display font-medium text-[1rem] tracking-[0.32em]"
+            : "font-sans font-medium text-[0.8125rem] tracking-[0.3em]",
         )}
       >
         <span className="sr-only">{clinic.name}</span>
@@ -73,10 +73,10 @@ export function RebloomWordmark({
 }
 
 /** The one place Rebloom appears on a clinic's pages (DECISIONS D-001): a small line with the gold logo. */
-export function PoweredByRebloom({ className }: { className?: string }) {
+export function PoweredByRebloom({ className, onDark }: { className?: string; onDark?: boolean }) {
   return (
-    <p className={cx("t-caption inline-flex items-center gap-2", className)}>
-      Powered by <RebloomWordmark height={11} className="translate-y-px" />
+    <p className={cx("t-caption inline-flex items-center gap-2", onDark && "!text-[#a9bcc8]", className)}>
+      Powered by <RebloomWordmark height={11} onDark={onDark} className="translate-y-px" />
     </p>
   );
 }

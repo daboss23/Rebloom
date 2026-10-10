@@ -109,7 +109,7 @@ export default async function UnsubscribePage({ params, searchParams }: PageProp
         <p className="t-body mt-5">Reminders and progress updates will stop coming to {address}.</p>
         <p className="t-caption mt-3">{stillComes}</p>
         <form action={unsubscribe.bind(null, clinic.slug, token)} className="mt-8">
-          <PendingButton block pending="Unsubscribing" className="!min-h-14 text-[16px]">
+          <PendingButton block pending="Unsubscribing" className="!min-h-14 text-[1rem]">
             Unsubscribe
           </PendingButton>
         </form>

@@ -195,25 +195,25 @@ export function LiveCamera({
         </svg>
         {status === "starting" && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[11px] uppercase tracking-[0.18em] text-white/80" style={{ animation: "breathe 2.4s ease-in-out infinite" }}>
+            <span className="text-[0.6875rem] uppercase tracking-[0.18em] text-white/80" style={{ animation: "breathe 2.4s ease-in-out infinite" }}>
               Preparing the camera
             </span>
           </div>
         )}
       </div>
 
-      <p aria-live="polite" className="mt-6 min-h-[3.5rem] text-center font-display text-[26px] font-light leading-tight text-ink">
+      <p aria-live="polite" className="mt-6 min-h-[3.5rem] text-center font-display text-[1.625rem] font-light leading-tight text-ink">
         {instruction}
       </p>
       {lightHint && status === "live" && (
-        <p className="fade -mt-2 text-center text-[14px] text-text-2">
+        <p className="fade -mt-2 text-center text-[0.875rem] text-text-2">
           <IconSun aria-hidden width={16} height={16} className="mr-1.5 inline-block -translate-y-px text-[#1e5a78]" />
           {lightHint}
         </p>
       )}
 
       <div className="mt-4 space-y-3">
-        <Button block disabled={!ready || status !== "live"} onClick={() => void captureRef.current()} className="!min-h-14 text-[16px]">
+        <Button block disabled={!ready || status !== "live"} onClick={() => void captureRef.current()} className="!min-h-14 text-[1rem]">
           Take photo
         </Button>
         <p className="t-caption text-center">The photo is taken for you once you&apos;ve held still for a second.</p>

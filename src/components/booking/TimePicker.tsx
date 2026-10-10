@@ -75,11 +75,11 @@ export function TimePicker({ token, days, depositCents }: { token: string; days:
                     : "border-[#0c1a22]/[0.12] bg-white/65 text-ink hover:border-[#0c1a22]/25 hover:bg-white/90",
                 )}
               >
-                <span className={cx("text-[11px] uppercase tracking-[0.16em]", selected ? "text-white/80" : "text-text-3")}>
+                <span className={cx("text-[0.6875rem] uppercase tracking-[0.16em]", selected ? "text-white/80" : "text-text-3")}>
                   {part(d.date, { weekday: "short" })}
                 </span>
-                <span className="font-display text-[32px] font-light leading-[1.1]">{part(d.date, { day: "numeric" })}</span>
-                <span className={cx("text-[11px] uppercase tracking-[0.16em]", selected ? "text-white/80" : "text-text-3")}>
+                <span className="font-display text-[2rem] font-light leading-[1.1]">{part(d.date, { day: "numeric" })}</span>
+                <span className={cx("text-[0.6875rem] uppercase tracking-[0.16em]", selected ? "text-white/80" : "text-text-3")}>
                   {part(d.date, { month: "short" })}
                 </span>
               </button>
@@ -123,7 +123,7 @@ export function TimePicker({ token, days, depositCents }: { token: string; days:
             <FormAlert>{error}</FormAlert>
           </div>
         )}
-        <p aria-live="polite" className="mb-3 min-h-[1.5em] text-center text-[14px] text-text-2">
+        <p aria-live="polite" className="mb-3 min-h-[1.5em] text-center text-[0.875rem] text-text-2">
           {chosen && day ? (
             <>
               <span className="text-ink">
@@ -135,7 +135,7 @@ export function TimePicker({ token, days, depositCents }: { token: string; days:
             "Choose a time to book it."
           )}
         </p>
-        <button type="button" onClick={book} disabled={!chosen || pending} className="btn-gold !h-14 w-full text-[16px] disabled:opacity-55">
+        <button type="button" onClick={book} disabled={!chosen || pending} className="btn-gold !h-14 w-full text-[1rem] disabled:opacity-55">
           {pending ? (depositCents > 0 ? "Opening secure payment" : "Booking") : depositCents > 0 ? `Pay ${dollars(depositCents)} deposit and book` : "Book this time"}
         </button>
       </div>

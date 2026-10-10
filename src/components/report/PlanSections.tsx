@@ -87,7 +87,7 @@ export function PlanTimeline({
                 />
               )}
               <p className="t-label">{shortDay(step.date)}</p>
-              <p className="mt-1 text-[16px] text-ink">{title}</p>
+              <p className="mt-1 text-[1rem] text-ink">{title}</p>
               <p className="t-caption mt-0.5">{detail}</p>
             </li>
           );
@@ -101,7 +101,7 @@ function Lines({ option }: { option: PlanOption }) {
   return (
     <>
       {option.lines.map((l) => (
-        <div key={l.treatment.id} className="flex items-baseline justify-between gap-4 border-t border-[#0c1a22]/[0.07] py-3 text-[14.5px] first:border-t-0">
+        <div key={l.treatment.id} className="flex items-baseline justify-between gap-4 border-t border-[#0c1a22]/[0.07] py-3 text-[0.90625rem] first:border-t-0">
           <span className="text-text-2">
             {l.treatment.name} · {l.sessions === 1 ? "1 session" : `${l.sessions} sessions`}
           </span>
@@ -121,13 +121,13 @@ export function Investment({ plan, budgetBand }: { plan: Plan; budgetBand: Budge
       </h2>
       <div className="glass mt-6 px-5 pb-5 pt-2">
         <Lines option={plan.recommended} />
-        <div className="flex items-baseline justify-between border-t border-[#0c1a22]/[0.07] py-3 text-[14.5px]">
+        <div className="flex items-baseline justify-between border-t border-[#0c1a22]/[0.07] py-3 text-[0.90625rem]">
           <span className="text-text-2">Progress scans</span>
           <span className="text-text-3">Included</span>
         </div>
         <div className="flex items-end justify-between border-t border-[#0c1a22]/20 pt-4">
-          <span className="text-[15px] text-ink">Estimated total</span>
-          <span className="gold-foil font-display text-[44px] font-light leading-none tabular-nums">
+          <span className="text-[0.9375rem] text-ink">Estimated total</span>
+          <span className="gold-foil font-display text-[2.75rem] font-light leading-none tabular-nums">
             {formatPrice(plan.recommended.totalCents)}
           </span>
         </div>
@@ -142,9 +142,9 @@ export function Investment({ plan, budgetBand }: { plan: Plan; budgetBand: Budge
           </p>
           <div className="mt-3">
             <Lines option={plan.withinBudget} />
-            <div className="flex items-baseline justify-between border-t border-[#0c1a22]/[0.12] pt-3 text-[14.5px]">
+            <div className="flex items-baseline justify-between border-t border-[#0c1a22]/[0.12] pt-3 text-[0.90625rem]">
               <span className="text-ink">Total</span>
-              <span className="gold-foil font-display text-[26px] leading-none tabular-nums">{formatPrice(plan.withinBudget.totalCents)}</span>
+              <span className="gold-foil font-display text-[1.625rem] leading-none tabular-nums">{formatPrice(plan.withinBudget.totalCents)}</span>
             </div>
           </div>
         </div>
@@ -164,14 +164,14 @@ export function HomeCare({ plan }: { plan: Plan }) {
       <ul className="glass mt-6 divide-y divide-[#0c1a22]/[0.07] px-5">
         {plan.homeCare.map(({ product, reason }) => (
           <li key={product.id} className="flex items-start gap-4 py-4">
-            <span aria-hidden className="grid h-14 w-14 shrink-0 place-items-center rounded-[14px] bg-[linear-gradient(150deg,#ffffff_0%,#dcebf2_60%,#bcd9e7_100%)] font-display text-[22px] text-[#1e5a78] ring-1 ring-inset ring-white">
+            <span aria-hidden className="grid h-14 w-14 shrink-0 place-items-center rounded-[14px] bg-[linear-gradient(150deg,#ffffff_0%,#dcebf2_60%,#bcd9e7_100%)] font-display text-[1.375rem] text-[#1e5a78] ring-1 ring-inset ring-white">
               {product.name[0]}
             </span>
             <span className="flex-1">
-              <span className="block text-[15px] text-ink">{product.name}</span>
+              <span className="block text-[0.9375rem] text-ink">{product.name}</span>
               <span className="t-caption mt-0.5 block">{reason}</span>
             </span>
-            <span className="gold-foil font-display text-[22px] leading-none tabular-nums">{formatPrice(product.priceCents)}</span>
+            <span className="gold-foil font-display text-[1.375rem] leading-none tabular-nums">{formatPrice(product.priceCents)}</span>
           </li>
         ))}
       </ul>
@@ -212,12 +212,12 @@ export function BookingLine({ booking }: { booking: BookingSummary | null }) {
       style={{ animationDelay: "200ms" }}
     >
       <span>
-        <span className="block text-[15px] leading-snug text-ink">
+        <span className="block text-[0.9375rem] leading-snug text-ink">
           {upcoming ? `Your next visit · ${upcoming.when}` : `${booking.returning} is ready to book`}
         </span>
         <span className="t-caption block">{upcoming ? upcoming.what : booking.nextOpen ? `First open time · ${booking.nextOpen}` : "Choose a time"}</span>
       </span>
-      <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[14px] text-[#1e5a78]">
+      <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[0.875rem] text-[#1e5a78]">
         {upcoming ? "See visit" : "Book"}
         <IconArrowRight aria-hidden width={16} height={16} className="transition-transform duration-200 group-hover:translate-x-0.5" />
       </span>
@@ -231,7 +231,7 @@ export function ReadyWhenYouAre({ plan, clinic, booking }: { plan: Plan; clinic:
   const call = (
     <a
       href={`tel:${dialable(clinic.phone)}`}
-      className="group flex min-h-11 items-center justify-center gap-2 text-[14px] text-white/90 underline decoration-white/30 underline-offset-4 transition-colors duration-200 hover:text-white hover:decoration-white/70"
+      className="group flex min-h-11 items-center justify-center gap-2 text-[0.875rem] text-white/90 underline decoration-white/30 underline-offset-4 transition-colors duration-200 hover:text-white hover:decoration-white/70"
     >
       <IconPhone aria-hidden width={15} height={15} />
       Call {clinic.phone}
@@ -240,7 +240,7 @@ export function ReadyWhenYouAre({ plan, clinic, booking }: { plan: Plan; clinic:
   const text = (
     <a
       href={`sms:${dialable(clinic.phone)}`}
-      className="group flex min-h-11 items-center justify-center gap-2 text-[14px] text-white/90 underline decoration-white/30 underline-offset-4 transition-colors duration-200 hover:text-white hover:decoration-white/70"
+      className="group flex min-h-11 items-center justify-center gap-2 text-[0.875rem] text-white/90 underline decoration-white/30 underline-offset-4 transition-colors duration-200 hover:text-white hover:decoration-white/70"
     >
       Questions? Text the clinic
       <IconArrowRight aria-hidden width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -250,26 +250,26 @@ export function ReadyWhenYouAre({ plan, clinic, booking }: { plan: Plan; clinic:
     <section className="sea on-dark relative mt-16 overflow-hidden rounded-[28px] px-6 py-10 shadow-[0_40px_80px_-44px_rgba(12,26,34,0.65)]">
       <LightField variant="sea" className="opacity-70" />
       <div className="relative">
-        <h2 className="font-display text-[36px] font-light leading-[1.05] text-white">{upcoming ? "See you soon." : "Ready when you are."}</h2>
+        <h2 className="font-display text-[2.25rem] font-light leading-[1.05] text-white">{upcoming ? "See you soon." : "Ready when you are."}</h2>
         {upcoming ? (
-          <p className="mt-3 text-[15px] leading-relaxed text-[#dbe8ef]">
+          <p className="mt-3 text-[0.9375rem] leading-relaxed text-[#dbe8ef]">
             Your next visit · <span className="text-white">{upcoming.when}</span> · {upcoming.what}
           </p>
         ) : booking?.nextOpen ? (
-          <p className="mt-3 text-[15px] leading-relaxed text-[#dbe8ef]">
+          <p className="mt-3 text-[0.9375rem] leading-relaxed text-[#dbe8ef]">
             First open time · <span className="text-white">{booking.nextOpen}</span> · {clinic.city}
           </p>
         ) : (
           !booking &&
           first && (
-            <p className="mt-3 text-[15px] leading-relaxed text-[#dbe8ef]">
+            <p className="mt-3 text-[0.9375rem] leading-relaxed text-[#dbe8ef]">
               Suggested first visit · {formatShortDay(`${first.date}T12:00:00Z`, "UTC")} · {clinic.city}
             </p>
           )
         )}
         {booking && (upcoming || booking.cta) ? (
           <>
-            <Link href={booking.href} className="btn-gold group mt-7 !h-14 w-full gap-2.5 px-6 text-[16px]">
+            <Link href={booking.href} className="btn-gold group mt-7 !h-14 w-full gap-2.5 px-6 text-[1rem]">
               {upcoming ? "See or change your visit" : booking.cta}
               <IconArrowRight aria-hidden width={18} height={18} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
@@ -280,7 +280,7 @@ export function ReadyWhenYouAre({ plan, clinic, booking }: { plan: Plan; clinic:
           </>
         ) : (
           <>
-            <a href={`tel:${dialable(clinic.phone)}`} className="btn-gold group mt-7 !h-14 w-full gap-2.5 px-6 text-[16px]">
+            <a href={`tel:${dialable(clinic.phone)}`} className="btn-gold group mt-7 !h-14 w-full gap-2.5 px-6 text-[1rem]">
               <IconPhone aria-hidden width={18} height={18} />
               Call to book your first session
             </a>

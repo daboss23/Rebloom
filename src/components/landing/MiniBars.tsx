@@ -13,7 +13,7 @@ export function MiniBars({ months, title }: { months: MonthBar[]; title: string 
       <div aria-hidden className="grid h-40 grid-flow-col auto-cols-fr items-end gap-2.5 border-b border-white/15 sm:gap-3">
         {months.map((m) => (
           <div key={m.month} className="flex h-full flex-col justify-end">
-            <span className={cx("mb-1.5 text-center text-[11px] tabular-nums", m.current ? "text-[#f1d49a]" : "text-ink-soft")}>
+            <span className={cx("mb-1.5 text-center text-[0.6875rem] tabular-nums", m.current ? "text-[#f1d49a]" : "text-ink-soft")}>
               {m.cents ? formatPrice(m.cents) : ""}
             </span>
             <div
@@ -28,7 +28,7 @@ export function MiniBars({ months, title }: { months: MonthBar[]; title: string 
       </div>
       <div aria-hidden className="mt-2.5 grid grid-flow-col auto-cols-fr gap-2.5 sm:gap-3">
         {months.map((m) => (
-          <span key={m.month} className={cx("text-center text-[11px] uppercase tracking-[0.12em]", m.current ? "text-[#f1d49a]" : "text-ink-soft")}>
+          <span key={m.month} className={cx("text-center text-[0.6875rem] uppercase tracking-[0.12em]", m.current ? "text-[#f1d49a]" : "text-ink-soft")}>
             {m.label}
           </span>
         ))}

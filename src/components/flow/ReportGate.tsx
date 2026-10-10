@@ -131,14 +131,14 @@ export function ReportGate({
                   <header className="sea on-dark relative overflow-hidden px-6 pb-7 pt-6">
                     <LightField variant="sea" className="opacity-70" />
                     <div className="relative">
-                      <p className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-[#e2c07a]">
+                      <p className="flex items-center gap-2 text-[0.6875rem] uppercase tracking-[0.22em] text-[#e2c07a]">
                         <IconLock width={15} height={15} aria-hidden />
                         Analysis complete
                       </p>
-                      <h1 id="gate-title" className="mt-3 font-display text-[36px] font-light leading-[1.04] tracking-[-0.01em] text-white">
+                      <h1 id="gate-title" className="mt-3 font-display text-[2.25rem] font-light leading-[1.04] tracking-[-0.01em] text-white">
                         Your skin report is ready.
                       </h1>
-                      <p className="mt-2 text-[15px] leading-relaxed text-[#dbe8ef]">Tell us where to send your results.</p>
+                      <p className="mt-2 text-[0.9375rem] leading-relaxed text-[#dbe8ef]">Tell us where to send your results.</p>
                     </div>
                   </header>
                   <form action={action} className="space-y-4 px-6 pb-6 pt-6">
@@ -180,7 +180,7 @@ export function ReportGate({
 
                     {state?.error && <FormAlert id="gate-error">{state.error}</FormAlert>}
 
-                    <Button type="submit" block disabled={pending} className="!min-h-14 text-[16px]">
+                    <Button type="submit" block disabled={pending} className="!min-h-14 text-[1rem]">
                       {pending ? "Sending your results" : "Send my results"}
                     </Button>
                     <p className="t-caption text-center">
@@ -229,7 +229,7 @@ function Confirmation({ sent, clinicName, demo }: { sent: SentResults; clinicNam
         </p>
       ) : (
         <>
-          <ButtonLink href={sent.reportPath} block className="mt-8 !min-h-14 text-[16px]">
+          <ButtonLink href={sent.reportPath} block className="mt-8 !min-h-14 text-[1rem]">
             Open my report
           </ButtonLink>
           <p className="t-caption mt-4 text-center">
@@ -272,7 +272,7 @@ function BlurredReport({ scanId }: { scanId: string }) {
           <li key={row.label} className="glass px-5 py-5">
             <p className="t-label">{String(i + 1).padStart(2, "0")}</p>
             <div className="flex items-end justify-between gap-4">
-              <p className="pb-2 font-display text-[26px] font-light text-ink">{row.label}</p>
+              <p className="pb-2 font-display text-[1.625rem] font-light text-ink">{row.label}</p>
               <ScoreNumber value={row.score} />
             </div>
             <ScoreRuler value={row.score} className="mt-3" />
@@ -285,8 +285,8 @@ function BlurredReport({ scanId }: { scanId: string }) {
       <dl className="glass mt-4 grid grid-cols-2 gap-x-6 px-5 pb-2">
         {GHOST_ANALYSIS.map(([label, score]) => (
           <div key={label} className="flex items-baseline justify-between border-t border-[#0c1a22]/[0.07] py-3 first:border-t-0 [&:nth-child(2)]:border-t-0">
-            <dt className="text-[14px] text-text-2">{label}</dt>
-            <dd className="font-display text-[26px] font-light leading-none text-ink">{score}</dd>
+            <dt className="text-[0.875rem] text-text-2">{label}</dt>
+            <dd className="font-display text-[1.625rem] font-light leading-none text-ink">{score}</dd>
           </div>
         ))}
       </dl>

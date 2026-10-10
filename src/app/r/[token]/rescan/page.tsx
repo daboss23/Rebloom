@@ -28,7 +28,7 @@ export default async function RescanPage({ params, searchParams }: PageProps<"/r
           {client.firstName}&apos;s photo is an AI-generated stand-in, so a progress scan here would compare your face with
           theirs. Take your own scan, then come back to your report to try a progress scan.
         </p>
-        <ButtonLink href={`/c/${clinic.slug}`} block className="mt-10 !min-h-14 text-[16px]">
+        <ButtonLink href={`/c/${clinic.slug}`} block className="mt-10 !min-h-14 text-[1rem]">
           Take your own scan
         </ButtonLink>
       </article>
@@ -50,7 +50,7 @@ export default async function RescanPage({ params, searchParams }: PageProps<"/r
 
 function BackLink({ token }: { token: string }) {
   return (
-    <Link href={`/r/${token}`} className="t-caption inline-flex min-h-11 items-center gap-2 !text-[13.5px] text-text-2 hover:text-ink">
+    <Link href={`/r/${token}`} className="t-caption inline-flex min-h-11 items-center gap-2 !text-[0.84375rem] text-text-2 hover:text-ink">
       <IconArrowLeft width={16} height={16} />
       Your report
     </Link>

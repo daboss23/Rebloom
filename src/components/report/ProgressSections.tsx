@@ -20,21 +20,21 @@ export function ScanPair({ token, progress, tz }: { token: string; progress: Pro
               <img src={`/r/${token}/photo/${s.id}`} alt={`${scanLabel(s.scanNumber)} photo`} className="absolute inset-0 h-full w-full object-cover" />
               {/* A soft shade under the label, so it reads on a white shirt as well as a dark one. */}
               <span aria-hidden className="absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(180deg,rgba(12,26,34,0)_0%,rgba(12,26,34,0.42)_100%)]" />
-              <span className="absolute bottom-2.5 left-3 text-[10.5px] uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
+              <span className="absolute bottom-2.5 left-3 text-[0.65625rem] uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
                 {scanLabel(s.scanNumber)}
               </span>
             </div>
-            <figcaption className="mt-2.5 text-[14px] text-ink">{formatLongDate(s.completedAt ?? s.createdAt, tz).replace(/, \d{4}$/, "")}</figcaption>
+            <figcaption className="mt-2.5 text-[0.875rem] text-ink">{formatLongDate(s.completedAt ?? s.createdAt, tz).replace(/, \d{4}$/, "")}</figcaption>
           </figure>
         ))}
       </div>
       {progress.verified ? (
-        <p className="glass mt-4 flex items-center gap-2.5 px-4 py-3 text-[14px] text-ink">
+        <p className="glass mt-4 flex items-center gap-2.5 px-4 py-3 text-[0.875rem] text-ink">
           <IconCheckCircle aria-hidden width={17} height={17} className="shrink-0 text-[var(--growth)]" />
           Same light, same angle. Verified at capture.
         </p>
       ) : !progress.confident ? (
-        <p className="glass mt-4 px-4 py-3 text-[14px] leading-relaxed text-text-2">
+        <p className="glass mt-4 px-4 py-3 text-[0.875rem] leading-relaxed text-text-2">
           Your latest photo was taken in different light from your first, so changes are shown without badges until your
           next scan confirms them.
         </p>
@@ -55,9 +55,9 @@ export function WhatsChanged({ items }: { items: ConcernProgress[] }) {
         {items.map((i) => (
           <li key={i.key} className="glass px-5 py-5">
             <div className="flex items-center justify-between gap-4">
-              <h3 className="text-[15.5px] text-ink">{i.label}</h3>
+              <h3 className="text-[0.96875rem] text-ink">{i.label}</h3>
               {i.badge && (
-                <span className="rounded-full bg-[var(--growth)]/10 px-2.5 py-1 text-[13px] tabular-nums text-[var(--growth)] ring-1 ring-inset ring-[var(--growth)]/20">
+                <span className="rounded-full bg-[var(--growth)]/10 px-2.5 py-1 text-[0.8125rem] tabular-nums text-[var(--growth)] ring-1 ring-inset ring-[var(--growth)]/20">
                   {i.badge}
                 </span>
               )}
@@ -67,13 +67,13 @@ export function WhatsChanged({ items }: { items: ConcernProgress[] }) {
                 <span className="sr-only">
                   {i.from} at your first scan, {i.to} now.
                 </span>
-                <span aria-hidden className="text-[30px] text-text-3">
+                <span aria-hidden className="text-[1.875rem] text-text-3">
                   {i.from}
                 </span>
-                <span aria-hidden className="text-[22px] text-text-3">
+                <span aria-hidden className="text-[1.375rem] text-text-3">
                   →
                 </span>
-                <span aria-hidden className="text-[52px]">
+                <span aria-hidden className="text-[3.25rem]">
                   {i.to}
                 </span>
               </p>
@@ -109,11 +109,11 @@ function Sparkline({ values, tone }: { values: number[]; tone: "growth" | "sea" 
 export function RescanInvite({ token, again }: { token: string; again: boolean }) {
   return (
     <div className="glass mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-4">
-      <p className="text-[14.5px] leading-snug text-ink">
+      <p className="text-[0.90625rem] leading-snug text-ink">
         {again ? "Ready for your next progress scan?" : "Between sessions, see what's changed."}
         <span className="t-caption block">Two minutes from home, the same steps as your first scan.</span>
       </p>
-      <Link href={`/r/${token}/rescan`} className="btn-ghost !h-11 shrink-0 text-[14.5px]">
+      <Link href={`/r/${token}/rescan`} className="btn-ghost !h-11 shrink-0 text-[0.90625rem]">
         Take a progress scan
       </Link>
     </div>

@@ -6,7 +6,7 @@ export type ButtonVariant = "primary" | "onDark" | "secondary" | "secondaryOnDar
 
 // Rebloom's buttons (DECISIONS D-058, D-061): gold for the one thing to do next, glass for the rest.
 const base =
-  "inline-flex items-center justify-center gap-2 min-h-12 rounded-[14px] px-6 text-[15px] font-normal tracking-[0.01em] select-none " +
+  "inline-flex items-center justify-center gap-2 min-h-12 rounded-[14px] px-6 text-[0.9375rem] font-normal tracking-[0.01em] select-none " +
   "transition-[background-color,color,border-color,opacity,transform,filter] duration-200 ease-out active:scale-[0.98] " +
   "disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 aria-disabled:opacity-40 aria-disabled:pointer-events-none";
 
