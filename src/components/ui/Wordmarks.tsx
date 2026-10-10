@@ -72,11 +72,11 @@ export function RebloomWordmark({
   );
 }
 
-/** The one place Rebloom appears on a clinic's pages (DECISIONS D-001): a small line with the gold logo. */
+/** The one place Rebloom appears on a clinic's pages (DECISIONS D-001): a small line with the gold logo, gold on dark too. */
 export function PoweredByRebloom({ className, onDark }: { className?: string; onDark?: boolean }) {
   return (
-    <p className={cx("t-caption inline-flex items-center gap-2", onDark && "!text-[#a9bcc8]", className)}>
-      Powered by <RebloomWordmark height={11} onDark={onDark} className="translate-y-px" />
+    <p className={cx("t-caption inline-flex items-center gap-2", onDark && "!text-[#dbe8ef]", className)}>
+      Powered by <RebloomWordmark height={onDark ? 13 : 11} className={cx("translate-y-px", onDark && "logo-on-deep")} />
     </p>
   );
 }

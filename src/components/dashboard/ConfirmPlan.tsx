@@ -18,7 +18,7 @@ export function ConfirmPlan({ clientId, label = "Confirm plan with client" }: { 
             if (!result.ok) setError(result.error ?? "Couldn't confirm the plan.");
           })
         }
-        className="btn-gold w-full disabled:opacity-60"
+        className="btn-gold sheen relative w-full disabled:opacity-60"
       >
         {pending ? "Confirming" : label}
       </button>

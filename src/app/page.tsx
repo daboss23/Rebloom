@@ -107,11 +107,11 @@ export default function RebloomHome() {
       <footer className="footer-deep on-dark">
         <div className={`${wrap} flex flex-col gap-5 py-10 sm:flex-row sm:items-center sm:justify-between`}>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-            <RebloomWordmark height={15} onDark />
-            <span className="text-[0.8125rem] text-[#a9bcc8]">A demo built for the YouCam API Skin AI hackathon.</span>
+            <RebloomWordmark height={17} className="logo-on-deep" />
+            <span className="text-[0.8125rem] text-[#dbe8ef]">A demo built for the YouCam API Skin AI hackathon.</span>
           </div>
           <nav aria-label="Legal">
-            <ul className="flex gap-6 text-[0.8125rem] text-[#a9bcc8]">
+            <ul className="flex gap-6 text-[0.8125rem] text-[#dbe8ef]">
               <li>
                 <Link href="/privacy" className="underline underline-offset-4">
                   Privacy
@@ -142,15 +142,15 @@ function Hero({ p }: { p: LandingPreview }) {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_75%_55%_at_22%_28%,rgba(246,251,253,0.82)_0%,rgba(246,251,253,0.35)_60%,rgba(246,251,253,0)_100%)]" />
       </div>
 
-      <div className={`${wrap} relative grid gap-12 pb-20 pt-12 sm:pt-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center lg:gap-14 lg:pb-28 lg:pt-14 xl:gap-20`}>
-        <div className="min-w-0">
+      <div className={`${wrap} relative grid gap-12 pb-20 pt-8 sm:pt-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-center lg:gap-14 lg:pb-28 lg:pt-6 xl:gap-20`}>
+        <div className="min-w-0 lg:-mt-16">
           <p className="focus-in flex items-center gap-2.5 text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">
             <Bloom size={16} unfurl className="text-[#9e4a5d]" />
             The retention engine for skin clinics
           </p>
           <h1
             id="hero-title"
-            className="focus-in mt-6 font-display text-[2.3125rem] font-light leading-[1.04] tracking-[-0.025em] text-ink min-[400px]:text-[2.5rem] sm:text-[3.375rem] lg:text-[clamp(44px,4.3vw,62px)]"
+            className="focus-in mt-6 font-display text-[2.625rem] font-light leading-[1.02] tracking-[-0.028em] text-ink min-[400px]:text-[2.875rem] sm:text-[3.875rem] lg:text-[clamp(52px,4.9vw,72px)]"
             style={{ animationDelay: "80ms" }}
           >
             <span className="block">Everyone sells the scan.</span>{" "}
@@ -307,20 +307,30 @@ function Problem({ p }: { p: LandingPreview }) {
             </p>
           </div>
 
-          <figure>
+          {/* Its own pane of dark glass, so the light on the water never runs through the figures. */}
+          <figure className="rounded-[24px] bg-[#06121a]/60 p-5 ring-1 ring-inset ring-white/10 backdrop-blur-md sm:p-7">
             <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-white/15 pb-4">
-              <span className="font-display text-[1.5rem] font-light text-white">{course.name}</span>
-              <span className="text-[0.84375rem] text-ink-soft">
+              <span className="font-display text-[1.625rem] font-light text-white">{course.name}</span>
+              <span className="text-[0.875rem] text-[#dbe8ef]">
                 {course.sessions} sessions at {formatPrice(course.priceCents)}
               </span>
             </figcaption>
             <ol className="mt-6 grid gap-2.5 sm:grid-cols-3 sm:gap-3">
               {Array.from({ length: course.sessions }, (_, i) =>
                 i === 0 ? (
-                  <li key={i} className={cx(tile, "bg-white/[0.09] ring-1 ring-inset ring-[#e2c07a]/55")}>
-                    <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-soft">Session {i + 1}</span>
+                  <li
+                    key={i}
+                    className={cx(
+                      tile,
+                      "bg-[linear-gradient(180deg,rgba(226,192,122,0.24),rgba(226,192,122,0.08))] shadow-[0_14px_30px_-18px_rgba(226,192,122,0.7)] ring-1 ring-inset ring-[#e2c07a]/80",
+                    )}
+                  >
+                    <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-[#f3dca6]">Session {i + 1}</span>
                     <span className="flex items-baseline gap-3 sm:block">
-                      <span className="block text-[0.875rem] text-white">Done</span>
+                      <span className="flex items-center gap-1.5 text-[0.875rem] font-medium text-white">
+                        <IconCheckCircle width={15} height={15} className="text-[#e2c07a]" />
+                        Done
+                      </span>
                       <span className="gold-foil-bright block font-display text-[1.625rem] leading-none sm:mt-0.5">{formatPrice(course.priceCents)}</span>
                     </span>
                   </li>
@@ -328,17 +338,19 @@ function Problem({ p }: { p: LandingPreview }) {
                   <li key={i} className="relative h-16 sm:h-32">
                     {/* Planned, then never booked: the change plays as the course scrolls into view. */}
                     <span className={cx(tile, "lapse-planned absolute inset-0 bg-white/[0.07] opacity-0 ring-1 ring-inset ring-white/25", i === 2 && "lapse-late")} aria-hidden>
-                      <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-soft">Session {i + 1}</span>
+                      <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-[#dbe8ef]">Session {i + 1}</span>
                       <span className="flex items-baseline gap-3 sm:block">
                         <span className="block text-[0.875rem] text-white">Planned</span>
                         <span className="block font-display text-[1.625rem] leading-none text-white sm:mt-0.5">{formatPrice(course.priceCents)}</span>
                       </span>
                     </span>
-                    <span className={cx(tile, "lapse-lost absolute inset-0 border border-dashed border-white/25", i === 2 && "lapse-late")}>
-                      <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-ink-soft/80">Session {i + 1}</span>
+                    <span className={cx(tile, "lapse-lost absolute inset-0 border border-dashed border-[#f49543]/70 bg-[#f49543]/[0.08]", i === 2 && "lapse-late")}>
+                      <span className="text-[0.6875rem] uppercase tracking-[0.14em] text-[#ffd2a8]/85">Session {i + 1}</span>
                       <span className="flex items-baseline gap-3 sm:block">
-                        <span className="block text-[0.875rem] text-ink-soft">Never booked</span>
-                        <span className="block font-display text-[1.625rem] leading-none text-ink-soft/70 sm:mt-0.5">{formatPrice(course.priceCents)}</span>
+                        <span className="block text-[0.875rem] font-medium text-[#ffb27a]">Never booked</span>
+                        <span className="block font-display text-[1.625rem] leading-none text-[#ffd2a8]/80 line-through decoration-[#f49543] decoration-1 sm:mt-0.5">
+                          {formatPrice(course.priceCents)}
+                        </span>
                       </span>
                     </span>
                   </li>
@@ -349,11 +361,11 @@ function Problem({ p }: { p: LandingPreview }) {
               <span className="gold-foil-bright font-display text-[clamp(60px,6.4vw,92px)] font-light leading-none tracking-[-0.03em]">
                 {formatPrice(lost)}
               </span>
-              <span className="max-w-[17rem] text-[0.96875rem] leading-snug text-[#dbe8ef]">
+              <span className="max-w-[17rem] text-[1.0625rem] leading-snug text-white">
                 of a {formatPrice(total)} course, gone when a client stops after session one.
               </span>
             </p>
-            <p className="mt-5 text-[0.78125rem] text-ink-soft">Prices from the demo clinic&apos;s menu.</p>
+            <p className="mt-5 text-[0.78125rem] text-[#a9bcc8]">Prices from the demo clinic&apos;s menu.</p>
           </figure>
         </div>
       </div>

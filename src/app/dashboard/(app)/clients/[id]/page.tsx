@@ -69,6 +69,8 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
   let total = 0;
   let planLabel = "Suggested plan";
   let planNote = "";
+  // Measured against the budget they gave, shown as a chip on the plan; null when they gave none.
+  let budgetFit: "fits" | "over" | null = null;
   if (facts.plan) {
     const progress = courses(facts, book.input.treatments);
     const homeCare = facts.plan.items.filter((i) => i.productId);
@@ -121,13 +123,11 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
     ];
     total = plan.recommended.totalCents + plan.homeCare.reduce((n, h) => n + h.product.priceCents, 0);
     const fits = plan.budgetCapCents === null || plan.recommended.totalCents <= plan.budgetCapCents;
-    planNote = [
-      fits ? "Fits the budget they gave" : "Above the budget they gave; a lighter option is on their report",
-      plan.shortenedForEvent ? "shortened to finish before their event" : null,
-    ]
+    budgetFit = plan.budgetCapCents === null ? null : fits ? "fits" : "over";
+    planNote = [fits ? null : "A lighter option is on their report", plan.shortenedForEvent ? "Shortened to finish before their event" : null, "Built only from the clinic's menu"]
       .filter(Boolean)
-      .join(", ")
-      .concat(". Built only from the clinic's menu.");
+      .join(". ")
+      .concat(".");
   }
 
   const kicker = next
@@ -250,16 +250,21 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
             Lowest scores
           </h2>
           <ul className="mt-1 px-2">
-            {scores.map((s) => (
+            {scores.map((s, i) => (
               <li key={s.score.key} className="grid grid-cols-[minmax(0,1fr)_auto_52px] items-center gap-4 border-b border-[#0c1a22]/[0.06] py-3 last:border-0">
-                <span className="text-[0.90625rem] text-ink">{s.label}</span>
+                <span className="min-w-0">
+                  <span className="block text-[0.90625rem] text-ink">{s.label}</span>
+                  <span aria-hidden className={cx("meter mt-2 block", s.delta !== null && s.delta > 0 && "meter-growth")}>
+                    <span style={{ width: `${Math.max(0, Math.min(100, s.score.ui))}%`, animationDelay: `${320 + i * 70}ms` }} />
+                  </span>
+                </span>
                 <span className="flex items-center gap-3">
                   {s.delta !== null && (
                     <span className={cx("text-[0.75rem] tabular-nums", s.delta > 0 ? "font-medium text-[color:var(--growth)]" : "text-text-3")}>
                       {s.delta > 0 ? `+${s.delta}` : s.delta}
                     </span>
                   )}
-                  <Sparkline values={s.series} width={56} height={18} />
+                  {s.series.length > 1 && <Sparkline values={s.series} width={56} height={18} />}
                 </span>
                 <span className="text-right font-display text-[1.625rem] font-light leading-none text-ink tabular-nums">{s.score.ui}</span>
               </li>
@@ -299,7 +304,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
             ].map(([term, value]) => (
               <div key={term} className="border-t border-[#0c1a22]/[0.07] py-4">
                 <dt className="t-label !text-[0.65625rem]">{term}</dt>
-                <dd className="mt-1.5 text-[0.9375rem] text-ink">
+                <dd className={cx("mt-1.5 text-[0.9375rem]", term === "Budget" && info.budget ? "font-medium text-[color:var(--gold)]" : "text-ink")}>
                   {value}
                   {term === "Emails" && facts.canEmail && <StopEmails clientId={client.id} firstName={name} />}
                 </dd>
@@ -308,19 +313,25 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
           </dl>
 
           {info.flags.length > 0 && (
-            <div className="mt-4 rounded-[16px] bg-[#e9a35f]/10 p-5 ring-1 ring-inset ring-[#e9a35f]/30">
-              <p className="flex items-center gap-2.5 text-[0.90625rem] text-ink">
-                <IconAlert width={17} height={17} className="text-[#b8691f]" />
-                Review before treatment
+            <div className="caution mt-4 p-5 sm:p-6">
+              <p className="flex items-center gap-3">
+                <span className="caution-badge">
+                  <IconAlert width={17} height={17} />
+                </span>
+                <span className="font-display text-[1.375rem] leading-tight text-ink">Review before treatment</span>
+                <span className="ml-auto rounded-full bg-white/80 px-2.5 py-0.5 text-[0.71875rem] font-medium tabular-nums text-[#8a4b12] ring-1 ring-inset ring-[#e98c3c]/30">
+                  {info.flags.length}
+                </span>
               </p>
-              <ul className="mt-3 space-y-2.5">
+              <ul className="mt-4">
                 {info.flags.map((flag) => (
-                  <li key={flag} className="text-[0.875rem] leading-relaxed text-text-2">
+                  <li key={flag} className="flex gap-3 border-t border-[#b8691f]/15 py-3 text-[0.875rem] leading-relaxed text-ink">
+                    <span aria-hidden className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full bg-[#e07a2a]" />
                     {flag}
                   </li>
                 ))}
               </ul>
-              <p className="t-caption mt-4 !text-[0.75rem]">Flags are prompts for your judgement, not decisions.</p>
+              <p className="mt-1 text-[0.75rem] text-[#7a4a1c]">Flags are prompts for your judgement, not decisions.</p>
             </div>
           )}
 
@@ -368,15 +379,27 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
                       <span className="block text-[0.96875rem] text-porcelain">{line.name}</span>
                       {line.detail && <span className="mt-1 block text-[0.8125rem] text-ink-soft">{line.detail}</span>}
                     </span>
-                    <span className="text-[0.9375rem] tabular-nums text-porcelain">{line.price}</span>
+                    <span className="font-display text-[1.5rem] font-light leading-none tabular-nums text-porcelain">{line.price}</span>
                   </li>
                 ))}
               </ul>
-              <div className="mt-8 flex items-baseline justify-between gap-6">
-                <span className="text-[0.875rem] text-ink-soft">Plan value</span>
-                <span className="gold-foil font-display text-[3.5rem] font-light leading-none">{formatPrice(total)}</span>
+              <div aria-hidden className="gold-rule mt-6" />
+              <div className="mt-6 flex items-end justify-between gap-6">
+                <span className="pb-2 text-[0.875rem] text-ink-soft">Plan value</span>
+                <span className="gold-foil font-display text-[4.25rem] font-light leading-[0.9] tracking-[-0.02em]">{formatPrice(total)}</span>
               </div>
-              <p className="mt-5 text-[0.8125rem] leading-relaxed text-ink-soft">{planNote}</p>
+              {budgetFit && (
+                <p
+                  className={cx(
+                    "mt-5 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[0.75rem] font-medium",
+                    budgetFit === "fits" ? "bg-[#1f7a63]/25 text-[#a8ecd2] ring-1 ring-inset ring-[#7fd1b4]/40" : "bg-[#f49543]/20 text-[#ffd2a8] ring-1 ring-inset ring-[#f49543]/45",
+                  )}
+                >
+                  <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", budgetFit === "fits" ? "bg-[#7fd1b4]" : "bg-[#f49543]")} />
+                  {budgetFit === "fits" ? "Fits their budget" : "Above their budget"}
+                </p>
+              )}
+              <p className="mt-4 text-[0.8125rem] leading-relaxed text-ink-soft">{planNote}</p>
               {(!facts.plan || facts.plan.status === "proposed") && (
                 <div className="mt-7">
                   <ConfirmPlan clientId={client.id} />

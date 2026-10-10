@@ -257,6 +257,65 @@ html:has(.rebloom) body {
     opacity: 0.6;
   }
 }
+/* A score as a filled meter, 0 to 100, that grows in once when the brief opens. */
+.meter {
+  position: relative;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(30 90 120 / 0.1);
+}
+.meter > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #9fc9dd 0%, #1e5a78 100%);
+  transform-origin: left;
+}
+.meter-growth > span {
+  background: linear-gradient(90deg, #9fdcc4 0%, #1f7a63 100%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .meter > span {
+    animation: meter-in 900ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+  }
+}
+@keyframes meter-in {
+  from {
+    transform: scaleX(0);
+  }
+}
+/* Review before treatment: warm, lit and impossible to skim past. */
+.caution {
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fff7ee 0%, #ffecd9 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    inset 0 0 0 1px rgb(233 140 60 / 0.32),
+    0 16px 30px -20px rgb(214 110 30 / 0.55);
+}
+.caution-badge {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  color: #3a1700;
+  background: linear-gradient(180deg, #ffc27e 0%, #f49543 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    0 6px 14px -6px rgb(240 116 30 / 0.8);
+}
+/* A thread of gold above the plan's total. */
+.gold-rule {
+  height: 1px;
+  background: linear-gradient(90deg, rgb(226 192 122 / 0), rgb(226 192 122 / 0.7) 30%, rgb(255 241 207 / 0.9) 55%, rgb(226 192 122 / 0));
+}
+/* The gold logo on deep water: lifted a touch so the leaf catches light instead of sinking into the dark. */
+.logo-on-deep {
+  filter: brightness(1.22) saturate(1.1) drop-shadow(0 0 10px rgb(226 192 122 / 0.25));
+}
 /* Gold leaf, matched to the logo. On light grounds even the brightest stop holds 3.1:1, so large figures pass. */
 .gold-foil {
   background: linear-gradient(100deg, #6e4810 0%, #8f6119 24%, #b0802c 42%, #8a5d1a 60%, #a87628 78%, #7a5014 100%);
