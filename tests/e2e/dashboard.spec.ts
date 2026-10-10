@@ -265,7 +265,7 @@ test("news that lands while the dashboard is open rises in: a reply, then someon
   await expect(page).toHaveURL(new RegExp(`/dashboard/clients/${priya}$`));
 });
 
-test("the dashboard's code carries the demo to a phone, to scan in as a new client", async ({ page, browser }) => {
+test("the dashboard's code carries the demo to a phone, to scan in as a new prospect", async ({ page, browser }) => {
   const scanIn = page.getByRole("region", { name: "Scan yourself in" });
   const code = scanIn.getByRole("img", { name: "Code to scan yourself in to Maison Verre on your phone" });
   // On a phone already, no code to point a phone at: the scan starts right here.

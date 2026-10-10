@@ -36,7 +36,7 @@ export const escapeHtml = (s: string) =>
 export const oneLine = (s: string) => s.replace(/[\u0000-\u001f\u007f]+/g, " ").trim();
 
 /** In the demo, for someone who scanned themselves: they're now in the clinic's book, and can see it from there. */
-const demoLine = (clinic: Pick<Clinic, "name">) => `Rebloom demo: you're now a new client in ${clinic.name}'s dashboard.`;
+const demoLine = (clinic: Pick<Clinic, "name">) => `Rebloom demo: you're now a new prospect in ${clinic.name}'s dashboard.`;
 
 /** Said once, in the first email: what else is coming, and that it can stop. */
 const updatesLine = (clinic: Pick<Clinic, "name">) => `${clinic.name} will also email you reminders and progress updates. Rather not get them?`;

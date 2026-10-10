@@ -67,7 +67,7 @@ describe("links that carry a demo to any device (DECISIONS D-088, D-090)", () =>
     const plain = reportEmail(base);
     expect(plain.text).not.toContain("Rebloom demo");
     const demo = reportEmail({ ...base, clinicSideUrl: "https://www.rebloom.test/dashboard/open/xyz" });
-    expect(demo.text).toContain("Rebloom demo: you're now a new client in Maison Verre's dashboard. See it from the clinic's side: https://www.rebloom.test/dashboard/open/xyz");
+    expect(demo.text).toContain("Rebloom demo: you're now a new prospect in Maison Verre's dashboard. See it from the clinic's side: https://www.rebloom.test/dashboard/open/xyz");
     expect(demo.html).toContain('href="https://www.rebloom.test/dashboard/open/xyz"');
   });
 });

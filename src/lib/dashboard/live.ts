@@ -1,5 +1,5 @@
 // What the open dashboard watches for (D-089, D-090): who has written back and waits on an answer (D-081), and who has
-// just scanned themselves in as a new client. In the small shapes the live notice needs. Pure, so the layout, the
+// just scanned themselves in as a new prospect. In the small shapes the live notice needs. Pure, so the layout, the
 // endpoint the notice checks and the tests all count the same way.
 
 import type { Client, Message } from "@/lib/domain";

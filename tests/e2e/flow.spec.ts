@@ -129,7 +129,7 @@ test("a scan runs end to end in fixture mode, opens from the clinic's side on an
   await expect(page.getByText("Demo: email isn't connected yet, so nothing was sent to amelia@example.com.")).toBeVisible();
   await expect(page.getByText("on their way")).toHaveCount(0);
   // The demo's way to see it from the clinic's side (D-090).
-  await expect(page.getByRole("complementary", { name: "Rebloom demo" })).toContainText("You're now a new client of Maison Verre.");
+  await expect(page.getByRole("complementary", { name: "Rebloom demo" })).toContainText("You're now a new prospect for Maison Verre.");
   await page.getByRole("link", { name: "Open my report" }).click();
 
   // The dev server builds the report page on its first visit (about 4 seconds when measured). A deployed site doesn't.
