@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Shell } from "@/components/dashboard/Shell";
 import { loadBook } from "@/lib/dashboard/load";
-import { waitingReplies } from "@/lib/dashboard/replies";
+import { newClients, waitingReplies } from "@/lib/dashboard/live";
 import { clientRows, shortDay } from "@/lib/dashboard/view";
 import { env } from "@/lib/env";
 
@@ -22,6 +22,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
       queueCount={book.queue.items.length}
       clientCount={clientRows(book.facts, book.queue, book.now, book.clinic.timezone).length}
       waiting={waitingReplies(book.input.clients, book.input.messages)}
+      arrivals={newClients(book.input.clients)}
     >
       {children}
     </Shell>

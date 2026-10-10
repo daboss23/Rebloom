@@ -94,7 +94,7 @@ export function ProcessingView({
   }, [gated, scanId]);
 
   if (complete && !assembling) {
-    const sent: SentResults | null = view.reportPath && contact ? { ...contact, reportPath: view.reportPath } : null;
+    const sent: SentResults | null = view.reportPath && contact ? { ...contact, reportPath: view.reportPath, clinicSidePath: view.clinicSidePath } : null;
     return <ReportGate clinicSlug={clinicSlug} clinicName={clinicName} scanId={scanId} demo={view.demo} sent={sent} />;
   }
 

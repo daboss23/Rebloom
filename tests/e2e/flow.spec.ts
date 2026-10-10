@@ -89,9 +89,9 @@ test("report links are private: a made-up token shows nothing", async ({ page })
   expect(res?.status()).toBe(404);
 });
 
-test("a scan runs end to end in fixture mode, and Delete my data removes it", async ({ page }) => {
-  // The whole journey, intake to deletion, compiling each page on first visit: about a minute on the dev server.
-  test.setTimeout(120_000);
+test("a scan runs end to end in fixture mode, opens from the clinic's side on another device, and Delete my data removes it", async ({ page, browser }) => {
+  // The whole journey, intake to deletion, compiling each page on first visit: over a minute on the dev server.
+  test.setTimeout(180_000);
   await completeIntake(page);
   const created = await page.request.post("/api/scans", {
     data: { clinicSlug: "maison-verre", width: 810, height: 1080, quality: GOOD_QUALITY, landmarks: syntheticLandmarks() },
@@ -128,9 +128,12 @@ test("a scan runs end to end in fixture mode, and Delete my data removes it", as
   await expect(page.getByText("Thank you for completing your skin consultation with Maison Verre.")).toBeVisible();
   await expect(page.getByText("Demo: email isn't connected yet, so nothing was sent to amelia@example.com.")).toBeVisible();
   await expect(page.getByText("on their way")).toHaveCount(0);
+  // The demo's way to see it from the clinic's side (D-090).
+  await expect(page.getByRole("complementary", { name: "Rebloom demo" })).toContainText("You're now a new client of Maison Verre.");
   await page.getByRole("link", { name: "Open my report" }).click();
 
-  await expect(page.getByRole("heading", { name: "Amelia, your skin is telling a clear story." })).toBeVisible();
+  // The dev server builds the report page on its first visit (about 4 seconds when measured). A deployed site doesn't.
+  await expect(page.getByRole("heading", { name: "Amelia, your skin is telling a clear story." })).toBeVisible({ timeout: 8_000 });
   await expect(page.getByText("Demo analysis.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Your three priorities" })).toBeVisible();
   const reportUrl = page.url();
@@ -149,6 +152,15 @@ test("a scan runs end to end in fixture mode, and Delete my data removes it", as
   // Masks were drawn and are served only through the report link.
   const mask = await page.request.get(`${reportUrl}/mask/${scanId}/texture`);
   expect(mask.headers()["content-type"]).toBe("image/png");
+
+  // On the report too. Opened on a laptop that has never seen this demo, it lands on Amelia's brief in it.
+  const clinicSide = await page.getByRole("complementary", { name: "Rebloom demo" }).getByRole("link", { name: "See it from the clinic's side" }).getAttribute("href");
+  const laptop = await browser.newContext();
+  const tab = await laptop.newPage();
+  await tab.goto(clinicSide!);
+  await expect(tab).toHaveURL(/\/dashboard\/clients\/[0-9a-f-]+$/, { timeout: 30_000 });
+  await expect(tab.getByRole("heading", { level: 1 })).toContainText("Amelia");
+  await laptop.close();
 
   await page.getByRole("button", { name: "Delete my data" }).click();
   await page.getByRole("button", { name: "Yes, delete everything" }).click();

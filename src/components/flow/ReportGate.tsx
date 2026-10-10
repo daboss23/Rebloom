@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { unlockReport, type SentResults, type UnlockResult } from "@/app/c/[clinicSlug]/actions";
 import { Bloom } from "@/components/dashboard/Bloom";
+import { ClinicSide } from "@/components/flow/ClinicSide";
 import { LightField } from "@/components/dashboard/LightField";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Checkbox, FieldLabel, TextInput } from "@/components/ui/Field";
@@ -239,6 +240,7 @@ function Confirmation({ sent, clinicName, demo }: { sent: SentResults; clinicNam
         </>
       )}
       {demo && <p className="t-caption mt-2 text-center">Demo analysis: results are sample data.</p>}
+      {sent.clinicSidePath && <ClinicSide href={sent.clinicSidePath} clinicName={clinicName} className="mt-8" />}
     </div>
   );
 }

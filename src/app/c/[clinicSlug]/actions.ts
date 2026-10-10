@@ -7,6 +7,7 @@ import { CONSENT_VERSION, EMAIL_UPDATES_VERSION, TEXTS_CONSENT_VERSION } from "@
 import { INTAKE_STEPS, stepSchemas, unlockSchema, type IntakeStep } from "@/lib/flow/intake-schema";
 import { getOwnScan } from "@/lib/scans/access";
 import { hasBiometricConsent, loadFlow } from "@/lib/flow/load";
+import { clinicSideLink } from "@/lib/dashboard/handoff";
 import { sendReportEmail, type ReportDelivery } from "@/lib/email/report";
 import { unsubscribeLinks } from "@/lib/email/unsubscribe";
 import { ensureGoalReading } from "@/lib/intake/read-goal";
@@ -34,6 +35,8 @@ export interface SentResults {
   reportPath: string;
   /** Whether the report email went out. The page claims "sent" only when Resend accepted it. */
   delivery: ReportDelivery;
+  /** Demo only: the judge's own scan in the clinic's dashboard, on any device (D-090). */
+  clinicSidePath?: string | null;
 }
 
 export interface UnlockResult extends ActionResult {
@@ -195,6 +198,7 @@ export async function unlockReport(
   const report = await store.getOrCreateReport(client.id, now);
   const reportPath = `/r/${report.token}`;
   const origin = await appOrigin();
+  const clinicSidePath = clinicSideLink("", client);
   const delivery = await sendReportEmail({
     clinic: state.clinic,
     clientId: client.id,
@@ -204,7 +208,8 @@ export async function unlockReport(
     email: parsed.data.email,
     url: `${origin}${reportPath}`,
     unsubscribeUrl: unsubscribeLinks(origin, state.clinic, client.id)?.page,
+    clinicSideUrl: clinicSidePath ? `${origin}${clinicSidePath}` : undefined,
     now,
   });
-  return { ok: true, sent: { firstName: parsed.data.firstName, email: parsed.data.email, reportPath, delivery } };
+  return { ok: true, sent: { firstName: parsed.data.firstName, email: parsed.data.email, reportPath, delivery, clinicSidePath } };
 }

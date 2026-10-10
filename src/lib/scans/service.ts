@@ -3,6 +3,7 @@ import "server-only";
 // Browser-driven polling keeps every server request short (DECISIONS D-019).
 
 import type { Scan } from "@/lib/domain";
+import { clinicSideLink } from "@/lib/dashboard/handoff";
 import { env } from "@/lib/env";
 import { chooseAnalysisMode, type ModeReason } from "@/lib/limits";
 import { sandboxNow } from "@/lib/sandbox";
@@ -229,6 +230,8 @@ export interface ScanView {
   stage: string;
   stageIndex: number;
   reportPath?: string;
+  /** Demo only: the judge's own scan in the clinic's dashboard (D-090). */
+  clinicSidePath?: string | null;
   /** True when the scan is done but the client hasn't opted in yet, so the report stays behind the gate. */
   locked?: boolean;
   error?: { title: string; instruction: string };
@@ -245,7 +248,7 @@ export async function viewScan(scan: Scan): Promise<ScanView> {
     // No report link leaves the server until the client has opted in at the gate.
     if (!client?.email) return { status: scan.status, stage: "Ready", stageIndex: STAGES.length, locked: true, demo };
     const report = await store.getOrCreateReport(scan.clientId, await sandboxNow());
-    return { status: scan.status, stage: "Ready", stageIndex: STAGES.length, reportPath: `/r/${report.token}`, demo };
+    return { status: scan.status, stage: "Ready", stageIndex: STAGES.length, reportPath: `/r/${report.token}`, clinicSidePath: clinicSideLink("", client), demo };
   }
   if (scan.status === "failed") {
     const e = friendlyError(scan.errorCode);

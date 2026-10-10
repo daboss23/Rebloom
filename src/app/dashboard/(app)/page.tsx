@@ -3,12 +3,15 @@ import { Bloom } from "@/components/dashboard/Bloom";
 import { CountUp } from "@/components/dashboard/CountUp";
 import { LightField } from "@/components/dashboard/LightField";
 import { Queue } from "@/components/dashboard/Queue";
+import { ScanYourselfIn } from "@/components/dashboard/ScanYourselfIn";
 import { toQueueRow } from "@/components/dashboard/queue-row";
 import { Visits } from "@/components/dashboard/Visits";
 import { IconArrowRight } from "@/components/ui/Icons";
+import { scanLink } from "@/lib/dashboard/handoff";
 import { loadBook } from "@/lib/dashboard/load";
 import { fullName, visitsOn } from "@/lib/dashboard/view";
 import { env, features } from "@/lib/env";
+import { appOrigin } from "@/lib/origin";
 import { nextOpenDay, shiftDate } from "@/lib/plan/build";
 import { TRIGGER_LABEL, daysBetween } from "@/lib/rebook/engine";
 import { at } from "@/lib/replies/thread";
@@ -37,6 +40,8 @@ export default async function TodayPage() {
   const open = Boolean(clinic.hours.days[new Date(`${today}T12:00:00Z`).getUTCDay() as 0]);
   const nextOpen = nextOpenDay(shiftDate(today, 1), clinic.hours);
   const recent = queue.handled.slice(0, 4);
+  // Demo only: a code that carries this demo to a phone, to scan in as a new client (D-090).
+  const scanIn = env.DEMO_MODE ? scanLink(await appOrigin(), book.sandboxId, clinic) : null;
 
   // One line that reads the queue back in words: the best moment first, then who needs care.
   const first = (id: string) => byId.get(id)!.client.firstName!;
@@ -147,6 +152,8 @@ export default async function TodayPage() {
         </div>
 
         <aside aria-label="Today" className="space-y-6 xl:pt-[4.6rem]">
+          {scanIn && <ScanYourselfIn url={scanIn} clinic={clinic} />}
+
           <section aria-labelledby="visits" className="glass focus-in overflow-hidden" style={{ animationDelay: "160ms" }}>
             <div className="flex items-baseline justify-between px-6 pt-6">
               <h2 id="visits" className="font-display text-[24px] font-light text-ink">
