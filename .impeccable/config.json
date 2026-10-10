@@ -21,6 +21,15 @@
         "value": "cormorant garamond",
         "createdAt": "2026-10-10T03:57:57.277Z",
         "reason": "Brand fonts per DECISIONS.md D-058/D-059/D-061"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "src/app/globals.css"
+        ],
+        "createdAt": "2026-10-10T04:02:54.303Z",
+        "reason": "Gold foil matched to logo; brand per D-058/D-059/D-061"
       }
     ]
   }
