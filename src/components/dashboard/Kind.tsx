@@ -28,10 +28,10 @@ export function KindChip({ row }: { row: Kind }) {
     <span
       className={cx(
         "inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[0.65625rem] uppercase tracking-[0.12em]",
-        moment ? "bg-[linear-gradient(90deg,rgba(255,214,196,0.85),rgba(244,185,163,0.7))] font-medium text-[#7d3447] shadow-[0_4px_12px_-6px_rgba(158,74,93,0.6)]" : cx("signal", signal),
+        cx("signal", moment ? "signal-moment signal-live" : signal),
       )}
     >
-      {moment ? <Bloom size={13} unfurl className="text-[#9e4a5d]" /> : <span aria-hidden className="signal-dot" />}
+      {moment ? <Bloom size={13} unfurl className="text-[#8a2f45]" /> : <span aria-hidden className="signal-dot" />}
       {row.label}
       {row.atRisk && row.kind !== "lapsed" && <span className="opacity-80">· At risk</span>}
     </span>

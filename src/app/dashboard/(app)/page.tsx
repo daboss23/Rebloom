@@ -6,7 +6,7 @@ import { Queue } from "@/components/dashboard/Queue";
 import { ScanYourselfIn } from "@/components/dashboard/ScanYourselfIn";
 import { toQueueRow } from "@/components/dashboard/queue-row";
 import { Visits } from "@/components/dashboard/Visits";
-import { IconArrowRight } from "@/components/ui/Icons";
+import { IconArrowRight, IconMail, IconMessage } from "@/components/ui/Icons";
 import { scanLink } from "@/lib/dashboard/handoff";
 import { loadBook } from "@/lib/dashboard/load";
 import { fullName, visitsOn } from "@/lib/dashboard/view";
@@ -87,7 +87,10 @@ export default async function TodayPage() {
 
           <ul className="mt-10 grid gap-px overflow-hidden rounded-[20px] bg-white/60 ring-1 ring-white/80 backdrop-blur-xl sm:grid-cols-3">
             {figures.map((f, i) => (
-              <li key={f.words} className="flex items-baseline gap-3 bg-white/45 px-6 py-5">
+              <li
+                key={f.words}
+                className={`flex items-baseline gap-3 px-6 py-5 ${f.gold ? "bg-[linear-gradient(135deg,rgba(255,250,240,0.85)_0%,rgba(241,212,154,0.35)_100%)] shadow-[inset_0_0_0_1px_rgba(226,192,122,0.45)]" : "bg-white/45"}`}
+              >
                 <span className={`font-display text-[clamp(44px,5vw,64px)] font-light leading-none tracking-[-0.02em] ${f.gold ? "gold-foil" : "text-ink"}`}>
                   <CountUp value={f.value} format={f.gold ? "money" : "int"} delay={250 + i * 120} />
                 </span>
@@ -113,16 +116,22 @@ export default async function TodayPage() {
                 <li key={reply.id}>
                   <Link
                     href={`/dashboard/clients/${f.client.id}#conversation`}
-                    className="group grid gap-x-6 gap-y-3 px-5 py-5 transition-colors duration-200 hover:bg-white/50 sm:grid-cols-[176px_minmax(0,1fr)_auto] sm:items-center sm:px-6"
+                    className="group grid gap-x-6 gap-y-3 px-5 py-5 transition-colors duration-200 hover:bg-white/50 sm:grid-cols-[200px_minmax(0,1fr)_auto] sm:items-center sm:px-6"
                   >
                     <span className="min-w-0">
                       <span className="block truncate font-display text-[1.375rem] leading-tight text-ink">{fullName(f.client)}</span>
-                      <span className={`mt-1 flex items-center gap-1.5 text-[0.78125rem] ${days >= 3 ? "font-medium text-[#7a5014]" : "text-text-3"}`}>
-                        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#c99645]" />
-                        {reply.channel === "sms" ? "Text" : "Email"} · {waited(days)}
+                      <span className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                        <span className="signal signal-urgent signal-live h-6 px-2.5 text-[0.71875rem]">
+                          <span aria-hidden className="signal-dot" />
+                          Waiting · {waited(days)}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[0.75rem] text-text-3">
+                          {reply.channel === "sms" ? <IconMessage width={13} height={13} aria-hidden /> : <IconMail width={13} height={13} aria-hidden />}
+                          {reply.channel === "sms" ? "Text" : "Email"}
+                        </span>
                       </span>
                     </span>
-                    <span className="min-w-0 font-display text-[1.1875rem] font-light italic leading-snug text-text-2">&ldquo;{excerpt(reply.body, 140)}&rdquo;</span>
+                    <span className="min-w-0 font-display text-[1.25rem] font-light italic leading-snug text-ink">&ldquo;{excerpt(reply.body, 140)}&rdquo;</span>
                     <span className="btn-sea justify-self-start sm:justify-self-end">
                       Answer
                       <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />

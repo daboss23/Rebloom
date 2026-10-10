@@ -24,6 +24,12 @@ export const IconCheckCircle = (p: SVGProps<SVGSVGElement>) => (
     <path d="M8 12.3l2.6 2.5L16 9.5" />
   </Icon>
 );
+/** A bare tick, for small marks: a visit done, a deposit paid. */
+export const IconCheck = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M5 12.5l4.5 4.5L19 7.5" />
+  </Icon>
+);
 export const IconAlert = (p: SVGProps<SVGSVGElement>) => (
   <Icon {...p}>
     <circle cx="12" cy="12" r="9" />

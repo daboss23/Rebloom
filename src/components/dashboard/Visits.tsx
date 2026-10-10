@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cx } from "@/components/ui/cx";
+import { IconCheck } from "@/components/ui/Icons";
 import { fullName, type Visit } from "@/lib/dashboard/view";
 
 /** Today's appointments as a timeline. The next one carries a gold mark; each opens that client's brief. */
@@ -11,7 +12,7 @@ export function Visits({ visits, now, empty }: { visits: Visit[]; now: Date; emp
   const nextId = visits.find((v) => v.appointment.endsAt >= nowIso)?.appointment.id;
   return (
     <ol className="relative px-3 py-3">
-      <span aria-hidden className="absolute bottom-8 left-[39px] top-8 w-px bg-gradient-to-b from-[#9fc9dd] via-[#9fc9dd]/60 to-transparent" />
+      <span aria-hidden className="absolute bottom-8 left-[39px] top-8 w-0.5 bg-gradient-to-b from-[#9fc9dd] via-[#9fc9dd]/60 to-transparent" />
       {visits.map(({ appointment, facts, treatment, time, minutes, session }, i) => {
         const past = appointment.endsAt < nowIso;
         const next = appointment.id === nextId;
@@ -21,20 +22,30 @@ export function Visits({ visits, now, empty }: { visits: Visit[]; now: Date; emp
               href={`/dashboard/clients/${facts.client.id}`}
               className="group relative grid grid-cols-[32px_minmax(0,1fr)] gap-4 rounded-[14px] px-3 py-4 transition-colors duration-200 hover:bg-white/70"
             >
-              <span className="relative flex justify-center pt-2">
+              <span className="relative flex justify-center pt-1">
                 <span
                   aria-hidden
                   className={cx(
-                    "relative z-10 h-3 w-3 rounded-full ring-4 ring-[#f4f8fa]",
-                    next ? "bg-[linear-gradient(135deg,#f1d49a,#b98a3c)] shadow-[0_0_0_4px_rgba(226,192,122,0.25)]" : past ? "bg-[#c5d6df]" : "bg-[#1e5a78]",
+                    "relative z-10 grid h-5 w-5 place-items-center rounded-full ring-4 ring-[#f4f8fa]",
+                    next
+                      ? "bg-[linear-gradient(135deg,#f1d49a,#b98a3c)] shadow-[0_0_0_5px_rgba(226,192,122,0.28)]"
+                      : past
+                        ? "bg-[linear-gradient(150deg,#23668a,#134560)] text-white shadow-[0_4px_10px_-4px_rgba(19,69,96,0.6)]"
+                        : "bg-white shadow-[inset_0_0_0_2px_#1e5a78]",
                   )}
-                />
+                >
+                  {past && <IconCheck width={11} height={11} strokeWidth={2.5} />}
+                </span>
               </span>
               <span className="min-w-0">
                 <span className="flex items-baseline justify-between gap-3">
-                  <span className={cx("font-display text-[1.625rem] font-light leading-none", past ? "text-text-3" : "text-ink")}>{time}</span>
-                  {next && <span className="text-[0.65625rem] uppercase tracking-[0.16em] text-[#9a6b22]">Next</span>}
-                  {past && <span className="text-[0.65625rem] uppercase tracking-[0.16em] text-text-3">Done</span>}
+                  <span className={cx("font-display text-[1.625rem] font-light leading-none", past ? "text-text-2" : "text-ink")}>{time}</span>
+                  {next && (
+                    <span className="rounded-full bg-[linear-gradient(180deg,#fff4dc,#f1d49a)] px-2 py-0.5 text-[0.65625rem] font-medium uppercase tracking-[0.14em] text-[#5a3a08] ring-1 ring-inset ring-[#c99645]/45">
+                      Next
+                    </span>
+                  )}
+                  {past && <span className="text-[0.65625rem] font-medium uppercase tracking-[0.16em] text-[#1e5a78]">Done</span>}
                 </span>
                 <span className="mt-2 block text-[0.9375rem] text-ink">{fullName(facts.client)}</span>
                 <span className="mt-0.5 block text-[0.84375rem] text-text-2">
@@ -44,7 +55,10 @@ export function Visits({ visits, now, empty }: { visits: Visit[]; now: Date; emp
                   <span className="mt-2 flex flex-wrap gap-1.5">
                     {session && <span className="rounded-full bg-white/80 px-2 py-0.5 text-[0.71875rem] text-text-3 ring-1 ring-inset ring-[#0c1a22]/[0.06]">{session}</span>}
                     {appointment.depositStatus === "paid" && (
-                      <span className="rounded-full bg-[#e2c07a]/20 px-2 py-0.5 text-[0.71875rem] text-[#7a5014]">Deposit paid</span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#1f7a63]/10 px-2 py-0.5 text-[0.71875rem] font-medium text-[color:var(--growth)] ring-1 ring-inset ring-[#1f7a63]/25">
+                        <IconCheck width={11} height={11} strokeWidth={2.5} aria-hidden />
+                        Deposit paid
+                      </span>
                     )}
                   </span>
                 )}

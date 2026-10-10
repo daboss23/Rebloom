@@ -181,6 +181,19 @@ html:has(.rebloom) body {
   background: linear-gradient(180deg, #d4eaf4 0%, #b7d9e9 100%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), inset 0 0 0 1px rgb(30 90 120 / 0.14);
 }
+/* Good news to act on (a progress moment): dawn rose, alive like the alerts but warm, not urgent. */
+.signal-moment {
+  color: #5e1f30;
+  background: linear-gradient(180deg, #ffe1d6 0%, #f6b3a1 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    0 0 0 1px rgb(196 104 120 / 0.3),
+    0 6px 16px -6px rgb(214 110 120 / 0.7);
+}
+.signal-moment.signal-live::before {
+  background: rgb(244 160 150 / 0.5);
+  filter: blur(6px);
+}
 .signal-dot {
   position: relative;
   width: 7px;
