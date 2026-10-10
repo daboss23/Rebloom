@@ -24,7 +24,7 @@ export function ClinicShell({
     <div style={clinicThemeStyle(clinic.accentHex)} className="rebloom client relative flex min-h-dvh flex-col overflow-x-clip">
       <ShellLight />
       {ephemeral && (
-        <p className="relative bg-white/70 px-4 py-2 text-center text-[12px] text-text-2">
+        <p className="relative bg-white/70 px-4 py-2 text-center text-[0.75rem] text-text-2">
           Preview without a database. Data may reset between visits.
         </p>
       )}
@@ -34,18 +34,18 @@ export function ClinicShell({
             <ClinicWordmark clinic={clinic} />
           </Link>
           {/* On the narrowest phones the clinic's name needs the whole bar. */}
-          {section && <span className="whitespace-nowrap text-[11px] uppercase tracking-[0.22em] text-[#1e5a78] max-[359px]:hidden">{section}</span>}
+          {section && <span className="whitespace-nowrap text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78] max-[359px]:hidden">{section}</span>}
         </div>
       </header>
       <main className="relative mx-auto w-full max-w-[600px] flex-1 px-5">{children}</main>
-      <footer className="relative mx-auto w-full max-w-[600px] px-5 pb-10 pt-16">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#0c1a22]/[0.08] pt-6">
-          <PoweredByRebloom />
+      <footer className="footer-deep on-dark relative mt-16">
+        <div className="mx-auto flex w-full max-w-[600px] flex-wrap items-center justify-between gap-4 px-5 pb-10 pt-8">
+          <PoweredByRebloom onDark />
           <nav className="t-caption flex gap-5">
-            <Link href="/privacy" className="underline decoration-[#0c1a22]/25 decoration-1 underline-offset-4 hover:text-ink">
+            <Link href="/privacy" className="underline decoration-1 underline-offset-4">
               Privacy
             </Link>
-            <Link href="/terms" className="underline decoration-[#0c1a22]/25 decoration-1 underline-offset-4 hover:text-ink">
+            <Link href="/terms" className="underline decoration-1 underline-offset-4">
               Terms
             </Link>
           </nav>

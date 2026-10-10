@@ -35,7 +35,7 @@ type Channel = "email" | "text";
 const SHOWN = 6;
 
 const field =
-  "w-full rounded-[14px] border border-[#0c1a22]/10 bg-white/85 text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-[#1e5a78]/50 focus:shadow-[0_0_0_4px_rgba(159,201,221,0.35)]";
+  "w-full rounded-[14px] border border-[#0c1a22]/10 bg-white text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-[#1e5a78]/45 focus:shadow-[0_0_0_4px_rgba(159,201,221,0.3)]";
 
 const nonce = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
@@ -139,13 +139,13 @@ export function Conversation({
           Nothing yet. When {firstName} replies to an email or a text, it lands here, and you answer from here.
         </p>
       ) : (
-        <ol aria-label={`Conversation with ${firstName}`} className="mt-6 space-y-5">
+        <ol aria-label={`Conversation with ${firstName}`} className="mt-6 space-y-6">
           {hidden > 0 && (
             <li className="flex justify-center">
               <button
                 type="button"
                 onClick={() => setAll(true)}
-                className="rounded-full bg-white/70 px-4 py-1.5 text-[12.5px] text-text-3 ring-1 ring-inset ring-[#0c1a22]/[0.06] transition-colors duration-150 hover:text-ink"
+                className="rounded-full bg-white/70 px-4 py-1.5 text-[0.78125rem] text-text-3 ring-1 ring-inset ring-[#0c1a22]/[0.06] transition-colors duration-150 hover:text-ink"
               >
                 Show {hidden} earlier {hidden === 1 ? "message" : "messages"}
               </button>
@@ -163,10 +163,10 @@ export function Conversation({
             e.preventDefault();
             send();
           }}
-          className="mt-8 rounded-[20px] bg-white/55 p-4 ring-1 ring-inset ring-white sm:p-5"
+          className="mt-10 rounded-[22px] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0.74))] p-4 shadow-[inset_0_1px_0_#fff,0_20px_40px_-28px_rgba(12,44,62,0.45)] ring-1 ring-inset ring-[#0c1a22]/[0.07] transition-shadow duration-300 focus-within:shadow-[inset_0_1px_0_#fff,0_0_0_4px_rgba(159,201,221,0.28),0_24px_44px_-26px_rgba(12,44,62,0.5)] sm:p-6"
         >
           <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-            <label htmlFor={`${countId}-body`} className="t-label">
+            <label htmlFor={`${countId}-body`} className="font-display text-[1.5rem] font-light leading-none text-ink">
               {waiting ? `Answer ${firstName}` : `Write to ${firstName}`}
             </label>
             {channels.email && channels.text ? (
@@ -181,14 +181,20 @@ export function Conversation({
                 />
               </div>
             ) : (
-              <span className="flex items-center gap-2 text-[13px] text-text-3">
+              <span className="flex items-center gap-2 text-[0.8125rem] text-text-3">
                 {isText ? <IconMessage width={15} height={15} /> : <IconMail width={15} height={15} />}
                 {isText ? "By text" : "By email"}
               </span>
             )}
           </div>
-          <p className="t-caption mt-3 !text-[12.5px]">
-            {isText ? `To ${phone}${unsubscribed && !channels.email ? ` · ${firstName} unsubscribed from emails` : ""}` : `To ${email} · ${subject}`}
+          <p className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 border-t border-[#0c1a22]/[0.07] pt-3 text-[0.8125rem]">
+            <span className="t-label !text-[0.65625rem]">To</span>
+            <span className="text-ink">{isText ? phone : email}</span>
+            {isText ? (
+              unsubscribed && !channels.email && <span className="text-text-3">· {firstName} unsubscribed from emails</span>
+            ) : (
+              <span className="min-w-0 truncate text-text-3">· {subject}</span>
+            )}
           </p>
           <textarea
             id={`${countId}-body`}
@@ -205,22 +211,22 @@ export function Conversation({
             rows={isText ? 3 : 5}
             placeholder={isText ? `A short text to ${firstName}` : `Hi ${firstName},`}
             aria-describedby={isText ? countId : undefined}
-            className={cx(field, "mt-3 resize-y p-4 text-[15px] leading-relaxed placeholder:text-text-3")}
+            className={cx(field, "mt-3 resize-y p-4 focus-visible:outline-none! text-[0.9375rem] leading-relaxed placeholder:text-text-3")}
           />
           {isText && (
-            <p id={countId} aria-live="polite" className={cx("t-caption mt-2 !text-[12.5px]", tooLong && "!text-ink")}>
+            <p id={countId} aria-live="polite" className={cx("t-caption mt-2 !text-[0.78125rem]", tooLong && "!text-ink")}>
               {tooLong
                 ? `${trimmed.length} characters. Keep it under ${TEXT_MAX_CHARS}.`
                 : `${trimmed.length} characters${trimmed ? `, sent as ${parts === 1 ? "one text" : `${parts} parts`}` : ""}${unicode ? ". An emoji or curly quote makes each part shorter" : ""}.`}
             </p>
           )}
           {error && (
-            <p role="alert" className="mt-3 text-[14px] text-ink">
+            <p role="alert" className="mt-3 text-[0.875rem] text-ink">
               {error}
             </p>
           )}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-            <p className="t-caption !text-[12.5px]">
+            <p className="t-caption !text-[0.78125rem]">
               {demo ? `Demo mode: logged here, not ${isText ? "texted" : "emailed"}.` : `${firstName}'s answer comes back here.`}
             </p>
             <div className="flex items-center gap-5">
@@ -229,7 +235,7 @@ export function Conversation({
                   type="button"
                   disabled={pending}
                   onClick={handled}
-                  className="whitespace-nowrap text-[13px] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 transition-colors duration-150 hover:text-ink hover:decoration-ink"
+                  className="whitespace-nowrap text-[0.8125rem] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 transition-colors duration-150 hover:text-ink hover:decoration-ink"
                 >
                   No answer needed
                 </button>
@@ -250,10 +256,10 @@ export function Conversation({
 
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
         {toast && (
-          <div key={toast.id} className="toast sea on-dark pointer-events-auto flex max-w-md items-center gap-6 rounded-[14px] py-3.5 pl-5 pr-4 text-[13.5px] shadow-[0_24px_48px_-20px_rgba(12,26,34,0.6)]">
+          <div key={toast.id} className="toast sea on-dark pointer-events-auto flex max-w-md items-center gap-6 rounded-[14px] py-3.5 pl-5 pr-4 text-[0.84375rem] shadow-[0_24px_48px_-20px_rgba(12,26,34,0.6)]">
             <p>{toast.text}</p>
             {toast.undo && (
-              <button type="button" onClick={toast.undo} className="text-[13px] text-[#e2c07a] underline underline-offset-4 hover:text-white">
+              <button type="button" onClick={toast.undo} className="text-[0.8125rem] text-[#e2c07a] underline underline-offset-4 hover:text-white">
                 Undo
               </button>
             )}
@@ -289,7 +295,7 @@ function Entry({ entry, firstName, arriving }: { entry: ConversationEntry; first
 
   if (entry.side === "note") {
     return (
-      <li className={cx("flex items-center gap-4 text-[12.5px] text-text-3", arriving && "focus-in")}>
+      <li className={cx("flex items-center gap-4 text-[0.78125rem] text-text-3", arriving && "focus-in")}>
         <span aria-hidden className="h-px flex-1 bg-[#0c1a22]/[0.08]" />
         <span>
           {entry.body} · {entry.when}
@@ -304,52 +310,73 @@ function Entry({ entry, firstName, arriving }: { entry: ConversationEntry; first
   const long = entry.channel === "email" && (entry.body.length > 420 || entry.body.split("\n").length > 8);
   const status =
     entry.status === "failed" ? "Didn't go through" : fromClient ? null : entry.logged ? "Logged" : "Sent";
+  const ChannelIcon = entry.channel === "sms" ? IconMessage : IconMail;
+  // Three voices, three finishes: the client on white, what Dana wrote in deep sea, what went out on its own in frost.
+  const quiet = fromClient || entry.automatic;
 
   return (
-    <li className={cx("flex flex-col", fromClient ? "items-start" : "items-end", arriving && "focus-in")}>
-      <div
-        className={cx(
-          "relative max-w-[min(36rem,92%)] px-4 py-3 text-[15px] leading-[1.55]",
-          entry.channel === "sms" ? "rounded-[20px]" : "rounded-[18px]",
-          fromClient
-            ? "rounded-bl-[6px] bg-white text-ink shadow-[0_14px_30px_-22px_rgba(12,44,62,0.45)] ring-1 ring-inset ring-[#0c1a22]/[0.05]"
-            : entry.automatic
-              ? "rounded-br-[6px] bg-[#e1edf2]/80 text-text-2 ring-1 ring-inset ring-white"
-              : "sea on-dark rounded-br-[6px] text-[#eaf3f6] shadow-[0_18px_36px_-24px_rgba(12,26,34,0.75)]",
-          entry.waiting && "ring-2 !ring-[#d9ae62]/70",
-        )}
-      >
-        {entry.channel === "email" && entry.subject && (
-          <p className={cx("mb-1.5 text-[12px] tracking-[0.01em]", fromClient || entry.automatic ? "text-text-3" : "text-ink-soft")}>{entry.subject}</p>
-        )}
-        <p className={cx("whitespace-pre-wrap break-words", long && !open && "line-clamp-6")}>
-          <Words text={entry.body} onDark={!fromClient && !entry.automatic} />
-        </p>
-        {long && (
-          <button
-            type="button"
-            onClick={() => setOpen((o) => !o)}
-            aria-expanded={open}
-            className={cx("mt-2 text-[12.5px] underline underline-offset-4", fromClient || entry.automatic ? "text-text-3 decoration-[#0c1a22]/20 hover:text-ink" : "text-ink-soft decoration-white/25 hover:text-white")}
-          >
-            {open ? "Show less" : "Read all"}
-          </button>
-        )}
-      </div>
-      <p className={cx("mt-1.5 flex flex-wrap items-center gap-x-2 px-1 text-[12px] text-text-3", !fromClient && "justify-end")}>
-        {entry.waiting && (
-          <span className="flex items-center gap-1.5 font-medium text-[#7a5014]">
-            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#c99645]" />
-            Waiting on you · {entry.waiting}
-          </span>
-        )}
-        <span>
-          {fromClient ? `${firstName} · ` : ""}
-          {how} · {entry.when}
-          {status ? ` · ${status}` : ""}
+    <li className={cx("flex items-end gap-3", fromClient ? "justify-start" : "justify-end", arriving && "focus-in")}>
+      {fromClient && (
+        <span
+          aria-hidden
+          className="mt-0.5 grid h-9 w-9 shrink-0 self-start place-items-center rounded-full bg-[linear-gradient(150deg,#1b3a4e_0%,#0b1a24_100%)] font-display text-[1rem] text-[#e2c07a] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_16px_-10px_rgba(12,44,62,0.7)]"
+        >
+          {firstName[0]}
         </span>
-        {entry.sender && <span>· from {entry.sender}</span>}
-      </p>
+      )}
+      <div className={cx("flex min-w-0 max-w-[min(36rem,88%)] flex-col", fromClient ? "items-start" : "items-end")}>
+        <div
+          className={cx(
+            "relative px-5 py-3.5 text-[0.9375rem] leading-[1.6]",
+            entry.channel === "sms" ? "rounded-[22px]" : "rounded-[18px]",
+            fromClient
+              ? "rounded-bl-[6px] bg-white text-ink shadow-[0_16px_32px_-22px_rgba(12,44,62,0.5)] ring-1 ring-inset ring-[#0c1a22]/[0.06]"
+              : entry.automatic
+                ? "rounded-br-[6px] bg-[linear-gradient(180deg,rgba(240,247,250,0.95),rgba(225,237,243,0.9))] text-text-2 ring-1 ring-inset ring-[#1e5a78]/10"
+                : "sea on-dark rounded-br-[6px] text-[#eaf3f6] shadow-[0_18px_36px_-24px_rgba(12,26,34,0.75)]",
+            entry.waiting && "!ring-2 !ring-[#f49543]/70 shadow-[0_0_0_6px_rgba(244,149,67,0.12),0_16px_32px_-22px_rgba(12,44,62,0.5)]",
+          )}
+        >
+          {(entry.automatic || (entry.channel === "email" && entry.subject)) && (
+            <p className={cx("mb-1.5 flex flex-wrap items-center gap-x-2 text-[0.75rem] tracking-[0.01em]", quiet ? "text-text-3" : "text-ink-soft")}>
+              {entry.automatic && (
+                <span className="rounded-full bg-white/80 px-2 py-px text-[0.65625rem] font-medium uppercase tracking-[0.1em] text-[#1e5a78] ring-1 ring-inset ring-[#1e5a78]/15">
+                  Automatic
+                </span>
+              )}
+              {entry.channel === "email" && entry.subject && <span className="min-w-0">{entry.subject}</span>}
+            </p>
+          )}
+          <p className={cx("whitespace-pre-wrap [overflow-wrap:anywhere]", long && !open && "line-clamp-6")}>
+            <Words text={entry.body} onDark={!quiet} />
+          </p>
+          {long && (
+            <button
+              type="button"
+              onClick={() => setOpen((o) => !o)}
+              aria-expanded={open}
+              className={cx("mt-2 text-[0.78125rem] underline underline-offset-4", quiet ? "text-text-3 decoration-[#0c1a22]/20 hover:text-ink" : "text-ink-soft decoration-white/25 hover:text-white")}
+            >
+              {open ? "Show less" : "Read all"}
+            </button>
+          )}
+        </div>
+        <p className={cx("mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 px-1 text-[0.75rem] text-text-3", !fromClient && "justify-end")}>
+          {entry.waiting && (
+            <span className="signal signal-urgent signal-live h-6 px-2.5 text-[0.71875rem]">
+              <span aria-hidden className="signal-dot" />
+              Waiting on you · {entry.waiting}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1.5">
+            <ChannelIcon width={13} height={13} aria-hidden className="shrink-0 opacity-70" />
+            {fromClient ? `${firstName} · ` : ""}
+            {how} · {entry.when}
+            {status ? ` · ${status}` : ""}
+          </span>
+          {entry.sender && <span>· from {entry.sender}</span>}
+        </p>
+      </div>
     </li>
   );
 }

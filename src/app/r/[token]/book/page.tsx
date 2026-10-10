@@ -38,7 +38,7 @@ export default async function BookPage({ params, searchParams }: PageProps<"/r/[
 
   return (
     <article className="booking pb-4 pt-8">
-      <Link href={`/r/${token}`} className="t-caption inline-flex min-h-11 items-center gap-2 !text-[13.5px] text-text-2 hover:text-ink">
+      <Link href={`/r/${token}`} className="t-caption inline-flex min-h-11 items-center gap-2 !text-[0.84375rem] text-text-2 hover:text-ink">
         <IconArrowLeft width={16} height={16} />
         Your report
       </Link>
@@ -49,7 +49,7 @@ export default async function BookPage({ params, searchParams }: PageProps<"/r/[
             <FormAlert>{notice}</FormAlert>
           </div>
         ) : (
-          <p role="status" className="glass focus-in mt-4 flex items-start gap-3 px-4 py-3.5 text-[14.5px] leading-relaxed text-ink">
+          <p role="status" className="glass focus-in mt-4 flex items-start gap-3 px-4 py-3.5 text-[0.90625rem] leading-relaxed text-ink">
             <IconCheckCircle aria-hidden width={18} height={18} className="mt-[3px] shrink-0 text-[#1f7a63]" />
             {notice}
           </p>
@@ -77,7 +77,7 @@ export default async function BookPage({ params, searchParams }: PageProps<"/r/[
           <p className="t-body mt-4">
             {client.firstName ? `${client.firstName}, your` : "Your"} report has no visit to book at the moment. We&apos;re happy to talk it through.
           </p>
-          <a href={`tel:${phone}`} className="btn-gold mt-8 !h-14 w-full gap-2.5 text-[16px]">
+          <a href={`tel:${phone}`} className="btn-gold mt-8 !h-14 w-full gap-2.5 text-[1rem]">
             <IconPhone aria-hidden width={18} height={18} />
             Call {clinic.name}
           </a>
@@ -94,14 +94,14 @@ function BookTarget({ token, ctx }: { token: string; ctx: BookingContext }) {
   const words = bookingWords({ target, clinic, intake, today: ctx.today });
   return (
     <>
-      <p className="focus-in mt-6 flex items-center gap-3 text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">
+      <p className="focus-in mt-6 flex items-center gap-3 text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">
         <span aria-hidden className="block h-[2px] w-8 rounded-full bg-accent" />
         {words.kicker}
       </p>
       <h1 className="t-h1 focus-in mt-4 [text-wrap:balance]" style={{ animationDelay: "60ms" }}>
         {words.title}
       </h1>
-      <p className="focus-in mt-3 text-[15px] text-ink tabular-nums" style={{ animationDelay: "100ms" }}>
+      <p className="focus-in mt-3 text-[0.9375rem] text-ink tabular-nums" style={{ animationDelay: "100ms" }}>
         {words.facts}
       </p>
       {(words.why || words.eventNote) && (
@@ -111,7 +111,7 @@ function BookTarget({ token, ctx }: { token: string; ctx: BookingContext }) {
         </div>
       )}
       {ctx.depositCents > 0 && (
-        <p className="t-caption focus-in mt-4 flex items-start gap-2 !text-[13.5px] text-text-2" style={{ animationDelay: "180ms" }}>
+        <p className="t-caption focus-in mt-4 flex items-start gap-2 !text-[0.84375rem] text-text-2" style={{ animationDelay: "180ms" }}>
           <IconLock aria-hidden width={16} height={16} className="mt-[2px] shrink-0" />
           A {formatPrice(ctx.depositCents)} deposit holds your time and goes toward the visit. Free to cancel up to {NOTICE_HOURS} hours
           before. Paid securely through Stripe.
@@ -122,8 +122,8 @@ function BookTarget({ token, ctx }: { token: string; ctx: BookingContext }) {
         <TimePicker token={token} days={ctx.days} depositCents={ctx.depositCents} />
       ) : (
         <div className="glass mt-10 px-6 py-7">
-          <p className="text-[15.5px] leading-relaxed text-ink">There are no open times in the next few weeks.</p>
-          <p className="t-caption mt-2 !text-[13.5px]">Call us and we&apos;ll find one with you.</p>
+          <p className="text-[0.96875rem] leading-relaxed text-ink">There are no open times in the next few weeks.</p>
+          <p className="t-caption mt-2 !text-[0.84375rem]">Call us and we&apos;ll find one with you.</p>
           <a href={`tel:${phone}`} className="btn-gold mt-6 !h-12 w-full gap-2.5">
             <IconPhone aria-hidden width={18} height={18} />
             Call {clinic.phone}

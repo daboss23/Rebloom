@@ -336,6 +336,15 @@ describe("the local store's demo copies", () => {
     await expect(store.setClockOffset("race", 1)).rejects.toThrow("only moves forward");
   });
 
+  it("moves the clock to a minute, forward only, and keeps the minutes through day steps", async () => {
+    const at = await store.setClockOffset("race", 2, 600);
+    expect([at.clockOffsetDays, at.clockOffsetMinutes]).toEqual([2, 600]);
+    await expect(store.setClockOffset("race", 2, 300)).rejects.toThrow("only moves forward");
+    await expect(store.setClockOffset("race", 2, 1440)).rejects.toThrow("only moves forward");
+    const stepped = await store.setClockOffset("race", 3);
+    expect([stepped.clockOffsetDays, stepped.clockOffsetMinutes]).toEqual([3, 600]);
+  });
+
   it("removes every copy with its sandbox", async () => {
     await store.deleteSandboxes(["race"]);
     expect(await store.listClients(MAISON_VERRE.id, "race")).toEqual([]);

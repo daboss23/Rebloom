@@ -30,16 +30,16 @@ export default async function EnterPage() {
       {/* One centred composition: the story on the left, the way in on the right, on a shared 8px rhythm. */}
       <div className="relative mx-auto flex min-h-dvh w-full max-w-[1200px] flex-col px-6 sm:px-10">
         <header className="flex h-20 items-center justify-between">
-          <Link href="/" className="group inline-flex items-center gap-2 text-[13px] text-text-2 hover:text-ink">
+          <Link href="/" className="group inline-flex items-center gap-2 text-[0.8125rem] text-text-2 hover:text-ink">
             <IconArrowLeft width={15} height={15} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
             Rebloom home
           </Link>
-          <span className="text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">Clinic dashboard</span>
+          <span className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">Clinic dashboard</span>
         </header>
 
-        <main className="grid flex-1 content-center items-center gap-12 pb-20 pt-4 lg:grid-cols-[minmax(0,1fr)_26rem] lg:gap-16 lg:pb-24 xl:gap-24">
+        <main className="grid flex-1 content-center items-center gap-12 pb-20 pt-4 lg:grid-cols-[minmax(0,1fr)_416px] lg:gap-16 lg:pb-24 xl:gap-24">
           <section className="focus-in mx-auto w-full max-w-[640px] lg:mx-0">
-            <p className="flex items-center gap-2.5 text-[11px] uppercase tracking-[0.22em] text-[#9e4a5d]">
+            <p className="flex items-center gap-2.5 text-[0.6875rem] uppercase tracking-[0.22em] text-[#9e4a5d]">
               <Bloom size={16} unfurl />
               Every client&apos;s next beginning
             </p>
@@ -57,7 +57,7 @@ export default async function EnterPage() {
             <p className="mt-10 max-w-[34rem] font-display text-[clamp(26px,2.6vw,34px)] font-light leading-[1.2] text-ink">
               <span className="block">Everyone sells the scan.</span> <span className="block">Rebloom sells the result.</span>
             </p>
-            <p className="mt-4 max-w-[30rem] text-[16px] leading-relaxed text-text-2">
+            <p className="mt-4 max-w-[30rem] text-[1rem] leading-relaxed text-text-2">
               Each morning, the clients whose skin is changing, and the ones who need a little care, each with the reason
               in one sentence.
             </p>
@@ -65,7 +65,7 @@ export default async function EnterPage() {
           </section>
 
           <section className="glass focus-in mx-auto w-full max-w-[26rem] p-8 sm:p-10 lg:mx-0" style={{ animationDelay: "180ms" }}>
-            <p className="text-[11px] uppercase tracking-[0.22em] text-text-3">Demo clinic</p>
+            <p className="text-[0.6875rem] uppercase tracking-[0.22em] text-text-3">Demo clinic</p>
             <div className="mt-5">
               <ClinicWordmark clinic={MAISON_VERRE} />
             </div>
@@ -73,25 +73,25 @@ export default async function EnterPage() {
 
             <div className="mt-8 border-t border-[#0c1a22]/[0.08] pt-8">
               <div className="flex items-center gap-4">
-                <span aria-hidden className="grid h-12 w-12 place-items-center rounded-full bg-[linear-gradient(140deg,#ffe4d8,#f4b9a3_45%,#8fbfd6)] font-display text-[22px] text-white [text-shadow:0_1px_2px_rgba(125,52,71,0.35)]">
+                <span aria-hidden className="grid h-12 w-12 place-items-center rounded-full bg-[linear-gradient(140deg,#ffe4d8,#f4b9a3_45%,#8fbfd6)] font-display text-[1.375rem] text-white [text-shadow:0_1px_2px_rgba(125,52,71,0.35)]">
                   {DANA.name[0]}
                 </span>
                 <span>
-                  <span className="block text-[16px] text-ink">{DANA.name}</span>
-                  <span className="block text-[13px] text-text-3">{DANA.title}</span>
+                  <span className="block text-[1rem] text-ink">{DANA.name}</span>
+                  <span className="block text-[0.8125rem] text-text-3">{DANA.title}</span>
                 </span>
               </div>
-              <p className="mt-5 text-[14.5px] leading-relaxed text-text-2">
+              <p className="mt-5 text-[0.90625rem] leading-relaxed text-text-2">
                 Twelve demo clients, laid out around today. Send, confirm and move the clock freely: everything stays in
                 this browser.
               </p>
               <form action={enterDemo} className="mt-8">
-                <button type="submit" className="btn-gold group w-full gap-2.5 !h-14 px-6 text-[16px]">
+                <button type="submit" className="btn-gold group w-full gap-2.5 !h-14 px-6 text-[1rem]">
                   Enter demo as {DANA.name}
                   <IconArrowRight width={18} height={18} className="transition-transform duration-300 ease-out group-hover:translate-x-1" />
                 </button>
               </form>
-              <p className="t-caption mt-5 !text-[12px]">Clinic sign-in by email arrives at launch.</p>
+              <p className="t-caption mt-5 !text-[0.75rem]">Clinic sign-in by email arrives at launch.</p>
             </div>
           </section>
 
@@ -113,8 +113,8 @@ function Pillars({ className }: { className: string }) {
         ["Sent", "only after you read it"],
       ].map(([term, detail], i) => (
         <div key={term} className="glass focus-in min-w-0 px-3 py-4 sm:px-5 sm:py-5" style={{ animationDelay: `${300 + i * 90}ms` }}>
-          <dt className="font-display text-[19px] font-light text-ink sm:text-[24px]">{term}</dt>
-          <dd className="mt-1.5 text-[12.5px] leading-snug text-text-3">{detail}</dd>
+          <dt className="font-display text-[1.1875rem] font-light text-ink sm:text-[1.5rem]">{term}</dt>
+          <dd className="mt-1.5 text-[0.78125rem] leading-snug text-text-3">{detail}</dd>
         </div>
       ))}
     </dl>

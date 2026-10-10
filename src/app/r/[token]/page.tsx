@@ -76,7 +76,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
 
   return (
     <article className="pb-4 pt-10">
-      <p className="focus-in flex items-center gap-3 text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">
+      <p className="focus-in flex items-center gap-3 text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">
         <span aria-hidden className="block h-[2px] w-8 rounded-full bg-accent" />
         {formatLongDate(latest.completedAt ?? latest.createdAt, tz)} · {scanLabel}
         {weekLabel}
@@ -91,7 +91,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
             ? `${client.firstName}, your skin is telling a clear story.`
             : "Your skin is telling a clear story."}
       </h1>
-      <p className="focus-in mt-5 text-[16.5px] leading-relaxed text-text-2" style={{ animationDelay: "140ms" }}>
+      <p className="focus-in mt-5 text-[1.03125rem] leading-relaxed text-text-2" style={{ animationDelay: "140ms" }}>
         {progress ? progressSubhead(progress) : subhead(result)}
       </p>
 
@@ -103,11 +103,11 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
           <span className="flex items-center gap-3">
             <Bloom size={20} unfurl className="shrink-0 text-[#9e4a5d]" />
             <span>
-              <span className="block text-[15px] leading-snug text-ink">{event.name}</span>
+              <span className="block text-[0.9375rem] leading-snug text-ink">{event.name}</span>
               <span className="t-caption block">{event.date}</span>
             </span>
           </span>
-          <span className="whitespace-nowrap text-[13.5px] text-[#1e5a78]">
+          <span className="whitespace-nowrap text-[0.84375rem] text-[#1e5a78]">
             {event.weeks === 1 ? "1 week away" : `${event.weeks} weeks away`}
           </span>
         </div>
@@ -164,7 +164,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
                   <div className="flex items-end justify-between gap-4">
                     <div>
                       <p className="t-label">{String(i + 1).padStart(2, "0")}</p>
-                      <h3 className="mt-1 font-display text-[26px] font-light leading-tight text-ink">
+                      <h3 className="mt-1 font-display text-[1.625rem] font-light leading-tight text-ink">
                         {CONCERNS[c.key].label}
                       </h3>
                     </div>
@@ -191,7 +191,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
       </FaceMapFocus>
 
       <details className="glass group mt-3 overflow-hidden">
-        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 text-[14.5px] text-ink [&::-webkit-details-marker]:hidden">
+        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 text-[0.90625rem] text-ink [&::-webkit-details-marker]:hidden">
           <span>
             Full analysis <span className="text-text-3">· {rest.length} more concerns</span>
           </span>
@@ -205,8 +205,8 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
         <dl className="grid grid-cols-2 gap-x-6 px-5 pb-3">
           {rest.map((c) => (
             <div key={c.key} className="flex items-baseline justify-between border-t border-[#0c1a22]/[0.07] py-3">
-              <dt className="text-[14px] text-text-2">{CONCERNS[c.key].label}</dt>
-              <dd className="font-display text-[26px] font-light leading-none text-ink">{c.ui}</dd>
+              <dt className="text-[0.875rem] text-text-2">{CONCERNS[c.key].label}</dt>
+              <dd className="font-display text-[1.625rem] font-light leading-none text-ink">{c.ui}</dd>
             </div>
           ))}
         </dl>
@@ -215,20 +215,20 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
       {report.practitionerNote && (
         <figure className="relative mt-16 overflow-hidden rounded-[24px] bg-[radial-gradient(110%_80%_at_100%_0%,rgba(255,214,196,0.6)_0%,rgba(255,214,196,0)_58%),linear-gradient(180deg,#f9fcfd_0%,#e7f1f6_100%)] px-6 py-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_22px_44px_-26px_rgba(12,44,62,0.32)] ring-1 ring-white/80">
           <figcaption className="t-label">Your practitioner&apos;s note</figcaption>
-          <blockquote className="mt-4 font-display text-[25px] font-light leading-[1.3] text-ink">
+          <blockquote className="mt-4 font-display text-[1.5625rem] font-light leading-[1.3] text-ink">
             {report.practitionerNote}
           </blockquote>
           {practitioner && (
-            <p className="mt-6 flex items-center gap-3 text-[14px] text-ink">
+            <p className="mt-6 flex items-center gap-3 text-[0.875rem] text-ink">
               <span
                 aria-hidden
-                className="grid h-10 w-10 place-items-center rounded-full bg-[linear-gradient(140deg,#ffe4d8,#f4b9a3_45%,#8fbfd6)] font-display text-[18px] text-white [text-shadow:0_1px_2px_rgba(125,52,71,0.35)]"
+                className="grid h-10 w-10 place-items-center rounded-full bg-[linear-gradient(140deg,#ffe4d8,#f4b9a3_45%,#8fbfd6)] font-display text-[1.125rem] text-white [text-shadow:0_1px_2px_rgba(125,52,71,0.35)]"
               >
                 {practitioner.name[0]}
               </span>
               <span>
                 {practitioner.name}
-                <span className="block text-[12.5px] text-text-3">{practitioner.title}</span>
+                <span className="block text-[0.78125rem] text-text-3">{practitioner.title}</span>
               </span>
             </p>
           )}
@@ -253,8 +253,8 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
         <section className="sea on-dark relative mt-16 overflow-hidden rounded-[28px] px-6 py-10 shadow-[0_40px_80px_-44px_rgba(12,26,34,0.65)]">
           <LightField variant="sea" className="opacity-60" />
           <div className="relative">
-            <h2 className="font-display text-[32px] font-light leading-tight text-white">What happens next.</h2>
-            <p className="mt-3 text-[15px] leading-relaxed text-[#dbe8ef]">
+            <h2 className="font-display text-[2rem] font-light leading-tight text-white">What happens next.</h2>
+            <p className="mt-3 text-[0.9375rem] leading-relaxed text-[#dbe8ef]">
               {clinic.name} reviews every scan and will suggest where to begin. Your plan will appear on this page. Same
               link, always private.
             </p>

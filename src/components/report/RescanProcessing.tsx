@@ -60,7 +60,7 @@ export function RescanProcessing({ token, scanId }: { token: string; scanId: str
         <Label>Progress scan</Label>
         <h1 className="t-h2 mt-4">{view.error.title}</h1>
         <p className="t-body mt-4">{view.error.instruction}</p>
-        <ButtonLink href={`/r/${token}/rescan`} block className="mt-10 !min-h-14 text-[16px]">
+        <ButtonLink href={`/r/${token}/rescan`} block className="mt-10 !min-h-14 text-[1rem]">
           Take a new photo
         </ButtonLink>
       </div>

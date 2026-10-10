@@ -137,14 +137,14 @@ export function IntakeFlow({ clinicSlug, initial, today }: { clinicSlug: string;
           <button
             type="button"
             onClick={() => setIndex(index - 1)}
-            className="group -ml-2 inline-flex min-h-11 items-center gap-2 rounded-full px-2 text-[14px] text-text-2 transition-colors duration-200 hover:text-ink"
+            className="group -ml-2 inline-flex min-h-11 items-center gap-2 rounded-full px-2 text-[0.875rem] text-text-2 transition-colors duration-200 hover:text-ink"
           >
             <IconArrowLeft width={18} height={18} className="transition-transform duration-200 group-hover:-translate-x-0.5" /> Back
           </button>
         ) : (
           <span />
         )}
-        <span className="text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]">
+        <span className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]">
           {index + 1} of {INTAKE_STEPS.length}
         </span>
       </div>
@@ -187,7 +187,7 @@ export function IntakeFlow({ clinicSlug, initial, today }: { clinicSlug: string;
               : "mt-10"
           }
         >
-          <Button type="submit" block disabled={!canContinue(step, answers) || pending} className="!min-h-14 text-[16px]">
+          <Button type="submit" block disabled={!canContinue(step, answers) || pending} className="!min-h-14 text-[1rem]">
             {pending ? "Saving" : step === "about" ? "Continue to your photo" : "Continue"}
           </Button>
           {step === "goal" && <p className="t-caption mt-3 text-center">This one is optional. You can continue without answering.</p>}
@@ -203,7 +203,7 @@ function Question({ title, hint, headingRef }: { title: string; hint?: string; h
       <h1 ref={headingRef} tabIndex={-1} className="font-display text-[clamp(32px,8.4vw,42px)] font-light leading-[1.08] tracking-[-0.015em] text-ink outline-none [text-wrap:balance]">
         {title}
       </h1>
-      {hint && <p className="mt-3 text-[16px] leading-relaxed text-text-2">{hint}</p>}
+      {hint && <p className="mt-3 text-[1rem] leading-relaxed text-text-2">{hint}</p>}
     </>
   );
 }
@@ -363,7 +363,7 @@ function Step({
           <div className="glass mt-8 divide-y divide-[#0c1a22]/[0.07] px-5">
             {SCREENING_QUESTIONS.map(([key, question]) => (
               <div key={key} className="py-5">
-                <p id={`q-${key}`} className="text-[15.5px] leading-snug text-ink">
+                <p id={`q-${key}`} className="text-[0.96875rem] leading-snug text-ink">
                   {question}
                 </p>
                 <div role="group" aria-labelledby={`q-${key}`} className="mt-3 flex flex-wrap gap-2">
@@ -409,7 +409,7 @@ function Step({
             <div>
               <p className="t-label mb-3 flex justify-between">
                 <span>Age range</span>
-                <span className="normal-case tracking-normal text-[12px]">Optional</span>
+                <span className="normal-case tracking-normal text-[0.75rem]">Optional</span>
               </p>
               <div role="group" aria-label="Age range" className="flex flex-wrap gap-2">
                 {AGE_OPTIONS.map(([value, label]) => (

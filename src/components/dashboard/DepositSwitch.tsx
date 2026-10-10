@@ -26,7 +26,7 @@ export function DepositSwitch({ initial, amount }: { initial: boolean; amount: s
   return (
     <div>
       <div className="flex items-center justify-between gap-6">
-        <span id="deposit-label" className="text-[15px] text-ink">
+        <span id="deposit-label" className="text-[0.9375rem] text-ink">
           Take a {amount} deposit at booking
         </span>
         <button
@@ -53,12 +53,12 @@ export function DepositSwitch({ initial, amount }: { initial: boolean; amount: s
           />
         </button>
       </div>
-      <p id="deposit-help" className="t-caption mt-2 max-w-xl !text-[13px]">
+      <p id="deposit-help" className="t-caption mt-2 max-w-xl !text-[0.8125rem]">
         {on
           ? `Clients pay ${amount} through Stripe to hold their time. It goes toward the visit and comes back in full if they cancel up to 24 hours before.`
           : "Clients choose a time and they're booked. No payment is taken until the visit."}
       </p>
-      <p aria-live="polite" className="mt-2 min-h-[1.25em] text-[13px] text-[#1e5a78]">
+      <p aria-live="polite" className="mt-2 min-h-[1.25em] text-[0.8125rem] text-[#1e5a78]">
         {status}
       </p>
     </div>

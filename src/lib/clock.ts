@@ -2,12 +2,20 @@
 // Real time is still used for security concerns: token expiry, rate limits, auto-delete.
 
 const DAY_MS = 86_400_000;
+const MINUTE_MS = 60_000;
 
 export interface ClockConfig {
   /** "YYYY-MM-DD" to pin the demo calendar, or undefined for real time. */
   demoToday?: string;
   /** Days moved forward by time travel. */
   offsetDays?: number;
+  /** Minutes beyond those days, from a jump to the next opening (D-091). */
+  offsetMinutes?: number;
+}
+
+/** The clock settings a sandbox carries, ready for `virtualNow`. */
+export function sandboxClock(demoToday: string | undefined, sandbox: { clockOffsetDays: number; clockOffsetMinutes?: number } | null): ClockConfig {
+  return { demoToday, offsetDays: sandbox?.clockOffsetDays ?? 0, offsetMinutes: sandbox?.clockOffsetMinutes ?? 0 };
 }
 
 export function virtualNow(config: ClockConfig = {}, realNow: Date = new Date()): Date {
@@ -18,7 +26,13 @@ export function virtualNow(config: ClockConfig = {}, realNow: Date = new Date())
     const pinned = Date.UTC(y, m - 1, d, realNow.getUTCHours(), realNow.getUTCMinutes(), realNow.getUTCSeconds());
     base = pinned;
   }
-  return new Date(base + (config.offsetDays ?? 0) * DAY_MS);
+  return new Date(base + (config.offsetDays ?? 0) * DAY_MS + (config.offsetMinutes ?? 0) * MINUTE_MS);
+}
+
+/** A clock offset as whole days plus the minutes left over (0 to 1439). */
+export function splitOffset(totalMinutes: number): { days: number; minutes: number } {
+  const days = Math.floor(totalMinutes / 1440);
+  return { days, minutes: totalMinutes - days * 1440 };
 }
 
 export function addDays(date: Date, days: number): Date {

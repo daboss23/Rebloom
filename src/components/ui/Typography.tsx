@@ -13,8 +13,8 @@ export function Hairline({ className, dark }: { className?: string; dark?: boole
 export function ScoreNumber({ value, size = "lg", className }: { value: number; size?: "lg" | "md"; className?: string }) {
   return (
     <span className={cx("inline-flex items-baseline", className)}>
-      <span className={cx("t-score", size === "md" && "!text-[30px]")}>{Math.round(value)}</span>
-      {size === "lg" && <span className="ml-1 text-[12px] text-text-3">/100</span>}
+      <span className={cx("t-score", size === "md" && "!text-[1.875rem]")}>{Math.round(value)}</span>
+      {size === "lg" && <span className="ml-1 text-[0.75rem] text-text-3">/100</span>}
     </span>
   );
 }

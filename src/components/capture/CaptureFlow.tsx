@@ -181,7 +181,7 @@ export function CaptureFlow({ clinicSlug, rescan }: { clinicSlug: string; rescan
           {cameraUnavailable && <Notice>{cameraUnavailable}</Notice>}
           <div className="mt-10 space-y-3">
             {!cameraUnavailable && (
-              <Button block onClick={() => setPhase({ kind: "camera" })} className="!min-h-14 text-[16px]">
+              <Button block onClick={() => setPhase({ kind: "camera" })} className="!min-h-14 text-[1rem]">
                 Open the camera
               </Button>
             )}
@@ -242,7 +242,7 @@ export function CaptureFlow({ clinicSlug, rescan }: { clinicSlug: string; rescan
             {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview */}
             <img src={phase.shot.url} alt="Your photo" className="absolute inset-0 h-full w-full object-cover" />
             {phase.shot.quality.passedGate && (
-              <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-ink backdrop-blur-sm">
+              <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1 text-[0.6875rem] uppercase tracking-[0.14em] text-ink backdrop-blur-sm">
                 <IconCheckCircle aria-hidden width={14} height={14} className="text-[var(--growth)]" />
                 Quality checked
               </span>
@@ -250,7 +250,7 @@ export function CaptureFlow({ clinicSlug, rescan }: { clinicSlug: string; rescan
           </div>
           {phase.kind === "submit-failed" && <Notice>{phase.message}</Notice>}
           <div className="mt-8 space-y-3">
-            <Button block disabled={phase.kind === "submitting"} onClick={() => void submit(phase.shot)} className="!min-h-14 text-[16px]">
+            <Button block disabled={phase.kind === "submitting"} onClick={() => void submit(phase.shot)} className="!min-h-14 text-[1rem]">
               {phase.kind === "submitting" ? "Sending" : phase.kind === "submit-failed" ? "Try again" : "Use this photo"}
             </Button>
             <Button
@@ -280,11 +280,11 @@ function InAppNotice() {
   const [copied, setCopied] = useState(false);
   return (
     <div className="glass mb-8 px-5 py-4">
-      <p className="text-[14px] text-ink">For the camera to work, open this page in Safari or Chrome.</p>
+      <p className="text-[0.875rem] text-ink">For the camera to work, open this page in Safari or Chrome.</p>
       <p className="t-caption mt-1">In-app browsers often block the camera. Uploading a photo still works here.</p>
       <button
         type="button"
-        className="mt-3 inline-flex items-center gap-2 min-h-11 text-[14px] text-ink underline underline-offset-4"
+        className="mt-3 inline-flex items-center gap-2 min-h-11 text-[0.875rem] text-ink underline underline-offset-4"
         onClick={async () => {
           await navigator.clipboard?.writeText(window.location.href).catch(() => undefined);
           setCopied(true);

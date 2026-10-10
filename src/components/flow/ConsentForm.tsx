@@ -23,7 +23,7 @@ export function ConsentForm({ clinicSlug, clinicName }: { clinicSlug: string; cl
       {state?.error && <FormAlert>{state.error}</FormAlert>}
 
       <div className="pt-2">
-        <Button type="submit" block disabled={!agreed || pending} className="!min-h-14 text-[16px]">
+        <Button type="submit" block disabled={!agreed || pending} className="!min-h-14 text-[1rem]">
           {pending ? "One moment" : "Continue"}
         </Button>
         <p className="t-caption mt-4 text-center">

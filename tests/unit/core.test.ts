@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { MAISON_VERRE, TIDEWATER } from "@/data/clinics";
 import { SEED_PRODUCTS, SEED_TREATMENTS } from "@/data/menu";
 import { contrastRatio, onAccent } from "@/lib/brand";
-import { formatLongDate, isoDateInZone, virtualNow } from "@/lib/clock";
+import { formatLongDate, isoDateInZone, splitOffset, virtualNow } from "@/lib/clock";
+import { nextOpening, offsetTo } from "@/lib/demo/next-opening";
 import { checkCopy, stripEmDashes } from "@/lib/copy/check";
 import { CONCERNS, SCORED_CONCERNS } from "@/lib/skin/concerns";
 import { normalizeResult, priorities } from "@/lib/skin/normalize";
@@ -30,6 +31,26 @@ describe("virtual clock", () => {
   });
   it("moves forward with time travel", () => {
     expect(virtualNow({ demoToday: "2026-12-29", offsetDays: 7 }, real).toISOString().slice(0, 10)).toBe("2027-01-05");
+  });
+  it("adds the minutes from a jump to the next opening", () => {
+    expect(virtualNow({ offsetDays: 1, offsetMinutes: 90 }, real).toISOString()).toBe("2026-11-11T20:00:00.000Z");
+    expect(splitOffset(1530)).toEqual({ days: 1, minutes: 90 });
+    expect(splitOffset(45)).toEqual({ days: 0, minutes: 45 });
+  });
+  it("jumps to the next opening, in the clinic's zone", () => {
+    const clinic = { timezone: "America/Los_Angeles", hours: { days: { 2: { open: "10:00", close: "18:00" }, 6: { open: "10:00", close: "18:00" } }, slotMinutes: 30 } };
+    // Friday 8:57pm in Los Angeles: closed for the night, so Saturday at ten.
+    expect(nextOpening(new Date("2026-10-10T03:57:00Z"), clinic)?.toISOString()).toBe("2026-10-10T17:00:00.000Z");
+    // Saturday at eight: later the same morning.
+    expect(nextOpening(new Date("2026-10-10T15:00:00Z"), clinic)?.toISOString()).toBe("2026-10-10T17:00:00.000Z");
+    // Saturday at noon, already open: the next open day is Tuesday.
+    expect(nextOpening(new Date("2026-10-10T19:00:00Z"), clinic)?.toISOString()).toBe("2026-10-13T17:00:00.000Z");
+    expect(nextOpening(new Date(), { timezone: "America/Los_Angeles", hours: { days: {}, slotMinutes: 30 } })).toBeNull();
+    // The offset lands on the opening, rounded up to the minute.
+    const base = new Date("2026-10-10T03:57:30Z");
+    const { days, minutes } = offsetTo(new Date("2026-10-10T17:00:00Z"), base);
+    expect(virtualNow({ offsetDays: days, offsetMinutes: minutes }, base).getTime()).toBeGreaterThanOrEqual(Date.parse("2026-10-10T17:00:00Z"));
+    expect({ days, minutes }).toEqual({ days: 0, minutes: 783 });
   });
   it("formats US dates in the clinic's zone", () => {
     expect(formatLongDate("2026-10-05T18:00:00Z", "America/Los_Angeles")).toBe("October 5, 2026");

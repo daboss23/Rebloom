@@ -7,7 +7,7 @@ import { cookies, headers } from "next/headers";
 import { env, localSecret } from "@/lib/env";
 import { newId } from "@/lib/ids";
 import { getStore } from "@/lib/store";
-import { virtualNow } from "@/lib/clock";
+import { sandboxClock, virtualNow } from "@/lib/clock";
 
 export const SANDBOX_COOKIE = "rb_sandbox";
 export const SANDBOX_TTL_DAYS = 30;
@@ -59,7 +59,7 @@ export async function clearVisitClientId(clinicSlug: string): Promise<void> {
 export async function sandboxNow(): Promise<Date> {
   const id = await readSandboxId();
   const sandbox = id ? await getStore().getSandbox(id) : null;
-  return virtualNow({ demoToday: env.DEMO_TODAY, offsetDays: sandbox?.clockOffsetDays ?? 0 });
+  return virtualNow(sandboxClock(env.DEMO_TODAY, sandbox));
 }
 
 /** Salted hash of the caller's IP. Raw IPs are never stored (DECISIONS D-015). */

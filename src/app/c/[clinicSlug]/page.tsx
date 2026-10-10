@@ -5,7 +5,7 @@ import { startOver } from "./actions";
 
 const PROMISES = [
   ["Your three priorities", "Not fifteen numbers. The three things worth your attention, in plain words.", <IconCheckCircle key="p" width={18} height={18} />],
-  ["A plan with real prices", "Built only from our treatment menu, mapped to dates, with every price upfront.", <span key="m" className="gold-foil font-display text-[24px] leading-none">$</span>],
+  ["A plan with real prices", "Built only from our treatment menu, mapped to dates, with every price upfront.", <span key="m" className="gold-foil font-display text-[1.5rem] leading-none">$</span>],
   ["Private, and yours to delete", "One private link. Delete your photo and details whenever you like.", <IconLock key="l" width={18} height={18} />],
 ] as const;
 
@@ -20,20 +20,20 @@ export default async function ScanStartPage({ params }: PageProps<"/c/[clinicSlu
         // eslint-disable-next-line @next/next/no-img-element -- static brand lockup
         <img src={clinic.lockupUrl} alt={clinic.name} width={240} height={110} className="focus-in mx-auto mb-12 h-auto w-[200px]" />
       )}
-      <p className="focus-in flex items-center gap-3 text-[11px] uppercase tracking-[0.22em] text-[#1e5a78]" style={{ animationDelay: "60ms" }}>
+      <p className="focus-in flex items-center gap-3 text-[0.6875rem] uppercase tracking-[0.22em] text-[#1e5a78]" style={{ animationDelay: "60ms" }}>
         <span aria-hidden className="block h-[2px] w-8 rounded-full bg-accent" />
         {clinic.name} · {clinic.city}
       </p>
       <h1 className="t-h1 focus-in mt-5" style={{ animationDelay: "120ms" }}>
         See your skin clearly.
       </h1>
-      <p className="focus-in mt-5 max-w-[30rem] text-[16.5px] leading-relaxed text-text-2" style={{ animationDelay: "180ms" }}>
+      <p className="focus-in mt-5 max-w-[30rem] text-[1.03125rem] leading-relaxed text-text-2" style={{ animationDelay: "180ms" }}>
         A short photo scan, read by AI skin analysis and reviewed by our practitioners. You&apos;ll get a private report
         that shows what we see, and where we&apos;d begin.
       </p>
 
       <div className="focus-in mt-10" style={{ animationDelay: "240ms" }}>
-        <ButtonLink href={`/c/${clinic.slug}/consent`} block className="group !min-h-14 text-[16px]">
+        <ButtonLink href={`/c/${clinic.slug}/consent`} block className="group !min-h-14 text-[1rem]">
           {resume ? "Pick up where you left off" : "Begin"}
           <IconArrowRight width={18} height={18} aria-hidden className="transition-transform duration-300 ease-out group-hover:translate-x-1" />
         </ButtonLink>
@@ -58,7 +58,7 @@ export default async function ScanStartPage({ params }: PageProps<"/c/[clinicSlu
               {mark}
             </span>
             <div>
-              <h2 className="font-display text-[22px] font-light leading-snug text-ink">{title}</h2>
+              <h2 className="font-display text-[1.375rem] font-light leading-snug text-ink">{title}</h2>
               <p className="t-body mt-1">{body}</p>
             </div>
           </li>

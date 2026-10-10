@@ -21,10 +21,10 @@ export function ClientPagePreview({ clinic, className }: { clinic: Pick<Clinic, 
         <ClinicWordmark clinic={clinic} />
       </span>
       <span aria-hidden className="mt-9 block h-[2px] w-8 rounded-full bg-accent" />
-      <span className="mt-3 block font-display text-[30px] font-light leading-tight text-ink">See your skin clearly.</span>
+      <span className="mt-3 block font-display text-[1.875rem] font-light leading-tight text-ink">See your skin clearly.</span>
       <span
         aria-hidden
-        className="mt-5 inline-flex h-9 items-center rounded-[10px] bg-[linear-gradient(100deg,#c99645_0%,#f1d49a_45%,#d9ae62_70%,#b98a3c_100%)] px-4 text-[12.5px] text-[#1a1206] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_8px_18px_-10px_rgba(201,150,69,0.8)]"
+        className="mt-5 inline-flex h-9 items-center rounded-[10px] bg-[linear-gradient(100deg,#c99645_0%,#f1d49a_45%,#d9ae62_70%,#b98a3c_100%)] px-4 text-[0.78125rem] text-[#1a1206] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_8px_18px_-10px_rgba(201,150,69,0.8)]"
       >
         Begin
       </span>

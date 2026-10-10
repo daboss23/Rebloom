@@ -84,8 +84,11 @@ export interface Store {
   expiredSandboxes(before: Date, limit: number): Promise<{ ids: string[]; storagePaths: string[] }>;
   /** Deletes sandboxes and everything in them, keeping api_usage so spent units stay counted. */
   deleteSandboxes(ids: string[]): Promise<void>;
-  /** Time travel (DECISIONS D-016): how many days this sandbox's clock runs ahead. Never backwards. */
-  setClockOffset(sandboxId: string, days: number): Promise<Sandbox>;
+  /**
+   * Time travel (DECISIONS D-016): how far this sandbox's clock runs ahead, in days and, after a jump to the next
+   * opening (D-091), minutes. Never backwards. Without `minutes`, the minutes already set stay as they are.
+   */
+  setClockOffset(sandboxId: string, days: number, minutes?: number): Promise<Sandbox>;
   /**
    * Copies the demo clients into a sandbox, all or nothing (DECISIONS D-014). False when this sandbox
    * already has its copy for the clinic, including when a racing request has just made it.

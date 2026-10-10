@@ -77,10 +77,10 @@ export default async function SettingsPage() {
       {/* ---------- Menu ---------- */}
       <section id="menu" aria-labelledby="menu-title" className="glass focus-in mt-10 scroll-mt-28 p-6 sm:p-8">
         <div className="flex flex-wrap items-baseline justify-between gap-4">
-          <h2 id="menu-title" className="font-display text-[34px] font-light text-ink">
+          <h2 id="menu-title" className="font-display text-[2.125rem] font-light text-ink">
             Menu
           </h2>
-          <p className="t-caption !text-[12.5px]">The only list the AI may recommend from. Demo prices.</p>
+          <p className="t-caption !text-[0.78125rem]">The only list the AI may recommend from. Demo prices.</p>
         </div>
         <table className="mt-5 w-full border-collapse text-left">
           <caption className="sr-only">Treatments</caption>
@@ -96,15 +96,15 @@ export default async function SettingsPage() {
             {treatments.map((t) => (
               <tr key={t.id} className="border-b border-[#0c1a22]/[0.06] align-top last:border-0">
                 <td className="py-4 pr-4">
-                  <p className="text-[15px] text-ink">{t.name}</p>
-                  <p className="t-caption mt-0.5 max-w-md !text-[13px]">{t.description}</p>
+                  <p className="text-[0.9375rem] text-ink">{t.name}</p>
+                  <p className="t-caption mt-0.5 max-w-md !text-[0.8125rem]">{t.description}</p>
                 </td>
-                <td className="hidden py-4 pr-4 text-[14px] text-text-2 md:table-cell">
+                <td className="hidden py-4 pr-4 text-[0.875rem] text-text-2 md:table-cell">
                   {t.sessionsTypical ? `${t.sessionsTypical} sessions` : "Ongoing"}
-                  <span className="t-caption block !text-[12.5px]">{interval(t.intervalDaysMin, t.intervalDaysMax)}</span>
+                  <span className="t-caption block !text-[0.78125rem]">{interval(t.intervalDaysMin, t.intervalDaysMax)}</span>
                 </td>
-                <td className="hidden py-4 pr-4 text-[13.5px] text-text-2 lg:table-cell">{t.concerns.map(concernLabel).join(", ")}</td>
-                <td className="py-4 text-right font-display text-[26px] font-light text-ink">{formatPrice(t.priceCents)}</td>
+                <td className="hidden py-4 pr-4 text-[0.84375rem] text-text-2 lg:table-cell">{t.concerns.map(concernLabel).join(", ")}</td>
+                <td className="py-4 text-right font-display text-[1.625rem] font-light text-ink">{formatPrice(t.priceCents)}</td>
               </tr>
             ))}
           </tbody>
@@ -123,11 +123,11 @@ export default async function SettingsPage() {
             {products.map((p) => (
               <tr key={p.id} className="border-b border-[#0c1a22]/[0.06] align-top last:border-0">
                 <td className="py-4 pr-4">
-                  <p className="text-[15px] text-ink">{p.name}</p>
-                  <p className="t-caption mt-0.5 max-w-md !text-[13px]">{p.description}</p>
+                  <p className="text-[0.9375rem] text-ink">{p.name}</p>
+                  <p className="t-caption mt-0.5 max-w-md !text-[0.8125rem]">{p.description}</p>
                 </td>
-                <td className="hidden py-4 pr-4 text-[13.5px] text-text-2 lg:table-cell">{p.concerns.map(concernLabel).join(", ")}</td>
-                <td className="py-4 text-right font-display text-[22px] font-light text-ink tabular-nums">{formatPrice(p.priceCents)}</td>
+                <td className="hidden py-4 pr-4 text-[0.84375rem] text-text-2 lg:table-cell">{p.concerns.map(concernLabel).join(", ")}</td>
+                <td className="py-4 text-right font-display text-[1.375rem] font-light text-ink tabular-nums">{formatPrice(p.priceCents)}</td>
               </tr>
             ))}
           </tbody>
@@ -136,10 +136,10 @@ export default async function SettingsPage() {
 
       {/* ---------- Brand ---------- */}
       <section id="brand" aria-labelledby="brand-title" className="glass focus-in mt-6 scroll-mt-28 p-6 sm:p-8">
-        <h2 id="brand-title" className="font-display text-[34px] font-light text-ink">
+        <h2 id="brand-title" className="font-display text-[2.125rem] font-light text-ink">
           Brand
         </h2>
-        <p className="t-caption mt-1 !text-[12.5px]">
+        <p className="t-caption mt-1 !text-[0.78125rem]">
           What clients see on their scan and report: your name, logo and accent. Rebloom is one small line at the foot of
           the page.
         </p>
@@ -152,8 +152,8 @@ export default async function SettingsPage() {
               ["Accent", clinic.accentHex.toUpperCase()],
             ].map(([term, value]) => (
               <div key={term} className="flex items-baseline justify-between gap-4 border-b border-[#0c1a22]/[0.06] py-3 last:border-0">
-                <dt className="t-label !text-[10.5px]">{term}</dt>
-                <dd className="flex items-center gap-2 text-[14px] text-ink">
+                <dt className="t-label !text-[0.65625rem]">{term}</dt>
+                <dd className="flex items-center gap-2 text-[0.875rem] text-ink">
                   {term === "Accent" && <span aria-hidden className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: clinic.accentHex }} />}
                   {value}
                 </dd>
@@ -165,14 +165,14 @@ export default async function SettingsPage() {
 
       {/* ---------- Booking (DECISIONS D-065, D-066) ---------- */}
       <section id="booking" aria-labelledby="booking-title" className="glass focus-in mt-6 scroll-mt-28 p-6 sm:p-8">
-        <h2 id="booking-title" className="font-display text-[34px] font-light text-ink">
+        <h2 id="booking-title" className="font-display text-[2.125rem] font-light text-ink">
           Booking
         </h2>
-        <p className="t-caption mt-1 !text-[12.5px]">How clients book from their report. Times come from your hours and the menu.</p>
+        <p className="t-caption mt-1 !text-[0.78125rem]">How clients book from their report. Times come from your hours and the menu.</p>
         <div className="mt-6 rounded-[16px] bg-white/70 p-6 ring-1 ring-inset ring-white">
           <DepositSwitch initial={settings.depositRequired} amount={formatPrice(clinic.depositCents)} />
           {settings.depositRequired && !env.STRIPE_SECRET_KEY && (
-            <p className="t-caption -mt-1 !text-[13px] text-[#7a4210]">Stripe isn&apos;t connected yet, so no deposit is taken until it is.</p>
+            <p className="t-caption -mt-1 !text-[0.8125rem] text-[#7a4210]">Stripe isn&apos;t connected yet, so no deposit is taken until it is.</p>
           )}
         </div>
         <dl className="mt-4">
@@ -182,8 +182,8 @@ export default async function SettingsPage() {
             ["Cancelling", `Online, up to ${NOTICE_HOURS} hours before. After that, clients call you.`],
           ].map(([term, value]) => (
             <div key={term} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-[#0c1a22]/[0.06] py-3.5 last:border-0">
-              <dt className="t-label !text-[10.5px]">{term}</dt>
-              <dd className="text-[14px] text-ink">{value}</dd>
+              <dt className="t-label !text-[0.65625rem]">{term}</dt>
+              <dd className="text-[0.875rem] text-ink">{value}</dd>
             </div>
           ))}
         </dl>
@@ -191,19 +191,19 @@ export default async function SettingsPage() {
 
       {/* ---------- Replies (DECISIONS D-087) ---------- */}
       <section id="replies" aria-labelledby="replies-title" className="glass focus-in mt-6 scroll-mt-28 p-6 sm:p-8">
-        <h2 id="replies-title" className="font-display text-[34px] font-light text-ink">
+        <h2 id="replies-title" className="font-display text-[2.125rem] font-light text-ink">
           Replies
         </h2>
-        <p className="t-caption mt-1 max-w-2xl !text-[12.5px]">
+        <p className="t-caption mt-1 max-w-2xl !text-[0.78125rem]">
           When a client writes back, hear about it straight away, with their words and a link to answer. A few lines in a row
           send one alert.
         </p>
         <div className="mt-6 rounded-[16px] bg-white/70 p-6 ring-1 ring-inset ring-white">
           <ReplyAlerts email={settings.alertEmail} phone={settings.alertPhone ? formatUsPhone(settings.alertPhone) : null} textsLive={features.sms} />
-          {!features.email && <p className="t-caption mt-1 !text-[13px] text-[#7a4210]">Email isn&apos;t connected yet, so alerts can&apos;t be emailed until it is.</p>}
+          {!features.email && <p className="t-caption mt-1 !text-[0.8125rem] text-[#7a4210]">Email isn&apos;t connected yet, so alerts can&apos;t be emailed until it is.</p>}
         </div>
         {env.DEMO_MODE && (
-          <p className="t-caption mt-4 !text-[12.5px]">
+          <p className="t-caption mt-4 !text-[0.78125rem]">
             Demo: alerts cover this browser&apos;s clients, including replies to the copies you send yourself.
           </p>
         )}
@@ -211,23 +211,23 @@ export default async function SettingsPage() {
 
       {/* ---------- Connects to ---------- */}
       <section id="connects" aria-labelledby="connects-title" className="glass focus-in mt-6 scroll-mt-28 p-6 sm:p-8">
-        <h2 id="connects-title" className="font-display text-[34px] font-light text-ink">
+        <h2 id="connects-title" className="font-display text-[2.125rem] font-light text-ink">
           Connects to
         </h2>
         <ul className="mt-5">
           <li className="flex flex-wrap items-baseline justify-between gap-4 border-b border-[#0c1a22]/[0.06] py-4">
             <span>
-              <span className="text-[15px] text-ink">Stripe</span>
-              <span className="t-caption ml-3 !text-[13px]">Deposits at booking</span>
+              <span className="text-[0.9375rem] text-ink">Stripe</span>
+              <span className="t-caption ml-3 !text-[0.8125rem]">Deposits at booking</span>
             </span>
-            <span className="text-[13px] text-text-2">{env.STRIPE_SECRET_KEY ? "Connected · Test mode" : "Test mode · Not connected yet"}</span>
+            <span className="text-[0.8125rem] text-text-2">{env.STRIPE_SECRET_KEY ? "Connected · Test mode" : "Test mode · Not connected yet"}</span>
           </li>
           <li className="flex flex-wrap items-baseline justify-between gap-4 border-b border-[#0c1a22]/[0.06] py-4">
             <span>
-              <span className="text-[15px] text-ink">Email</span>
-              <span className="t-caption ml-3 !text-[13px]">Reports and rebook messages</span>
+              <span className="text-[0.9375rem] text-ink">Email</span>
+              <span className="t-caption ml-3 !text-[0.8125rem]">Reports and rebook messages</span>
             </span>
-            <span className="text-[13px] text-text-2">
+            <span className="text-[0.8125rem] text-text-2">
               {env.DEMO_MODE ? "Demo mode · Logged, not sent" : features.email ? "Connected" : "Not connected yet"}
             </span>
           </li>
@@ -235,9 +235,9 @@ export default async function SettingsPage() {
         <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {CONNECTS_TO.map(([name, what]) => (
             <li key={name} className="lift sheen relative rounded-[16px] bg-white/70 p-6 ring-1 ring-inset ring-white shadow-[0_16px_32px_-24px_rgba(12,44,62,0.4)]">
-              <p className="text-[15px] text-ink">{name}</p>
-              <p className="t-caption mt-1 !text-[13px]">{what}</p>
-              <p className="mt-6 inline-flex rounded-full bg-[#9fc9dd]/30 px-2.5 py-1 text-[10.5px] uppercase tracking-[0.14em] text-[#174a63]">Coming soon</p>
+              <p className="text-[0.9375rem] text-ink">{name}</p>
+              <p className="t-caption mt-1 !text-[0.8125rem]">{what}</p>
+              <p className="mt-6 inline-flex rounded-full bg-[#9fc9dd]/30 px-2.5 py-1 text-[0.65625rem] uppercase tracking-[0.14em] text-[#174a63]">Coming soon</p>
             </li>
           ))}
         </ul>

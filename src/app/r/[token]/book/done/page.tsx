@@ -21,7 +21,7 @@ export default async function BookedPage({ params }: PageProps<"/r/[token]/book/
 
   return (
     <article className="booking pb-4 pt-8">
-      <Link href={`/r/${token}`} className="t-caption inline-flex min-h-11 items-center gap-2 !text-[13.5px] text-text-2 hover:text-ink">
+      <Link href={`/r/${token}`} className="t-caption inline-flex min-h-11 items-center gap-2 !text-[0.84375rem] text-text-2 hover:text-ink">
         <IconArrowLeft width={16} height={16} />
         Your report
       </Link>
@@ -40,7 +40,7 @@ export default async function BookedPage({ params }: PageProps<"/r/[token]/book/
         sessionLabel={ctx.upcomingSession}
         today={ctx.today}
       />
-      <Link href={`/r/${token}`} className="btn-gold mt-8 !h-14 w-full text-[16px]">
+      <Link href={`/r/${token}`} className="btn-gold mt-8 !h-14 w-full text-[1rem]">
         Back to your report
       </Link>
     </article>

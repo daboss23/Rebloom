@@ -32,13 +32,13 @@ export function NoteEditor({ clientId, initial, author }: { clientId: string; in
           }}
           rows={4}
           placeholder="A line or two, in your own words, for their report."
-          className="mt-3 w-full resize-y rounded-[14px] border border-[#0c1a22]/10 bg-white/75 px-5 py-4 font-display text-[22px] leading-snug text-ink outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-text-3 focus:border-[#1e5a78]/50 focus:shadow-[0_0_0_4px_rgba(159,201,221,0.35)]"
+          className="mt-3 w-full resize-y rounded-[14px] border border-[#0c1a22]/10 bg-white/75 px-5 py-4 font-display text-[1.375rem] leading-snug text-ink outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-text-3 focus:border-[#1e5a78]/50 focus:shadow-[0_0_0_4px_rgba(159,201,221,0.35)]"
         />
       </label>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <span className="t-caption !text-[12.5px]">{author}</span>
+        <span className="t-caption !text-[0.78125rem]">{author}</span>
         <span className="flex items-center gap-4">
-          <span role="status" className="t-caption !text-[12.5px]">
+          <span role="status" className="t-caption !text-[0.78125rem]">
             {status?.text}
           </span>
           <button

@@ -41,7 +41,7 @@ export default function ComponentGallery() {
           {TOKENS.map(([name, hex, token]) => (
             <li key={token} className="border border-mist">
               <span className="block h-16" style={{ background: hex }} />
-              <span className="block p-2 text-[13px] text-ink">{name}</span>
+              <span className="block p-2 text-[0.8125rem] text-ink">{name}</span>
               <span className="block px-2 pb-2 t-caption">
                 {hex} · {token}
               </span>

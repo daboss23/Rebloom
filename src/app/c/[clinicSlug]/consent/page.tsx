@@ -43,7 +43,7 @@ export default async function ConsentPage({ params }: PageProps<"/c/[clinicSlug]
       <dl className="glass focus-in mt-8 divide-y divide-[#0c1a22]/[0.07] px-5" style={{ animationDelay: "200ms" }}>
         {sections.map(([term, detail]) => (
           <div key={term} className="py-5">
-            <dt className="font-display text-[21px] font-light leading-snug text-ink">{term}</dt>
+            <dt className="font-display text-[1.3125rem] font-light leading-snug text-ink">{term}</dt>
             <dd className="t-body mt-1">{detail}</dd>
           </div>
         ))}

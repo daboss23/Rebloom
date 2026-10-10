@@ -20,7 +20,7 @@ export function MonthBars({ months, title }: { months: MonthBar[]; title: string
           return (
             <div key={m.month} className="group relative flex h-full flex-col justify-end">
               <span
-                className={cx("mb-2 text-center text-[12.5px] tabular-nums transition-colors duration-200 group-hover:text-ink", m.current ? "text-[#7a5014]" : "text-text-3")}
+                className={cx("mb-2 text-center text-[0.78125rem] tabular-nums transition-colors duration-200 group-hover:text-ink", m.current ? "text-[#7a5014]" : "text-text-3")}
                 style={{ marginBottom: 8 }}
               >
                 {m.cents ? formatPrice(m.cents) : ""}
@@ -40,12 +40,12 @@ export function MonthBars({ months, title }: { months: MonthBar[]; title: string
       </div>
       <div aria-hidden className="mt-3 grid grid-flow-col auto-cols-fr gap-3 sm:gap-5">
         {months.map((m) => (
-          <span key={m.month} className={cx("text-center text-[12.5px] uppercase tracking-[0.12em]", m.current ? "text-[#7a5014]" : "text-text-3")}>
+          <span key={m.month} className={cx("text-center text-[0.78125rem] uppercase tracking-[0.12em]", m.current ? "text-[#7a5014]" : "text-text-3")}>
             {m.label}
           </span>
         ))}
       </div>
-      <figcaption className="t-caption mt-5 !text-[12.5px]">
+      <figcaption className="t-caption mt-5 !text-[0.78125rem]">
         The gold bar is this month so far, with visits already booked for later in the month.
       </figcaption>
       <table className="sr-only">

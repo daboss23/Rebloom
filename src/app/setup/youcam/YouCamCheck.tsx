@@ -116,7 +116,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="border-t border-mist py-4">
       <dt className="t-label">{label}</dt>
-      <dd className="mt-1 text-[15px] text-ink">{children}</dd>
+      <dd className="mt-1 text-[0.9375rem] text-ink">{children}</dd>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { cx } from "./cx";
 
 // Glass fields (DECISIONS D-061). 16px text, so phones don't zoom in when a field takes focus.
 const control =
-  "w-full rounded-[12px] border border-[#0c1a22]/10 bg-white/80 px-4 text-[16px] text-ink placeholder:text-text-3 " +
+  "w-full rounded-[12px] border border-[#0c1a22]/10 bg-white/80 px-4 text-[1rem] text-ink placeholder:text-text-3 " +
   "outline-none transition-[border-color,box-shadow,background-color] duration-200 " +
   "focus:border-[#1e5a78]/50 focus:bg-white focus:shadow-[0_0_0_4px_rgba(159,201,221,0.35)] " +
   // A field the server turned back wears the form alert's amber until it's corrected.
@@ -13,7 +13,7 @@ export function FieldLabel({ htmlFor, children, optional }: { htmlFor: string; c
   return (
     <label htmlFor={htmlFor} className="t-label mb-2 flex justify-between">
       <span>{children}</span>
-      {optional && <span className="normal-case tracking-normal text-[12px]">Optional</span>}
+      {optional && <span className="normal-case tracking-normal text-[0.75rem]">Optional</span>}
     </label>
   );
 }

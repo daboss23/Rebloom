@@ -2,7 +2,7 @@ import "server-only";
 // Where a reply lands (DECISIONS D-081). The webhooks verify the provider's signature, then hand the message here:
 // it finds the client, keeps only their new words, and adds it to their conversation once.
 
-import { virtualNow } from "@/lib/clock";
+import { sandboxClock, virtualNow } from "@/lib/clock";
 import type { Client, Message } from "@/lib/domain";
 import { env } from "@/lib/env";
 import { getStore } from "@/lib/store";
@@ -70,7 +70,7 @@ export async function clientForPhone(phone: string): Promise<Client | null> {
  */
 export async function conversationTime(client: Client, messages: Message[], real?: Date): Promise<string> {
   const sandbox = client.sandboxId ? await getStore().getSandbox(client.sandboxId) : null;
-  const clock = virtualNow({ demoToday: env.DEMO_TODAY, offsetDays: sandbox?.clockOffsetDays ?? 0 }, real);
+  const clock = virtualNow(sandboxClock(env.DEMO_TODAY, sandbox), real);
   const latest = messages.reduce((t, m) => Math.max(t, Date.parse(at(m))), 0);
   return new Date(Math.max(clock.getTime(), latest + 1000)).toISOString();
 }

@@ -34,24 +34,24 @@ export default async function InsightsPage() {
         <div className="sea on-dark focus-in relative overflow-hidden rounded-[28px] p-8 shadow-[0_40px_80px_-40px_rgba(12,26,34,0.7)] sm:p-10" style={{ animationDelay: "60ms" }}>
           <LightField variant="sea" className="opacity-60" />
           <div className="relative flex h-full flex-col">
-            <h2 id="kept" className="text-[11px] uppercase tracking-[0.22em] text-[#e2c07a]">
+            <h2 id="kept" className="text-[0.6875rem] uppercase tracking-[0.22em] text-[#e2c07a]">
               Revenue kept through rebooking
             </h2>
             <p className="gold-foil mt-6 font-display text-[clamp(72px,9vw,128px)] font-light leading-[0.9] tracking-[-0.035em]">
               <CountUp value={Math.round(insights.keptCents / 100)} format="money" duration={1600} delay={200} />
             </p>
-            <p className="mt-6 max-w-sm text-[15px] leading-relaxed text-[#dbe8ef]">
+            <p className="mt-6 max-w-sm text-[0.9375rem] leading-relaxed text-[#dbe8ef]">
               Every treatment visit after a client&apos;s first, over the last six months. The second visit, and every one
               after it.
             </p>
-            <p className="mt-auto pt-8 text-[13px] text-ink-soft">
+            <p className="mt-auto pt-8 text-[0.8125rem] text-ink-soft">
               This month so far: <span className="text-white">{formatPrice(insights.keptThisMonthCents)}</span>
             </p>
           </div>
         </div>
 
         <div className="glass focus-in min-w-0 p-6 sm:p-8" style={{ animationDelay: "140ms" }}>
-          <h2 className="font-display text-[26px] font-light text-ink">Revenue kept, month by month</h2>
+          <h2 className="font-display text-[1.625rem] font-light text-ink">Revenue kept, month by month</h2>
           <div className="mt-6">
             <MonthBars months={insights.months} title="Revenue kept through rebooking, by month" />
           </div>
@@ -79,11 +79,11 @@ export default async function InsightsPage() {
         ].map((stat, i) => (
           <div key={stat.term} className="glass lift focus-in p-7" style={{ animationDelay: `${220 + i * 80}ms` }}>
             <dt className="t-label">{stat.term}</dt>
-            <dd className="mt-4 font-display text-[72px] font-light leading-none tracking-[-0.02em] text-ink">{stat.value}</dd>
-            <dd className="mt-4 max-w-xs text-[14px] leading-relaxed text-text-2">{stat.note}</dd>
+            <dd className="mt-4 font-display text-[4.5rem] font-light leading-none tracking-[-0.02em] text-ink">{stat.value}</dd>
+            <dd className="mt-4 max-w-xs text-[0.875rem] leading-relaxed text-text-2">{stat.note}</dd>
             {stat.href && (
               <dd className="mt-3">
-                <Link href={stat.href} className="group inline-flex items-center gap-2 text-[13.5px] text-ink">
+                <Link href={stat.href} className="group inline-flex items-center gap-2 text-[0.84375rem] text-ink">
                   Open the queue
                   <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
                 </Link>
@@ -93,7 +93,7 @@ export default async function InsightsPage() {
         ))}
       </dl>
 
-      <p className="t-caption mt-6 !text-[12.5px]">Demo data: twelve demo clients, dated around today, plus anyone who scans in this browser.</p>
+      <p className="t-caption mt-6 !text-[0.78125rem]">Demo data: twelve demo clients, dated around today, plus anyone who scans in this browser.</p>
     </div>
   );
 }

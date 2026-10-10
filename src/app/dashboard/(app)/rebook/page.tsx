@@ -59,7 +59,7 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
                   <li key={v.key}>
                     <Link href={v.key === "all" ? "/dashboard/rebook" : `/dashboard/rebook?show=${v.key}`} aria-current={active ? "page" : undefined} scroll={false} className={pill(active)}>
                       {v.label}
-                      <span className={cx("tabular-nums text-[12px]", active ? "text-white/70" : "text-text-3")}>{n}</span>
+                      <span className={cx("tabular-nums text-[0.75rem]", active ? "text-white/70" : "text-text-3")}>{n}</span>
                     </Link>
                   </li>
                 );
@@ -77,10 +77,10 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
 
       <section aria-labelledby="outbox" className="glass focus-in mt-14 p-6 sm:p-8">
         <div className="flex flex-wrap items-baseline justify-between gap-4">
-          <h2 id="outbox" className="font-display text-[34px] font-light text-ink">
+          <h2 id="outbox" className="font-display text-[2.125rem] font-light text-ink">
             Outbox
           </h2>
-          {env.DEMO_MODE && <p className="t-caption !text-[12.5px]">Demo mode: messages are logged here, never emailed or texted.</p>}
+          {env.DEMO_MODE && <p className="t-caption !text-[0.78125rem]">Demo mode: messages are logged here, never emailed or texted.</p>}
         </div>
         {outbox.length === 0 ? (
           <p className="t-caption mt-4 pt-1">Nothing sent yet. Messages you send from the queue land here, word for word.</p>
@@ -91,21 +91,21 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
               return (
                 <li key={m.id} className="border-b border-[#0c1a22]/[0.07] last:border-0">
                   <details className="group">
-                    <summary className="grid cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto_1rem] items-baseline gap-x-6 gap-y-1 py-4 md:grid-cols-[11rem_minmax(0,1fr)_9rem_6rem_1rem] [&::-webkit-details-marker]:hidden">
-                      <span className="text-[15px] text-ink">{client ? fullName(client) : "Removed client"}</span>
-                      <span className="col-span-2 row-start-2 min-w-0 truncate text-[14px] text-text-2 md:col-span-1 md:row-start-auto">
+                    <summary className="grid cursor-pointer list-none grid-cols-[minmax(0,1fr)_auto_16px] items-baseline gap-x-6 gap-y-1 py-4 md:grid-cols-[176px_minmax(0,1fr)_144px_96px_16px] [&::-webkit-details-marker]:hidden">
+                      <span className="text-[0.9375rem] text-ink">{client ? fullName(client) : "Removed client"}</span>
+                      <span className="col-span-2 row-start-2 min-w-0 truncate text-[0.875rem] text-text-2 md:col-span-1 md:row-start-auto">
                         {m.channel === "sms" && <span className="text-text-3">Text · </span>}
                         {m.subject ?? m.body}
                       </span>
-                      <span className="t-label hidden items-center gap-2 !text-[10.5px] md:flex">
+                      <span className="t-label hidden items-center gap-2 !text-[0.65625rem] md:flex">
                         <KindMarkStatic kind={m.type as TriggerKind} />
                         {TRIGGER_LABEL[m.type as TriggerKind]}
                       </span>
-                      <span className="t-caption text-right !text-[12.5px]">
+                      <span className="t-caption text-right !text-[0.78125rem]">
                         {m.status === "sent" ? (env.DEMO_MODE ? "Logged" : "Sent") : m.status === "skipped" ? "Done" : "Failed"} ·{" "}
                         {relativeDay(local(m.createdAt), book.today)}
                       </span>
-                      <span aria-hidden className="text-[18px] leading-none text-text-3 transition-transform duration-200 ease-out group-open:rotate-45">
+                      <span aria-hidden className="text-[1.125rem] leading-none text-text-3 transition-transform duration-200 ease-out group-open:rotate-45">
                         +
                       </span>
                     </summary>
@@ -113,16 +113,16 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
                       <div className="pb-6 md:pl-[11rem]">
                         {m.channel === "sms" ? (
                           <>
-                            <p className="t-caption !text-[12.5px]">Text to {client?.phone}</p>
+                            <p className="t-caption !text-[0.78125rem]">Text to {client?.phone}</p>
                             {/* As it reads on their phone. */}
-                            <p className="mt-3 w-fit max-w-md whitespace-pre-wrap break-words rounded-[18px] rounded-bl-[6px] bg-white/80 px-4 py-2.5 text-[14.5px] leading-[1.45] text-ink ring-1 ring-inset ring-white">
+                            <p className="mt-3 w-fit max-w-md whitespace-pre-wrap break-words rounded-[18px] rounded-bl-[6px] bg-white/80 px-4 py-2.5 text-[0.90625rem] leading-[1.45] text-ink ring-1 ring-inset ring-white">
                               {m.body}
                             </p>
                           </>
                         ) : (
                           <>
-                            <p className="t-caption !text-[12.5px]">To {client?.email}</p>
-                            <pre className="mt-3 max-w-2xl whitespace-pre-wrap rounded-[14px] bg-white/70 p-5 font-sans text-[14.5px] leading-relaxed text-text-2 ring-1 ring-inset ring-white">{m.body}</pre>
+                            <p className="t-caption !text-[0.78125rem]">To {client?.email}</p>
+                            <pre className="mt-3 max-w-2xl whitespace-pre-wrap rounded-[14px] bg-white/70 p-5 font-sans text-[0.90625rem] leading-relaxed text-text-2 ring-1 ring-inset ring-white">{m.body}</pre>
                           </>
                         )}
                       </div>
@@ -136,17 +136,17 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
       </section>
 
       <section aria-labelledby="rules" className="mt-14">
-        <h2 id="rules" className="font-display text-[34px] font-light text-ink">
+        <h2 id="rules" className="font-display text-[2.125rem] font-light text-ink">
           The rules
         </h2>
         <dl className="mt-5 grid gap-4 sm:grid-cols-2">
           {RULES.map(([kind, rule]) => (
             <div key={kind} className="glass p-5">
-              <dt className="flex items-center gap-2 text-[14px] text-ink">
+              <dt className="flex items-center gap-2 text-[0.875rem] text-ink">
                 <KindMarkStatic kind={kind} />
                 {TRIGGER_LABEL[kind]}
               </dt>
-              <dd className="mt-1 text-[13.5px] leading-relaxed text-text-2">{rule}</dd>
+              <dd className="mt-1 text-[0.84375rem] leading-relaxed text-text-2">{rule}</dd>
             </div>
           ))}
         </dl>

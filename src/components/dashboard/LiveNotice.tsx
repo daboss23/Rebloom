@@ -93,7 +93,7 @@ export function LiveNotice(live: Live) {
   return (
     <div
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 flex flex-col gap-3 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-[23.5rem]"
+      className="pointer-events-none fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 flex flex-col gap-3 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-[376px]"
     >
       {shown.map((n) => {
         const { first, name, clientId } = n.item;
@@ -106,18 +106,18 @@ export function LiveNotice(live: Live) {
             data-leaving={n.leaving || undefined}
             className="reply-notice sea pointer-events-auto relative overflow-hidden rounded-[20px] p-5 pr-14 ring-1 ring-white/10"
           >
-            <p className="flex items-center gap-2.5 text-[11px] uppercase tracking-[0.22em] text-[#e2c07a]">
+            <p className="flex items-center gap-2.5 text-[0.6875rem] uppercase tracking-[0.22em] text-[#e2c07a]">
               <span aria-hidden className="reply-dot relative h-1.5 w-1.5 rounded-full bg-[#e2c07a]" />
               {reply ? "New reply" : "New prospect"}
             </p>
-            <p className="mt-3 font-display text-[28px] font-light leading-none text-white">{label}.</p>
-            <p className="mt-2 text-[12.5px] text-ink-soft">
+            <p className="mt-3 font-display text-[1.75rem] font-light leading-none text-white">{label}.</p>
+            <p className="mt-2 text-[0.78125rem] text-ink-soft">
               {name} · {reply ? (reply.channel === "sms" ? "By text" : "By email") : "First scan"} · Just now
             </p>
             {reply ? (
-              <p className="mt-3 line-clamp-2 font-display text-[18px] font-light italic leading-snug text-[#d8e7ee]">&ldquo;{reply.body}&rdquo;</p>
+              <p className="mt-3 line-clamp-2 font-display text-[1.125rem] font-light italic leading-snug text-[#d8e7ee]">&ldquo;{reply.body}&rdquo;</p>
             ) : (
-              <p className="mt-3 text-[14px] leading-relaxed text-[#d8e7ee]">Their report and plan are ready, and they&apos;re in your book.</p>
+              <p className="mt-3 text-[0.875rem] leading-relaxed text-[#d8e7ee]">Their report and plan are ready, and they&apos;re in your book.</p>
             )}
             <Link
               href={`/dashboard/clients/${clientId}${reply ? "#conversation" : ""}`}

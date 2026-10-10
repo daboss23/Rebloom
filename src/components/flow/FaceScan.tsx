@@ -111,7 +111,7 @@ export function FaceScan({
         {!still && !done && (
           <div aria-hidden className="pointer-events-none absolute transition-[left,top] duration-700 ease-gentle" style={{ left: pct(tx), top: pct(ty) }}>
             <span className="scan-target absolute -translate-x-1/2 -translate-y-1/2" />
-            <span key={hop} className="fade absolute left-5 top-0 -translate-y-1/2 whitespace-nowrap rounded-full bg-[rgba(8,24,32,0.45)] px-2 py-0.5 text-[9.5px] uppercase tracking-[0.16em] text-white backdrop-blur-sm">
+            <span key={hop} className="fade absolute left-5 top-0 -translate-y-1/2 whitespace-nowrap rounded-full bg-[rgba(8,24,32,0.45)] px-2 py-0.5 text-[0.59375rem] uppercase tracking-[0.16em] text-white backdrop-blur-sm">
               {target.label}
             </span>
           </div>
@@ -148,10 +148,10 @@ export function FaceScan({
               style={{ transform: `scaleX(${Math.max(0.04, Math.min(1, progress))})` }}
             />
           </span>
-          <span key={stage} className="fade min-w-0 flex-1 truncate text-[10.5px] uppercase tracking-[0.16em] drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+          <span key={stage} className="fade min-w-0 flex-1 truncate text-[0.65625rem] uppercase tracking-[0.16em] drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
             {stage}
           </span>
-          <span className="shrink-0 text-[10.5px] tabular-nums tracking-[0.12em] text-white/80">
+          <span className="shrink-0 text-[0.65625rem] tabular-nums tracking-[0.12em] text-white/80">
             {Math.min(step, steps)}/{steps}
           </span>
         </div>
@@ -159,7 +159,7 @@ export function FaceScan({
         {/* The end of the reading. */}
         <div
           className={cx(
-            "absolute inset-x-[12%] top-[58%] flex items-center justify-center gap-2.5 rounded-[16px] border border-white/85 bg-white/60 px-5 py-3.5 text-[15px] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_20px_40px_-22px_rgba(12,44,62,0.6)] backdrop-blur-xl transition-[opacity,transform] duration-700 ease-gentle",
+            "absolute inset-x-[12%] top-[58%] flex items-center justify-center gap-2.5 rounded-[16px] border border-white/85 bg-white/60 px-5 py-3.5 text-[0.9375rem] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_20px_40px_-22px_rgba(12,44,62,0.6)] backdrop-blur-xl transition-[opacity,transform] duration-700 ease-gentle",
             done ? "opacity-100" : "pointer-events-none translate-y-2 scale-[0.98] opacity-0",
           )}
         >
@@ -182,8 +182,8 @@ function Hex({ value, label }: { value: string; label: string }) {
         <path d="M23 1.5 44 13.5v25L23 50.5 2 38.5v-25Z" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.9)" strokeWidth="1" />
       </svg>
       <span className="relative text-center leading-none">
-        <span className="block font-display text-[17px]">{value}</span>
-        <span className="mt-0.5 block text-[7px] uppercase tracking-[0.14em] text-white/85">{label}</span>
+        <span className="block font-display text-[1.0625rem]">{value}</span>
+        <span className="mt-0.5 block text-[0.4375rem] uppercase tracking-[0.14em] text-white/85">{label}</span>
       </span>
     </span>
   );

@@ -14,7 +14,7 @@ export function CancelVisit({ token, appointmentId, refund, noticeHours }: { tok
   if (!asking) {
     return (
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="t-caption !text-[13.5px]">
+        <p className="t-caption !text-[0.84375rem]">
           Need a different time? Cancel up to {noticeHours} hours before and choose another.{refund ? " Your deposit comes back in full." : ""}
         </p>
         <button
@@ -23,7 +23,7 @@ export function CancelVisit({ token, appointmentId, refund, noticeHours }: { tok
             setAsking(true);
             requestAnimationFrame(() => keep.current?.focus());
           }}
-          className="min-h-11 text-[14px] text-ink underline decoration-[#0c1a22]/30 underline-offset-4 transition-colors hover:decoration-[#0c1a22]/70"
+          className="min-h-11 text-[0.875rem] text-ink underline decoration-[#0c1a22]/30 underline-offset-4 transition-colors hover:decoration-[#0c1a22]/70"
         >
           Cancel this visit
         </button>
@@ -33,7 +33,7 @@ export function CancelVisit({ token, appointmentId, refund, noticeHours }: { tok
 
   return (
     <div className="focus-in" role="group" aria-labelledby="cancel-q">
-      <p id="cancel-q" className="text-[15px] leading-relaxed text-ink">
+      <p id="cancel-q" className="text-[0.9375rem] leading-relaxed text-ink">
         Cancel this visit?{refund ? ` Your ${refund} deposit comes back to you in full.` : ""}
       </p>
       {error && (
@@ -42,7 +42,7 @@ export function CancelVisit({ token, appointmentId, refund, noticeHours }: { tok
         </div>
       )}
       <div className="mt-4 grid grid-cols-2 gap-2.5">
-        <button ref={keep} type="button" onClick={() => setAsking(false)} disabled={pending} className="btn-ghost !h-12 text-[15px]">
+        <button ref={keep} type="button" onClick={() => setAsking(false)} disabled={pending} className="btn-ghost !h-12 text-[0.9375rem]">
           Keep my visit
         </button>
         <button
@@ -55,7 +55,7 @@ export function CancelVisit({ token, appointmentId, refund, noticeHours }: { tok
               if (!result.ok) setError(result.error ?? "That didn't go through. Please try again.");
             })
           }
-          className="btn-ghost !h-12 !border-[#9e4a5d]/30 text-[15px] !text-[#9e4a5d] hover:!border-[#9e4a5d]/60 disabled:opacity-60"
+          className="btn-ghost !h-12 !border-[#9e4a5d]/30 text-[0.9375rem] !text-[#9e4a5d] hover:!border-[#9e4a5d]/60 disabled:opacity-60"
         >
           {pending ? "Cancelling" : "Yes, cancel it"}
         </button>
