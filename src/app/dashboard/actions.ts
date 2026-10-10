@@ -23,6 +23,8 @@ import { TEXT_MAX_CHARS, TEXT_OPT_OUT, formatUsPhone, toUsE164 } from "@/lib/sms
 import { sendText } from "@/lib/sms/twilio";
 import { appOrigin } from "@/lib/origin";
 import { ensureSandboxId, sandboxNow } from "@/lib/sandbox";
+import { sandboxClock, virtualNow } from "@/lib/clock";
+import { nextOpening, offsetTo } from "@/lib/demo/next-opening";
 import { getStore } from "@/lib/store";
 import { keptPlan } from "@/lib/plan/keep";
 import { suggestedPlan } from "@/lib/dashboard/brief";
@@ -62,6 +64,34 @@ export async function travel(days: number): Promise<ActionResult> {
     await store.setClockOffset(session.sandboxId, sandbox.clockOffsetDays + days);
   } catch {
     // Another tab moved the clock first. Reloading shows where it is now.
+  }
+  revalidatePath("/dashboard", "layout");
+  return { ok: true };
+}
+
+/**
+ * The demo clock's jump to the next opening (DECISIONS D-091): forward to the moment the clinic next opens, so a
+ * demo opened in the evening can be seen as the day begins. Forward only, like every jump.
+ */
+export async function travelToOpening(): Promise<ActionResult> {
+  const session = await readSession();
+  if (!session) return { ok: false, error: "Please sign in again." };
+  if (!env.DEMO_MODE) return { ok: false, error: "Time travel is for the demo only." };
+  const store = getStore();
+  const sandbox = await store.getSandbox(session.sandboxId);
+  if (!sandbox) return { ok: false, error: "Please sign in again." };
+  const now = virtualNow(sandboxClock(env.DEMO_TODAY, sandbox));
+  const opening = nextOpening(now, session.clinic);
+  if (!opening) return { ok: false, error: "The clinic has no opening hours set." };
+  const { days, minutes } = offsetTo(opening, virtualNow({ demoToday: env.DEMO_TODAY }));
+  try {
+    await store.setClockOffset(session.sandboxId, days, minutes);
+  } catch (e) {
+    // Before the clock-minutes migration, only this jump needs it; the day steps still work.
+    if (e instanceof Error && /clock_offset_minutes/.test(e.message)) {
+      return { ok: false, error: "This jump needs the latest database update (pnpm db:migrate)." };
+    }
+    // Otherwise another tab moved the clock first. Reloading shows where it is now.
   }
   revalidatePath("/dashboard", "layout");
   return { ok: true };

@@ -6,13 +6,14 @@ import type { NewClient, WaitingReply } from "@/lib/dashboard/live";
 import type { Clinic, Staff } from "@/lib/domain";
 import { SideNav, TabNav, type NavItem } from "./Nav";
 import { LiveNotice } from "./LiveNotice";
-import { TimeTravel } from "./TimeTravel";
+import { TimeTravel, type ClockReading } from "./TimeTravel";
 
 interface ShellProps {
   clinic: Clinic;
   staff: Staff;
   dateLabel: string;
-  offsetDays: number;
+  /** The demo clock's time, for its face: the virtual now, the clinic's zone, and how far ahead it runs in minutes. */
+  clock: ClockReading;
   demo: boolean;
   queueCount: number;
   clientCount: number;
@@ -24,7 +25,7 @@ interface ShellProps {
 }
 
 /** The dashboard frame: a deep-sea menu carrying the gold logo, glass across the top. */
-export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, clientCount, waiting, arrivals, children }: ShellProps) {
+export function Shell({ clinic, staff, dateLabel, clock, demo, queueCount, clientCount, waiting, arrivals, children }: ShellProps) {
   const items: NavItem[] = [
     { href: "/dashboard", label: "Today", attention: waiting.length },
     { href: "/dashboard/clients", label: "Clients", count: clientCount },
@@ -85,7 +86,7 @@ export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, 
             </div>
             {demo && (
               <div className="hidden md:block">
-                <TimeTravel dateLabel={dateLabel} offsetDays={offsetDays} />
+                <TimeTravel dateLabel={dateLabel} clock={clock} />
               </div>
             )}
           </div>
@@ -96,7 +97,7 @@ export function Shell({ clinic, staff, dateLabel, offsetDays, demo, queueCount, 
 
         {demo && (
           <div className="border-b border-white/70 bg-white/40 px-4 py-3 sm:px-6 md:hidden">
-            <TimeTravel dateLabel={dateLabel} offsetDays={offsetDays} compact />
+            <TimeTravel dateLabel={dateLabel} clock={clock} compact />
           </div>
         )}
 

@@ -333,11 +333,21 @@ test("closing the sheet keeps Dana's edits, and focus goes back to the row", asy
 test("moving the clock forward brings Isabel's follow-up", async ({ page }) => {
   await expect(page.getByRole("listitem").filter({ hasText: "Isabel Navarro" })).toHaveCount(0);
   const clock = page.getByRole("group", { name: "Move the demo clock forward" }).filter({ visible: true });
+  // How far ahead the clock runs, beside "Demo clock" (the step buttons carry the same words, so not those).
+  const ahead = (text: string) => page.locator("span", { hasText: new RegExp(`^\\${text}$`) }).filter({ visible: true });
   await clock.getByRole("button", { name: "+1 day" }).click();
-  await expect(page.getByText("+1 days").filter({ visible: true })).toBeVisible();
+  await expect(ahead("+1 day")).toBeVisible();
   await clock.getByRole("button", { name: "+1 day" }).click();
-  await expect(page.getByText("+2 days").filter({ visible: true })).toBeVisible();
+  await expect(ahead("+2 days")).toBeVisible();
   await expect(page.getByRole("listitem").filter({ hasText: "Isabel Navarro" })).toContainText("New lead");
+});
+
+test("the clock jumps to the next opening, and the day begins", async ({ page }) => {
+  const clock = page.getByRole("group", { name: "Move the demo clock forward" }).filter({ visible: true });
+  await clock.getByRole("button", { name: "Next opening" }).click();
+  // The clinic opens at ten, so whenever this runs, the clock lands in the morning.
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Good morning");
+  await expect(page.getByText("10:00am").filter({ visible: true })).toBeVisible();
 });
 
 test("the practitioner brief confirms the plan the report suggests", async ({ page }) => {

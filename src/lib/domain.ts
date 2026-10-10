@@ -263,6 +263,8 @@ export interface Sandbox {
   createdAt: ISODateTime;
   /** Days the demo clock has been moved forward (time travel). */
   clockOffsetDays: number;
+  /** Minutes beyond those days, 0 to 1439, from a jump to the next opening (D-091). Missing before that migration. */
+  clockOffsetMinutes?: number;
 }
 
 // ---------- The clinic side (Week 3) ----------

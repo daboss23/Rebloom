@@ -547,3 +547,9 @@ Each judge keeps a private demo (D-013): no visitor sees another's face, name or
 - **Watching it arrive:** the live notice (D-089) also announces new clients: "Joshua just scanned.", with a gold "Open Joshua's brief". A new client is someone who scanned themselves in and gave their name at the gate.
 - **Not done:** a browser that opened the demo before new sample data was added keeps its older copy (a fresh window gets the current one).
 
+
+### D-091 · The demo clock can jump to the next opening (J + C, Oct 10)
+The demo clock moved only in whole days and kept the real time of day (D-016), so a demo opened in the evening always showed a finished day: every visit done, no "Next". A fourth step, "Next opening", moves the clock forward to the moment the clinic next opens: later today if it hasn't opened yet, else the next open day at its opening time. Time runs on from there, and the day steps keep that time of day.
+- **Still forward only:** the jump always lands later than now, and the store refuses any offset that would wind the clock back.
+- **How it's kept:** the sandbox stores minutes beyond its whole days (0 to 1439) beside the days. The migration (`20261011120000_clock_minutes.sql`) adds the column; before it runs, the app reads as before and only this jump asks for the update.
+- **The face:** the clock in the bar keeps the demo's time, and its hands sweep forward when the clock jumps.

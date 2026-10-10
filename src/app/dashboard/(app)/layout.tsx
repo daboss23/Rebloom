@@ -17,7 +17,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
       clinic={book.clinic}
       staff={book.staff}
       dateLabel={shortDay(book.today)}
-      offsetDays={book.offsetDays}
+      clock={{ now: book.now.toISOString(), timeZone: book.clinic.timezone, offsetMinutes: book.offsetDays * 1440 + book.offsetMinutes }}
       demo={env.DEMO_MODE}
       queueCount={book.queue.items.length}
       clientCount={clientRows(book.facts, book.queue, book.now, book.clinic.timezone).length}

@@ -17,6 +17,8 @@ export interface Book extends DashboardSession {
   today: string;
   /** Days the demo clock has been moved forward. */
   offsetDays: number;
+  /** Minutes beyond those days (D-091). */
+  offsetMinutes: number;
   input: EngineInput;
   facts: ClientFacts[];
   queue: Queue;
@@ -53,6 +55,7 @@ export const loadBook = cache(async (): Promise<Book> => {
     now,
     today: isoDateInZone(now, clinic.timezone),
     offsetDays: sandbox?.clockOffsetDays ?? 0,
+    offsetMinutes: sandbox?.clockOffsetMinutes ?? 0,
     input,
     facts: clientFacts(input),
     queue: buildQueue(input),

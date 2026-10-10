@@ -8,7 +8,7 @@ import "server-only";
 
 import type { Appointment, Client, Clinic, ISODate, Treatment } from "@/lib/domain";
 import { env, features } from "@/lib/env";
-import { isoDateInZone, virtualNow } from "@/lib/clock";
+import { isoDateInZone, sandboxClock, virtualNow } from "@/lib/clock";
 import { bookingCancelledEmail, bookingConfirmationEmail, visitInvite, visitWhen, type BookingDetails } from "@/lib/email/booking";
 import { resend } from "@/lib/email/resend";
 import { replyTo } from "@/lib/replies/address";
@@ -51,7 +51,7 @@ export interface BookingContext {
 /** The virtual "now" for this client's sandbox (DECISIONS D-016), whichever browser opens their link. */
 export async function clientNow(client: Pick<Client, "sandboxId">): Promise<Date> {
   const sandbox = client.sandboxId ? await getStore().getSandbox(client.sandboxId) : null;
-  return virtualNow({ demoToday: env.DEMO_TODAY, offsetDays: sandbox?.clockOffsetDays ?? 0 });
+  return virtualNow(sandboxClock(env.DEMO_TODAY, sandbox));
 }
 
 const isHold = (a: Appointment) => a.status === "booked" && a.depositStatus === "pending";

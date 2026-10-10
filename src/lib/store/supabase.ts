@@ -152,8 +152,28 @@ export const supabaseStore: Store = {
     // Clients, consents, intakes, scans, reports and events go with the sandbox (on delete cascade).
     check(await db().from("sandboxes").delete().in("id", ids), "deleteSandboxes");
   },
-  async setClockOffset(sandboxId, days) {
+  async setClockOffset(sandboxId, days, minutes) {
     if (!Number.isInteger(days) || days < 0) throw new Error("The demo clock only moves forward.");
+    if (minutes !== undefined) {
+      if (!Number.isInteger(minutes) || minutes < 0 || minutes >= 1440) throw new Error("The demo clock only moves forward.");
+      // Days and minutes move together, from the values just read: a tab that moved the clock in between wins.
+      const current = maybe<Sandbox>(await db().from("sandboxes").select("*").eq("id", sandboxId).maybeSingle(), "setClockOffset");
+      const was = current?.clockOffsetMinutes ?? 0;
+      if (!current || days * 1440 + minutes < current.clockOffsetDays * 1440 + was) throw new Error("The demo clock only moves forward.");
+      const moved = maybe<Sandbox>(
+        await db()
+          .from("sandboxes")
+          .update({ clock_offset_days: days, clock_offset_minutes: minutes })
+          .eq("id", sandboxId)
+          .eq("clock_offset_days", current.clockOffsetDays)
+          .eq("clock_offset_minutes", was)
+          .select()
+          .maybeSingle(),
+        "setClockOffset",
+      );
+      if (!moved) throw new Error("The demo clock only moves forward.");
+      return moved;
+    }
     // Only forward: a stale tab can't wind back a clock another tab already moved.
     const moved = maybe<Sandbox>(
       await db().from("sandboxes").update({ clock_offset_days: days }).eq("id", sandboxId).lte("clock_offset_days", days).select().maybeSingle(),

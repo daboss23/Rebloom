@@ -125,6 +125,9 @@ function must<T>(value: T | undefined, what: string): T {
   return value;
 }
 
+/** Minutes beyond whole days on the demo clock: 0 to 1439. */
+const validMinutes = (m: number) => Number.isInteger(m) && m >= 0 && m < 1440;
+
 export const localStore: Store = {
   kind: "local",
 
@@ -185,11 +188,16 @@ export const localStore: Store = {
       db.settings = db.settings.filter((s) => !(s.sandboxId && gone.has(s.sandboxId)));
       // Usage stays, so spent units keep counting against the budget.
     }, true),
-  setClockOffset: (sandboxId, days) =>
+  setClockOffset: (sandboxId, days, minutes) =>
     tx((db) => {
       const sandbox = must(db.sandboxes.find((s) => s.id === sandboxId), "Sandbox");
-      if (!Number.isInteger(days) || days < sandbox.clockOffsetDays) throw new Error("The demo clock only moves forward.");
+      const was = sandbox.clockOffsetMinutes ?? 0;
+      const next = minutes ?? was;
+      if (!Number.isInteger(days) || !validMinutes(next) || days * 1440 + next < sandbox.clockOffsetDays * 1440 + was) {
+        throw new Error("The demo clock only moves forward.");
+      }
       sandbox.clockOffsetDays = days;
+      if (minutes !== undefined) sandbox.clockOffsetMinutes = minutes;
       return sandbox;
     }, true),
   seedDemoClients: (clinicId, sandboxId, bundle) =>
