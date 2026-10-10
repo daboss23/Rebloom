@@ -90,6 +90,8 @@ test("report links are private: a made-up token shows nothing", async ({ page })
 });
 
 test("a scan runs end to end in fixture mode, and Delete my data removes it", async ({ page }) => {
+  // The whole journey, intake to deletion, compiling each page on first visit: about a minute on the dev server.
+  test.setTimeout(120_000);
   await completeIntake(page);
   const created = await page.request.post("/api/scans", {
     data: { clinicSlug: "maison-verre", width: 810, height: 1080, quality: GOOD_QUALITY, landmarks: syntheticLandmarks() },
