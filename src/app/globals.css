@@ -40,6 +40,7 @@
   --text-3: #556773;
   --ink-soft: #a9bcc8; /* Secondary text on deep sea. */
   --gold: #9a6b22; /* Gold text on light. */
+  --bronze: var(--gold); /* The retired porcelain bronze, wherever it's left, reads as Rebloom's gold. */
   --gold-bright: #e2c07a; /* Gold on deep sea. */
   --growth: #1f7a63; /* Fresh green: real improvement. 4.7:1 on the ice ground. */
   --bloom: #9e4a5d; /* Dawn rose, as text. 5.2:1. */
