@@ -92,7 +92,7 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
             : "Your skin is telling a clear story."}
       </h1>
       <p className="focus-in mt-5 text-[16.5px] leading-relaxed text-text-2" style={{ animationDelay: "140ms" }}>
-        {progress ? progressSubhead(progress) : subhead(result, stated)}
+        {progress ? progressSubhead(progress) : subhead(result)}
       </p>
 
       {event && (

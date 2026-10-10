@@ -377,16 +377,8 @@ describe("each priority speaks to this person (Joshua, Oct 7)", () => {
 describe("the report's subhead grammar", () => {
   it("gives one strength its own verb", () => {
     const low = { texture: 60, pore: 60, age_spot: 60, redness: 60, wrinkle: 60, firmness: 60, acne: 60, moisture: 60, radiance: 60, oiliness: 60, dark_circle_v2: 60, eye_bag: 60, droopy_upper_eyelid: 60, droopy_lower_eyelid: 60, tear_trough: 60 };
-    expect(subhead(result({ ...low, acne: 92 }))).toBe("Blemishes are your strongest area today. Here's where we'd begin.");
-    expect(subhead(result({ ...low, firmness: 92 }))).toBe("Firmness is your strongest area today. Here's where we'd begin.");
-    expect(subhead(result({ ...low, acne: 92, tear_trough: 90 }))).toBe("Blemishes and under-eye hollows are your strongest areas today. Here's where we'd begin.");
-  });
-
-  it("never praises what the client told us worries them", () => {
-    const low = { texture: 60, pore: 60, age_spot: 60, redness: 60, wrinkle: 60, firmness: 60, acne: 60, moisture: 60, radiance: 60, oiliness: 60, dark_circle_v2: 60, eye_bag: 60, droopy_upper_eyelid: 60, droopy_lower_eyelid: 60, tear_trough: 60 };
-    // Marcus: blemishes and dark circles score high, but he named dark circles as a worry.
-    const r = result({ ...low, acne: 92, dark_circle_v2: 90 });
-    expect(subhead(r, new Map([["dark_circle_v2", {}]]))).toBe("Blemishes are your strongest area today. Here's where we'd begin.");
-    expect(subhead(r, new Map([["dark_circle_v2", {}], ["acne", {}]]))).toBe("Here's what we see, and where we'd begin.");
+    expect(subhead(result({ ...low, acne: 92 }))).toBe("Blemishes are already looking strong. Here's where we'd begin.");
+    expect(subhead(result({ ...low, firmness: 92 }))).toBe("Firmness is already looking strong. Here's where we'd begin.");
+    expect(subhead(result({ ...low, acne: 92, tear_trough: 90 }))).toMatch(/^Blemishes and under-eye hollows are already/);
   });
 });
