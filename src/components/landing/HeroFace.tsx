@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bloom } from "@/components/dashboard/Bloom";
 import { ScanLight } from "@/components/face/ScanLight";
+import { ScanShow } from "@/components/face/ScanShow";
 import { cx } from "@/components/ui/cx";
 import { ScoreRuler } from "@/components/ui/ScoreRuler";
 import { framing, onStage, photoBox } from "@/lib/face/frame";
@@ -17,15 +18,16 @@ export interface HeroPriority {
   anchor: P;
 }
 
-/** How long each priority stays on the face before the next, and when the first reading hands over to the cards. */
+/** How long each priority stays on the face before the next, and each act of the opening scan. */
 const HOLD_MS = 4200;
-const CARDS_AT = 2600;
+const ACT_MS = 1750;
 const REST = { oval: 0.4, features: 0.3 };
 
 /**
- * The hero's proof (DECISIONS D-076, D-078): a sample client's latest scan, in the scan's own light. The grid crosses
- * her face every few seconds, a target rests where each priority shows with its score on a ruler, and a card holds
- * the measured change since her first scan. Every point and number is her demo report's own. The priorities can be
+ * The hero's proof (DECISIONS D-076, D-078, D-092): a sample client's latest scan, in the scan's own light. It opens
+ * with the scan itself, played once (ScanShow) and replayable; then the grid crosses her face every few seconds, a
+ * target rests where each priority shows with its score on a ruler, and a card holds the measured change since her
+ * first scan. Every point and number is her demo report's own. The priorities can be
  * chosen; with reduced motion it shows the first, still.
  */
 export function HeroFace({
@@ -47,6 +49,9 @@ export function HeroFace({
 }) {
   const plane = useMemo(() => framing(points, aspect), [points, aspect]);
   const [live, setLive] = useState(false);
+  // The opening scan: plays once on arrival, and again on request.
+  const [showing, setShowing] = useState(true);
+  const [take, setTake] = useState(0);
   const [active, setActive] = useState(0);
   const [chosen, setChosen] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -74,13 +79,14 @@ export function HeroFace({
     return () => ro.disconnect();
   }, []);
 
-  // The reading plays once on load; with reduced motion the marks are simply there.
+  // With reduced motion the scan isn't played: the marks are simply there.
   useEffect(() => {
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const t = window.setTimeout(() => {
+      setShowing(false);
       setLive(true);
-      if (still) setChosen(true);
-    }, still ? 0 : CARDS_AT);
+      setChosen(true);
+    }, 0);
     return () => window.clearTimeout(t);
   }, []);
 
@@ -109,16 +115,31 @@ export function HeroFace({
     <figure ref={box} className="relative">
       <div className="relative mx-auto max-w-[560px] lg:mr-0">
         <div ref={stage} className="relative aspect-[4/5] overflow-hidden rounded-[28px] bg-mist shadow-[0_44px_90px_-40px_rgba(12,44,62,0.7)] ring-1 ring-white/80">
-          {/* eslint-disable-next-line @next/next/no-img-element -- a bundled demo portrait */}
-          <img
-            src={photo}
-            alt={`${firstName}, a sample client, read by the scan`}
-            fetchPriority="high"
-            className="absolute max-w-none object-cover"
-            style={photoBox(plane)}
-          />
-          {/* The scan's light crosses her face every few seconds; off screen it stops. */}
-          {visible && <ScanLight points={points} frame={plane} passes={Infinity} gapMs={2600} rest={REST} />}
+          <ScanShow
+            points={points}
+            frame={plane}
+            photo={photo}
+            phase={showing && visible ? "scan" : "off"}
+            face="her face"
+            actMs={ACT_MS}
+            once
+            run={take}
+            onDone={() => {
+              setShowing(false);
+              setLive(true);
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- a bundled demo portrait */}
+            <img
+              src={photo}
+              alt={`${firstName}, a sample client, read by the scan`}
+              fetchPriority="high"
+              className="absolute max-w-none object-cover"
+              style={photoBox(plane)}
+            />
+            {/* The scan's light crosses her face every few seconds; off screen it stops. */}
+            {visible && <ScanLight points={points} frame={plane} passes={Infinity} gapMs={showing ? 300 : 2600} rest={REST} />}
+          </ScanShow>
 
           {/* A line from where the priority shows to its card. */}
           {live && end && (
@@ -144,6 +165,22 @@ export function HeroFace({
           <span className="absolute bottom-3 left-4 text-[0.6875rem] uppercase tracking-[0.14em] text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
             Scan {scan} · Face map
           </span>
+          {live && (
+            <button
+              type="button"
+              onClick={() => {
+                setLive(false);
+                setShowing(true);
+                setTake((n) => n + 1);
+              }}
+              className="scan-chapter hero-card-in absolute right-3 top-3 flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-white transition-transform duration-150 active:scale-[0.96]"
+            >
+              <svg aria-hidden viewBox="0 0 16 16" width={12} height={12}>
+                <path d="M13 8a5 5 0 1 1-1.5-3.5M13 2.5v3h-3" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Replay the scan
+            </button>
+          )}
         </div>
 
         {/* The priority on the face: its score on a ruler, from her first scan to now. */}

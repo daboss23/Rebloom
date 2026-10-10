@@ -553,3 +553,16 @@ The demo clock moved only in whole days and kept the real time of day (D-016), s
 - **Still forward only:** the jump always lands later than now, and the store refuses any offset that would wind the clock back.
 - **How it's kept:** the sandbox stores minutes beyond its whole days (0 to 1439) beside the days. The migration (`20261011120000_clock_minutes.sql`) adds the column; before it runs, the app reads as before and only this jump asks for the update.
 - **The face:** the clock in the bar keeps the demo's time, and its hands sweep forward when the clock jumps.
+
+### D-092 · The scan plays as a show (J + C, Oct 10)
+The scan was one sweep and a target hopping from feature to feature; Joshua wanted it exciting to watch, with the glass he likes, cards that move, and a different look for each pass. It now plays in five acts around the face, each in its own light, with a glass card that slides in, floats and hands over to the next:
+- **Lock-on:** points pop onto the face, the outlines draw themselves, a gold orbit turns round the head; the card counts the face model's 468 points.
+- **Contour:** the camera swings to one side and the other, a beam following it.
+- **Texture:** a close-up on the cheek, where a glass loupe sharpens the skin it passes over.
+- **Tone:** a sheet of light travels down the face, and chips show the skin's own colours, sampled from the photo at the forehead, a cheek and the jaw.
+- **Lines:** rings pulse from the eyes and fine traces draw under them and across the brow.
+- **Then, while the report is put together:** the face's points join in gold and a card ticks off each step.
+
+**Where:** the processing screen and the rescan (looping until the analysis ends; the bar stays the analysis's real progress), and the landing hero (played once over Amelia, then her results, with "Replay the scan").
+**Kept true:** every figure and colour is measured, never invented. One photo can't show the side of a head, so the "turn" is the camera orbiting in perspective, not an invented face. Motion is transforms only; with reduced motion the first act rests.
+**Not done:** a generated video per prospect. It would show a face that isn't theirs, or send their photo to another AI service their consent doesn't cover.
