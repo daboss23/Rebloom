@@ -24,7 +24,7 @@ import { sendText } from "@/lib/sms/twilio";
 import { appOrigin } from "@/lib/origin";
 import { ensureSandboxId, sandboxNow } from "@/lib/sandbox";
 import { sandboxClock, virtualNow } from "@/lib/clock";
-import { nextOpening, offsetTo } from "@/lib/demo/next-opening";
+import { JUMP_HORIZON_DAYS, nextOpening, offsetTo, openingsAhead } from "@/lib/demo/next-opening";
 import { getStore } from "@/lib/store";
 import { keptPlan } from "@/lib/plan/keep";
 import { suggestedPlan } from "@/lib/dashboard/brief";
@@ -56,7 +56,7 @@ export async function travel(days: number): Promise<ActionResult> {
   const session = await readSession();
   if (!session) return { ok: false, error: "Please sign in again." };
   if (!env.DEMO_MODE) return { ok: false, error: "Time travel is for the demo only." };
-  if (!Number.isInteger(days) || days < 1 || days > 90) return { ok: false, error: "Pick a number of days to move forward." };
+  if (!Number.isInteger(days) || days < 1 || days > JUMP_HORIZON_DAYS) return { ok: false, error: "Pick a number of days to move forward." };
   const store = getStore();
   const sandbox = await store.getSandbox(session.sandboxId);
   if (!sandbox) return { ok: false, error: "Please sign in again." };
@@ -83,11 +83,30 @@ export async function travelToOpening(): Promise<ActionResult> {
   const now = virtualNow(sandboxClock(env.DEMO_TODAY, sandbox));
   const opening = nextOpening(now, session.clinic);
   if (!opening) return { ok: false, error: "The clinic has no opening hours set." };
-  const { days, minutes } = offsetTo(opening, virtualNow({ demoToday: env.DEMO_TODAY }));
+  return jumpTo(session.sandboxId, opening);
+}
+
+/** The demo clock's calendar: lands on the opening of the day picked. Forward only, within 90 days, open days only. */
+export async function travelToDay(day: string): Promise<ActionResult> {
+  const session = await readSession();
+  if (!session) return { ok: false, error: "Please sign in again." };
+  if (!env.DEMO_MODE) return { ok: false, error: "Time travel is for the demo only." };
+  const store = getStore();
+  const sandbox = await store.getSandbox(session.sandboxId);
+  if (!sandbox) return { ok: false, error: "Please sign in again." };
+  const now = virtualNow(sandboxClock(env.DEMO_TODAY, sandbox));
+  const opening = openingsAhead(now, session.clinic).find((o) => o.day === day);
+  if (!opening) return { ok: false, error: `Pick a day the clinic is open, within the next ${JUMP_HORIZON_DAYS} days.` };
+  return jumpTo(session.sandboxId, opening.at);
+}
+
+/** Sets the sandbox's clock to land exactly on `target`, which callers have already checked is later than now. */
+async function jumpTo(sandboxId: string, target: Date): Promise<ActionResult> {
+  const { days, minutes } = offsetTo(target, virtualNow({ demoToday: env.DEMO_TODAY }));
   try {
-    await store.setClockOffset(session.sandboxId, days, minutes);
+    await getStore().setClockOffset(sandboxId, days, minutes);
   } catch (e) {
-    // Before the clock-minutes migration, only this jump needs it; the day steps still work.
+    // Before the clock-minutes migration, only the jumps to an opening need it; the day steps still work.
     if (e instanceof Error && /clock_offset_minutes/.test(e.message)) {
       return { ok: false, error: "This jump needs the latest database update (pnpm db:migrate)." };
     }

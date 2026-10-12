@@ -285,6 +285,12 @@ test("on a phone the menu slides in, takes Dana where she taps, and gets out of 
   await expect(menu.getByRole("link", { name: /^Clients/ })).toHaveAttribute("aria-current", "page");
   await menu.getByRole("button", { name: "Close menu" }).click();
   await expect(menu).toBeHidden();
+
+  // The demo clock rides in the menu too, and a jump from there closes it so the page shows what changed.
+  await open.click();
+  await menu.getByRole("region", { name: "Demo clock" }).getByRole("button", { name: "Next opening" }).click();
+  await expect(menu).toBeHidden();
+  await expect(page.getByText("10:00am").filter({ visible: true })).toBeVisible();
 });
 
 test("the dashboard's code carries the demo to a phone, to scan in as a new prospect", async ({ page, browser }) => {
@@ -352,24 +358,56 @@ test("closing the sheet keeps Dana's edits, and focus goes back to the row", asy
   await expect(page.getByRole("dialog", { name: "Review & send" }).getByLabel("Message")).toHaveValue("Hi Priya, a quick note from Dana.");
 });
 
+// The demo clock sits small in the bar on a phone and opens as a sheet; a jump closes it so the page shows what changed.
+const demoClock = (page: Page) => ({
+  open: () => page.getByRole("button", { name: /^Demo clock/ }).click(),
+  sheet: page.getByRole("dialog", { name: "Demo clock" }),
+});
+
 test("moving the clock forward brings Isabel's follow-up", async ({ page }) => {
   await expect(page.getByRole("listitem").filter({ hasText: "Isabel Navarro" })).toHaveCount(0);
-  const clock = page.getByRole("group", { name: "Move the demo clock forward" }).filter({ visible: true });
+  const clock = demoClock(page);
   // How far ahead the clock runs, beside "Demo clock" (the step buttons carry the same words, so not those).
-  const ahead = (text: string) => page.locator("span", { hasText: new RegExp(`^\\${text}$`) }).filter({ visible: true });
-  await clock.getByRole("button", { name: "+1 day" }).click();
+  const ahead = (text: string) => clock.sheet.locator("span", { hasText: new RegExp(`^\\${text}$`) });
+  await clock.open();
+  await clock.sheet.getByRole("button", { name: "+1 day" }).click();
+  await expect(clock.sheet).toBeHidden();
+  await clock.open();
   await expect(ahead("+1 day")).toBeVisible();
-  await clock.getByRole("button", { name: "+1 day" }).click();
+  await clock.sheet.getByRole("button", { name: "+1 day" }).click();
+  await expect(clock.sheet).toBeHidden();
+  await clock.open();
   await expect(ahead("+2 days")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(clock.sheet).toBeHidden();
   await expect(page.getByRole("listitem").filter({ hasText: "Isabel Navarro" })).toContainText("New lead");
 });
 
 test("the clock jumps to the next opening, and the day begins", async ({ page }) => {
-  const clock = page.getByRole("group", { name: "Move the demo clock forward" }).filter({ visible: true });
-  await clock.getByRole("button", { name: "Next opening" }).click();
+  const clock = demoClock(page);
+  await clock.open();
+  await clock.sheet.getByRole("button", { name: "Next opening" }).click();
   // The clinic opens at ten, so whenever this runs, the clock lands in the morning.
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Good morning");
   await expect(page.getByText("10:00am").filter({ visible: true })).toBeVisible();
+});
+
+test("the calendar sends the clock to the day picked, as the clinic opens", async ({ page }) => {
+  const clock = demoClock(page);
+  await clock.open();
+  // Only open days take a tap; the button below says where the clock will land before it moves.
+  const openDays = clock.sheet.getByRole("button", { name: /, opens 10:00am$/ });
+  // Late in a month there may be none left in it.
+  if ((await openDays.count()) === 0) await clock.sheet.getByRole("button", { name: "Next month" }).click();
+  for (const closed of await clock.sheet.getByRole("button", { name: /, closed$/ }).all()) await expect(closed).toBeDisabled();
+  const day = openDays.last();
+  const label = (await day.getAttribute("aria-label"))!.replace(", opens 10:00am", "");
+  await day.click();
+  await expect(day).toHaveAttribute("aria-pressed", "true");
+  await clock.sheet.getByRole("button", { name: /^Go to .* · 10:00am$/ }).click();
+  await expect(clock.sheet).toBeHidden();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Good morning");
+  await expect(page.getByText(label, { exact: true })).toBeVisible();
 });
 
 test("the practitioner brief confirms the plan the report suggests", async ({ page }) => {

@@ -3,7 +3,7 @@ import { MAISON_VERRE, TIDEWATER } from "@/data/clinics";
 import { SEED_PRODUCTS, SEED_TREATMENTS } from "@/data/menu";
 import { contrastRatio, onAccent } from "@/lib/brand";
 import { formatLongDate, isoDateInZone, splitOffset, virtualNow } from "@/lib/clock";
-import { nextOpening, offsetTo } from "@/lib/demo/next-opening";
+import { nextOpening, offsetTo, openingOn, openingsAhead } from "@/lib/demo/next-opening";
 import { checkCopy, stripEmDashes } from "@/lib/copy/check";
 import { CONCERNS, SCORED_CONCERNS } from "@/lib/skin/concerns";
 import { normalizeResult, priorities } from "@/lib/skin/normalize";
@@ -51,6 +51,22 @@ describe("virtual clock", () => {
     const { days, minutes } = offsetTo(new Date("2026-10-10T17:00:00Z"), base);
     expect(virtualNow({ offsetDays: days, offsetMinutes: minutes }, base).getTime()).toBeGreaterThanOrEqual(Date.parse("2026-10-10T17:00:00Z"));
     expect({ days, minutes }).toEqual({ days: 0, minutes: 783 });
+  });
+  it("offers the calendar every open day ahead, each at its opening, within ninety days", () => {
+    const clinic = { timezone: "America/Los_Angeles", hours: { days: { 2: { open: "10:00", close: "18:00" }, 6: { open: "10:00", close: "18:00" } }, slotMinutes: 30 } };
+    expect(openingOn("2026-10-13", clinic)?.toISOString()).toBe("2026-10-13T17:00:00.000Z");
+    expect(openingOn("2026-10-12", clinic)).toBeNull();
+    // Saturday at eight: this morning's opening is still ahead, so it's the first day offered.
+    const morning = openingsAhead(new Date("2026-10-10T15:00:00Z"), clinic);
+    expect(morning.slice(0, 3).map((o) => o.day)).toEqual(["2026-10-10", "2026-10-13", "2026-10-17"]);
+    expect(morning[0].at.toISOString()).toBe("2026-10-10T17:00:00.000Z");
+    // Saturday at noon, already open: today is gone, and nothing lies past the horizon.
+    const noon = new Date("2026-10-10T19:00:00Z");
+    const later = openingsAhead(noon, clinic);
+    expect(later[0].day).toBe("2026-10-13");
+    expect(later.every((o) => o.at > noon && o.at.getTime() <= noon.getTime() + 90 * 86_400_000)).toBe(true);
+    expect(later.every((o) => [2, 6].includes(new Date(`${o.day}T12:00:00Z`).getUTCDay()))).toBe(true);
+    expect(openingsAhead(noon, { timezone: "America/Los_Angeles", hours: { days: {}, slotMinutes: 30 } })).toEqual([]);
   });
   it("formats US dates in the clinic's zone", () => {
     expect(formatLongDate("2026-10-05T18:00:00Z", "America/Los_Angeles")).toBe("October 5, 2026");

@@ -4,10 +4,10 @@ import { signOut } from "@/app/dashboard/actions";
 import { RebloomWordmark } from "@/components/ui/Wordmarks";
 import type { NewClient, WaitingReply } from "@/lib/dashboard/live";
 import type { Clinic, Staff } from "@/lib/domain";
+import { DemoClockCard, DemoClockChip, type ClockReading, type OpeningDay } from "./DemoClock";
 import { MobileMenu } from "./MobileMenu";
 import { SideNav, type NavItem } from "./Nav";
 import { LiveNotice } from "./LiveNotice";
-import { TimeTravel, type ClockReading } from "./TimeTravel";
 
 interface ShellProps {
   clinic: Clinic;
@@ -15,6 +15,8 @@ interface ShellProps {
   dateLabel: string;
   /** The demo clock's time, for its face: the virtual now, the clinic's zone, and how far ahead it runs in minutes. */
   clock: ClockReading;
+  /** The days the demo clock's calendar can land on, each at its opening. */
+  openings: OpeningDay[];
   demo: boolean;
   queueCount: number;
   clientCount: number;
@@ -25,8 +27,11 @@ interface ShellProps {
   children: ReactNode;
 }
 
-/** The dashboard frame: a deep-sea menu carrying the gold logo, glass across the top. Below desktop the same menu slides in. */
-export function Shell({ clinic, staff, dateLabel, clock, demo, queueCount, clientCount, waiting, arrivals, children }: ShellProps) {
+/**
+ * The dashboard frame: a deep-sea menu carrying the gold logo, the clinic and the demo clock. On desktop it stands at the
+ * left; below, a black bar carries the logo, the clock and the button that slides the same menu in.
+ */
+export function Shell({ clinic, staff, dateLabel, clock, openings, demo, queueCount, clientCount, waiting, arrivals, children }: ShellProps) {
   const items: NavItem[] = [
     { href: "/dashboard", label: "Today", attention: waiting.length },
     { href: "/dashboard/clients", label: "Clients", count: clientCount },
@@ -45,7 +50,12 @@ export function Shell({ clinic, staff, dateLabel, clock, demo, queueCount, clien
       <nav aria-label="Dashboard" className="mt-12">
         <SideNav items={items} />
       </nav>
-      <div className="mt-auto">
+      {demo && (
+        <div className="mt-8">
+          <DemoClockCard dateLabel={dateLabel} clock={clock} openings={openings} />
+        </div>
+      )}
+      <div className="mt-auto pt-8">
         <nav aria-label="Settings">
           <SideNav items={settings} />
         </nav>
@@ -68,48 +78,29 @@ export function Shell({ clinic, staff, dateLabel, clock, demo, queueCount, clien
   );
 
   return (
-    <div className="rebloom min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
+    <div className="rebloom min-h-dvh lg:grid lg:grid-cols-[272px_minmax(0,1fr)]">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-ink focus:px-4 focus:py-2 focus:text-porcelain">
         Skip to content
       </a>
 
       {/* ---------- Desktop menu ---------- */}
-      <aside className="sea on-dark hidden lg:flex sticky top-0 h-dvh flex-col px-4 pb-6 pt-8">
+      <aside className="sea on-dark hidden lg:flex sticky top-0 h-dvh flex-col overflow-y-auto overscroll-contain px-4 pb-6 pt-8 [scrollbar-width:none]">
         {menu}
       </aside>
 
       <div className="min-w-0">
-        {/* ---------- Top bar ---------- */}
-        <header className="sticky top-0 z-30 border-b border-white/70 bg-white/55 backdrop-blur-xl backdrop-saturate-150">
-          <div className="flex h-16 items-center justify-between gap-3 px-4 sm:gap-6 sm:px-6 lg:px-12">
-            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-              <Link href="/dashboard" className="shrink-0 lg:hidden" aria-label="Rebloom, today">
-                <RebloomWordmark height={16} className="!h-[14px] sm:!h-4" />
-              </Link>
-              <span aria-hidden className="h-5 w-px bg-mist lg:hidden" />
-              <p className="min-w-0 truncate text-[0.875rem] text-text-2">
-                <span className="font-display text-[0.9375rem] font-medium tracking-[0.16em] text-ink sm:text-[1.0625rem] sm:tracking-[0.2em]">{clinic.wordmark}</span>
-                <span className="hidden sm:inline text-text-3"> · {clinic.city}</span>
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-4">
-              {demo && (
-                <div className="hidden xl:block">
-                  <TimeTravel dateLabel={dateLabel} clock={clock} />
-                </div>
-              )}
-              <div className="lg:hidden">
-                <MobileMenu attention={waiting.length}>{menu}</MobileMenu>
-              </div>
+        {/* ---------- Top bar, below desktop ---------- */}
+        <header className="on-dark sticky top-0 z-30 border-b border-white/10 bg-black/90 backdrop-blur-xl backdrop-saturate-150 lg:hidden">
+          <div className="grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:px-6">
+            <div className="justify-self-start">{demo && <DemoClockChip dateLabel={dateLabel} clock={clock} openings={openings} />}</div>
+            <Link href="/dashboard" aria-label="Rebloom, today" className="justify-self-center">
+              <RebloomWordmark height={22} className="!h-[19px] sm:!h-[22px]" shine />
+            </Link>
+            <div className="justify-self-end">
+              <MobileMenu attention={waiting.length}>{menu}</MobileMenu>
             </div>
           </div>
         </header>
-
-        {demo && (
-          <div className="border-b border-white/70 bg-white/40 px-4 py-3 sm:px-6 lg:px-12 xl:hidden">
-            <TimeTravel dateLabel={dateLabel} clock={clock} compact />
-          </div>
-        )}
 
         <main id="main" tabIndex={-1} className="px-4 pb-24 pt-8 sm:px-6 lg:px-12 lg:pt-10">
           <div className="mx-auto max-w-[1220px]">{children}</div>
