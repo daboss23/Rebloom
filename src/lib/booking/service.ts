@@ -19,6 +19,7 @@ import { buildPlan, type Plan } from "@/lib/plan/build";
 import { keptPlan } from "@/lib/plan/keep";
 import { loadReportData, type ReportData } from "@/lib/report/load";
 import { getStore } from "@/lib/store";
+import { skinRule } from "@/lib/skin/fitzpatrick";
 import { SlotTakenError, type PlanWithItems } from "@/lib/store/types";
 import { nextBooking, type BookingTarget } from "./next";
 import { eventBlock, isOpen, openDays, type OpenDay } from "./slots";
@@ -76,7 +77,7 @@ export async function bookingContext(token: string): Promise<BookingContext | nu
   const live = plans.filter((p) => p.status === "proposed" || p.status === "confirmed");
   const plan = live[live.length - 1] ?? null;
   const from = isoDateInZone(new Date(latest.completedAt ?? latest.createdAt), clinic.timezone);
-  const suggested = plan ? null : buildPlan({ result: latest.result!, intake, treatments, products, clinic, from, skinType: client.fitzpatrick?.type });
+  const suggested = plan ? null : buildPlan({ result: latest.result!, intake, treatments, products, clinic, from, skin: skinRule(client) });
 
   // The client's own unpaid hold doesn't count: they're back on this page, so they've left that payment.
   const mine = appointments.filter((a) => a.clientId === client.id && !isHold(a));
@@ -259,7 +260,7 @@ async function keepPlan(appointment: Appointment, client: Client, clinic: Clinic
   if (!latest) return appointment;
   const [treatments, products, intake] = await Promise.all([store.listTreatments(clinic.id), store.listProducts(clinic.id), store.getIntake(client.id)]);
   const from = isoDateInZone(new Date(latest.completedAt ?? latest.createdAt), clinic.timezone);
-  const plan = buildPlan({ result: latest.result!, intake, treatments, products, clinic, from, skinType: client.fitzpatrick?.type });
+  const plan = buildPlan({ result: latest.result!, intake, treatments, products, clinic, from, skin: skinRule(client) });
   const kept = keptPlan({ plan, clientId: client.id, scanId: latest.id, status: "proposed", confirmedBy: null, now });
   // Null when another request kept it a moment ago: use that one.
   const saved = (await store.createPlan(kept.plan, kept.items)) ?? (await livePlan());

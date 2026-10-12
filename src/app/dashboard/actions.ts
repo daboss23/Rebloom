@@ -575,6 +575,35 @@ export async function setSkinType(input: z.input<typeof skinTypeInput>): Promise
   return { ok: true, message: `Saved: ${skinTypeLabel(parsed.data.type)}.` };
 }
 
+const exceptionInput = z.object({ clientId: z.string().min(1), treatmentId: z.string().min(1), reason: z.string().max(200).optional() });
+
+/**
+ * Dana offers one client a treatment the clinic doesn't usually offer to their skin type (D-095), with her reason.
+ * Without a reason, takes the exception back. Either way the plan follows at once.
+ */
+export async function setSkinTypeException(input: z.input<typeof exceptionInput>): Promise<ActionResult> {
+  const parsed = exceptionInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Keep the reason under 200 characters." };
+  if (!(await readSession())) return { ok: false, error: "Please sign in again." };
+  const book = await loadBook();
+  const facts = book.facts.find((f) => f.client.id === parsed.data.clientId);
+  const treatment = book.input.treatments.find((t) => t.id === parsed.data.treatmentId);
+  if (!facts || !treatment) return { ok: false, error: "That isn't in your book." };
+  const name = facts.client.firstName ?? "this client";
+  const others = (facts.client.skinTypeExceptions ?? []).filter((e) => e.treatmentId !== treatment.id);
+  if (parsed.data.reason === undefined) {
+    await getStore().updateClient(facts.client.id, { skinTypeExceptions: others });
+    revalidatePath("/dashboard", "layout");
+    return { ok: true, message: `${treatment.name} is back to the clinic's rule for ${name}.` };
+  }
+  const reason = parsed.data.reason.trim().replace(/\s+/g, " ");
+  if (reason.length < 3) return { ok: false, error: "Say why, in a few words. It's kept with the client's record." };
+  const exception = { treatmentId: treatment.id, reason, by: book.staff.name, at: (await sandboxNow()).toISOString(), type: facts.client.fitzpatrick?.type ?? null };
+  await getStore().updateClient(facts.client.id, { skinTypeExceptions: [...others, exception] });
+  revalidatePath("/dashboard", "layout");
+  return { ok: true, message: `${treatment.name} is offered to ${name}. Your reason is kept with their record.` };
+}
+
 const noteInput = z.object({ clientId: z.string().min(1), note: z.string().max(1200) });
 
 /** Dana's note, shown on the client's report. */

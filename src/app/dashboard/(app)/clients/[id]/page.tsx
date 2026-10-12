@@ -12,6 +12,7 @@ import { toQueueRow } from "@/components/dashboard/queue-row";
 import { Sparkline } from "@/components/dashboard/Sparkline";
 import { StatusMark } from "@/components/dashboard/StatusMark";
 import { SkinTypeControl } from "@/components/dashboard/SkinTypeControl";
+import { SkinTypeExceptions, type LimitedTreatment } from "@/components/dashboard/SkinTypeExceptions";
 import { StopEmails } from "@/components/dashboard/StopEmails";
 import { IconAlert, IconArrowLeft, IconArrowUpRight } from "@/components/ui/Icons";
 import { cx } from "@/components/ui/cx";
@@ -29,7 +30,7 @@ import { draftFor, draftView } from "@/lib/agent/view";
 import { appOrigin } from "@/lib/origin";
 import { formatUsPhone, toUsE164 } from "@/lib/sms/text";
 import { concernLabel } from "@/lib/skin/concerns";
-import { limitLabel, suitsSkinType } from "@/lib/skin/fitzpatrick";
+import { limitLabel, offered, skinRule, suitsSkinType } from "@/lib/skin/fitzpatrick";
 
 /** Opening a brief may start the agent's drafts (D-093), which run after the page has gone out. */
 export const maxDuration = 300;
@@ -74,15 +75,26 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
   const scores = lowestScores(facts);
   const name = client.firstName!;
 
-  // Fitzpatrick type (D-094): a treatment on their plan the clinic doesn't offer to it is flagged for review.
+  // Fitzpatrick type (D-094): a treatment on their plan the clinic doesn't offer to it is flagged for review,
+  // unless Dana has offered it to them anyway (D-095).
   const skinType = client.fitzpatrick?.type ?? null;
+  const skin = skinRule(client);
   const skinFlags = skinType
     ? (facts.plan?.items ?? [])
         .map((i) => book.input.treatments.find((t) => t.id === i.treatmentId))
-        .filter((t): t is NonNullable<typeof t> => Boolean(t) && !suitsSkinType(t!, skinType))
+        .filter((t): t is NonNullable<typeof t> => Boolean(t) && !offered(t!, skin))
         .map((t) => `${t.name} is offered to skin ${limitLabel(t.fitzpatrickMax)} only. ${name} is skin type ${skinType}${client.fitzpatrick?.source === "scan" ? ", estimated from their scan" : ""}.`)
     : [];
   const flags = [...skinFlags, ...info.flags];
+  // Treatments the clinic doesn't usually offer to their type, each with Dana's exception if she made one.
+  const limited: LimitedTreatment[] = skinType
+    ? book.input.treatments
+        .filter((t) => t.active && !suitsSkinType(t, skinType))
+        .map((t) => {
+          const e = client.skinTypeExceptions?.find((x) => x.treatmentId === t.id);
+          return { id: t.id, name: t.name, limit: limitLabel(t.fitzpatrickMax)!, exception: e ? { reason: e.reason, by: e.by, when: monthDay(local(e.at)) } : null };
+        })
+    : [];
 
   // ---------- The plan panel: the confirmed plan, or what the report suggests ----------
   const suggested = !facts.plan ? suggestedPlan(book, facts) : null;
@@ -148,7 +160,9 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
     const fits = plan.budgetCapCents === null || plan.recommended.totalCents <= plan.budgetCapCents;
     budgetFit = plan.budgetCapCents === null ? null : fits ? "fits" : "over";
     const heldBack = plan.heldBack.length && skinType ? `${plan.heldBack.map((t) => t.name).join(" and ")} ${plan.heldBack.length === 1 ? "isn't" : "aren't"} offered to skin type ${skinType}` : null;
-    planNote = [fits ? null : "A lighter option is on their report", plan.shortenedForEvent ? "Shortened to finish before their event" : null, heldBack, "Built only from the clinic's menu"]
+    const excepted = plan.recommended.lines.filter((l) => skinType && !suitsSkinType(l.treatment, skinType)).map((l) => l.treatment.name);
+    const yourCall = excepted.length ? `${excepted.join(" and ")} included on your exception for type ${skinType}` : null;
+    planNote = [fits ? null : "A lighter option is on their report", plan.shortenedForEvent ? "Shortened to finish before their event" : null, heldBack, yourCall, "Built only from the clinic's menu"]
       .filter(Boolean)
       .join(". ")
       .concat(".");
@@ -337,6 +351,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
               </div>
             ))}
           </dl>
+          {limited.length > 0 && skinType && <SkinTypeExceptions clientId={client.id} firstName={name} type={skinType} treatments={limited} />}
 
           {flags.length > 0 && (
             <div className="caution mt-4 p-5 sm:p-6">

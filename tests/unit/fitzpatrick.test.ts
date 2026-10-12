@@ -6,7 +6,7 @@ import { SEED_PRODUCTS, SEED_TREATMENTS } from "@/data/menu";
 import type { ScanResult } from "@/lib/domain";
 import { buildPlan } from "@/lib/plan/build";
 import type { ConcernKey } from "@/lib/skin/concerns";
-import { fitzpatrickRank, isFitzpatrickType, limitLabel, suitsSkinType } from "@/lib/skin/fitzpatrick";
+import { fitzpatrickRank, isFitzpatrickType, limitLabel, offered, skinRule, suitsSkinType } from "@/lib/skin/fitzpatrick";
 
 // The client reads its key and address when first imported.
 process.env.YOUCAM_API_KEY = "test-key";
@@ -146,8 +146,9 @@ describe("the plan leaves out what doesn't suit the skin type", () => {
     skinAge: null,
     skinType: null,
   };
-  const plan = (skinType?: "II" | "V" | null) =>
-    buildPlan({ result, intake: null, treatments, products, clinic: MAISON_VERRE, from: "2026-10-05", skinType });
+  const plan = (type: "II" | "V" | null, allowed: string[] = []) =>
+    buildPlan({ result, intake: null, treatments, products, clinic: MAISON_VERRE, from: "2026-10-05", skin: { type, allowed } });
+  const ipl = treatments.find((t) => t.name === "IPL Photofacial")!;
   const names = (p: ReturnType<typeof plan>) => p.recommended.lines.map((l) => l.treatment.name);
 
   it("offers IPL to type II, and to an unknown type", () => {
@@ -163,6 +164,17 @@ describe("the plan leaves out what doesn't suit the skin type", () => {
     expect(p.recommended.lines.some((l) => l.covers.includes("redness"))).toBe(true);
   });
 
+  it("offers it again when Dana makes an exception for this client (D-095)", () => {
+    const p = plan("V", [ipl.id]);
+    expect(names(p)).toContain("IPL Photofacial");
+    expect(p.heldBack).toEqual([]);
+    // Only for the treatment she named.
+    expect(offered(ipl, skinRule({ fitzpatrick: { type: "V", source: "scan", at: "" }, skinTypeExceptions: [] }))).toBe(false);
+    expect(
+      offered(ipl, skinRule({ fitzpatrick: { type: "V", source: "scan", at: "" }, skinTypeExceptions: [{ treatmentId: ipl.id, reason: "Patch test clear", by: "Dana", at: "", type: "V" }] })),
+    ).toBe(true);
+  });
+
   it("never puts it in the lighter, within-budget plan either", () => {
     const p = buildPlan({
       result,
@@ -171,7 +183,7 @@ describe("the plan leaves out what doesn't suit the skin type", () => {
       products,
       clinic: MAISON_VERRE,
       from: "2026-10-05",
-      skinType: "V",
+      skin: { type: "V", allowed: [] },
     });
     expect([...p.recommended.lines, ...(p.withinBudget?.lines ?? [])].some((l) => l.treatment.name === "IPL Photofacial")).toBe(false);
   });

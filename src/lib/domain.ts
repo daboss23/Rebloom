@@ -2,7 +2,7 @@
 // Field names are camelCase here; the Supabase store maps them to snake_case columns.
 
 import type { ConcernKey } from "@/lib/skin/concerns";
-import type { FitzpatrickReading } from "@/lib/skin/fitzpatrick";
+import type { FitzpatrickReading, SkinTypeException } from "@/lib/skin/fitzpatrick";
 
 export type ISODate = string; // "2026-10-05"
 export type ISODateTime = string; // full ISO timestamp
@@ -102,6 +102,8 @@ export interface Client {
   demoKey: string | null;
   /** Fitzpatrick skin type: YouCam's estimate from the first live scan, or the clinic's own call (D-094). */
   fitzpatrick?: FitzpatrickReading | null;
+  /** Treatments Dana offers this client although the clinic doesn't usually offer them to their type (D-095). */
+  skinTypeExceptions?: SkinTypeException[];
   createdAt: ISODateTime;
 }
 

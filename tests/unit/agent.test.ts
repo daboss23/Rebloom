@@ -325,6 +325,19 @@ describe("skin type (D-094)", () => {
     });
   });
 
+  it("may suggest it once Dana has offered it to them anyway (D-095)", async () => {
+    const grace = await contextFor("grace", "plan_review");
+    const ipl = treatments.find((t) => t.name === "IPL Photofacial")!;
+    const client = {
+      ...grace.facts.client,
+      fitzpatrick: { type: "V" as const, source: "practitioner" as const, at: "" },
+      skinTypeExceptions: [{ treatmentId: ipl.id, reason: "Patch test clear", by: "Dana", at: "", type: "V" as const }],
+    };
+    const ctx = { ...grace, facts: { ...grace.facts, client, plan: null, appointments: [] } };
+    expect(checkChange(ctx, { treatment: "IPL Photofacial", sessions: 2, why }).ok).toBe(true);
+    expect(describeClient(ctx)).toContain('Dana offers them IPL Photofacial anyway, her call: "Patch test clear".');
+  });
+
   it("tells the agent the limit, and the type as Dana's alone", async () => {
     const marcus = await contextFor("marcus");
     expect(describeMenu(marcus)).toContain("Offered to skin types I to III only.");

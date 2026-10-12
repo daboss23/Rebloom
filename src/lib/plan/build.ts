@@ -7,7 +7,7 @@ import { CONCERN_OPTIONS } from "@/lib/flow/intake-options";
 import { currentReading, goalWords } from "@/lib/intake/goal-reading";
 import { PROGRESS_SCAN_AFTER_DAYS } from "@/lib/rebook/thresholds";
 import { CONCERNS, INTAKE_TO_CONCERNS, type ConcernKey } from "@/lib/skin/concerns";
-import { suitsSkinType, type FitzpatrickType } from "@/lib/skin/fitzpatrick";
+import { offered, type SkinRule } from "@/lib/skin/fitzpatrick";
 
 /** A concern the client ticked gets this many extra points of need, on a 0 to 100 scale. */
 export const STATED_BOOST = 12;
@@ -186,8 +186,8 @@ export interface PlanInput {
   clinic: Pick<Clinic, "hours">;
   /** The scan date, "YYYY-MM-DD" in the clinic's time zone. Dates count from here, so the plan stays put. */
   from: string;
-  /** The client's Fitzpatrick type, if known. Treatments that don't suit it are left out (D-094). */
-  skinType?: FitzpatrickType | null;
+  /** The client's Fitzpatrick type, if known, and Dana's exceptions. Treatments that don't suit it are left out (D-094, D-095). */
+  skin?: SkinRule | null;
 }
 
 // Dates are "YYYY-MM-DD" strings. The arithmetic runs at UTC noon, so no time zone or DST can shift a day.
@@ -378,8 +378,9 @@ export function buildPlan(input: PlanInput): Plan {
   const start = nextOpenDay(shiftDate(input.from, LEAD_DAYS), hours);
   const event = input.intake?.hasEvent && input.intake.eventDate && input.intake.eventDate > start ? input.intake.eventDate : null;
   const active = input.treatments.filter((t) => t.active);
-  // A treatment the clinic doesn't offer to this skin type never reaches the plan or the budget option (D-094).
-  const treatments = active.filter((t) => suitsSkinType(t, input.skinType));
+  // A treatment the clinic doesn't offer to this skin type never reaches the plan or the budget option (D-094),
+  // unless Dana has offered it to this client anyway (D-095).
+  const treatments = active.filter((t) => offered(t, input.skin));
   const heldBack = active.filter((t) => !treatments.includes(t) && t.concerns.some((k) => focus.some((f) => f.key === k)));
 
   // No session inside a treatment's rest period before the event (brief 8.3).

@@ -17,7 +17,7 @@ import { courses, priorityKeys, type ClientFacts, type QueueItem } from "@/lib/r
 import { canAnswerByText, isReply, thread } from "@/lib/replies/thread";
 import { buildProgress } from "@/lib/report/progress";
 import { concernLabel, type ConcernKey } from "@/lib/skin/concerns";
-import { limitLabel } from "@/lib/skin/fitzpatrick";
+import { limitLabel, skinRule } from "@/lib/skin/fitzpatrick";
 
 export interface AgentContext {
   kind: AgentDraftKind;
@@ -94,6 +94,10 @@ export function describeClient(ctx: AgentContext): string {
     client.fitzpatrick
       ? `Skin type for ${ctx.staffName} only, never to mention in writing: Fitzpatrick ${client.fitzpatrick.type}, ${client.fitzpatrick.source === "practitioner" ? "confirmed by the clinic" : "estimated from their scan"}. Treatments the clinic doesn't offer to this type are left out of their plan; never suggest one.`
       : null,
+    ...(client.skinTypeExceptions ?? []).map((e) => {
+      const name = ctx.treatments.find((t) => t.id === e.treatmentId)?.name;
+      return name ? `${e.by} offers them ${name} anyway, her call: "${e.reason}". It may be suggested.` : null;
+    }),
     ctx.facts.report?.practitionerNote ? `${ctx.staffName}'s note on their report: "${ctx.facts.report.practitionerNote}"` : null,
     `This draft goes by ${ctx.channel === "sms" ? "text" : "email"}.`,
   ];
@@ -169,7 +173,7 @@ export function suggested(ctx: AgentContext): Plan | null {
     products: ctx.products,
     clinic: ctx.clinic,
     from: isoDateInZone(new Date(scan.createdAt), ctx.clinic.timezone),
-    skinType: ctx.facts.client.fitzpatrick?.type,
+    skin: skinRule(ctx.facts.client),
   });
 }
 

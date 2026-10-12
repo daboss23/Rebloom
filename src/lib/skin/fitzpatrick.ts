@@ -13,6 +13,29 @@ export interface FitzpatrickReading {
   scanId?: string | null;
 }
 
+/**
+ * Dana's exception for one client (D-095): a treatment the clinic doesn't usually offer to their type, offered anyway,
+ * with her reason ("Patch test clear, Oct 14"), her name and when. Kept on the client as a record of the call.
+ */
+export interface SkinTypeException {
+  treatmentId: string;
+  reason: string;
+  by: string;
+  at: string;
+  /** The client's type when she made the call. */
+  type: FitzpatrickType | null;
+}
+
+/** What the plan needs to know: the client's type, and the treatments Dana has offered them anyway. */
+export interface SkinRule {
+  type: FitzpatrickType | null;
+  allowed: readonly string[];
+}
+
+export function skinRule(client: { fitzpatrick?: FitzpatrickReading | null; skinTypeExceptions?: SkinTypeException[] | null }): SkinRule {
+  return { type: client.fitzpatrick?.type ?? null, allowed: (client.skinTypeExceptions ?? []).map((e) => e.treatmentId) };
+}
+
 export function isFitzpatrickType(value: unknown): value is FitzpatrickType {
   return typeof value === "string" && (FITZPATRICK_TYPES as readonly string[]).includes(value);
 }
@@ -29,6 +52,11 @@ export function fitzpatrickRank(type: FitzpatrickType): number {
 export function suitsSkinType(treatment: { fitzpatrickMax?: number | null }, type: FitzpatrickType | null | undefined): boolean {
   if (!type || treatment.fitzpatrickMax == null) return true;
   return fitzpatrickRank(type) <= treatment.fitzpatrickMax;
+}
+
+/** Whether this client may be offered the treatment: it suits their type, or Dana made an exception for them. */
+export function offered(treatment: { id: string; fitzpatrickMax?: number | null }, rule: SkinRule | null | undefined): boolean {
+  return suitsSkinType(treatment, rule?.type) || Boolean(rule?.allowed.includes(treatment.id));
 }
 
 /** "Type IV". */

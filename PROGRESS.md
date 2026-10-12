@@ -18,6 +18,11 @@
 - **Dashboard browser tests:** 18 of 20 passed in one run; the other two pass on their own. One is Settings' reply alerts, which times out on the dev server's first compile, as before. The other, Sofia's unsubscribe, has a flaw of its own: it "tampers" with a link by setting its last character to 0, which changes nothing when it already is 0 (about 1 run in 16). Left as it is; worth a one-line fix.
 - **Checked on screen:** Marcus's brief and plan, changing the type, and Grace's IPL course flagged once her type is set to V, at desktop and phone widths.
 
+### Dana's exceptions (D-095), added after Joshua asked whether she can override the rule
+- **"Offer anyway"** on the brief, under "For skin type V": she gives a reason ("Patch test clear"), which is kept with her name and the date. The treatment can then come back into the plan and the agent's suggestions, a confirmed plan holding it isn't flagged, and "Remove" takes it back. Changing the type itself was already hers (D-094).
+- **A two-minute outage, fixed:** the new database column was first added as "never empty", which the demo seed's bulk insert broke against, so a brand-new demo couldn't be created on the live site for about two minutes. A follow-up change (`20261013131000`) fixed it; the Supabase test passes 20 of 20 against the live project.
+- **Tests:** 2 more unit tests (an exception brings IPL back into the plan, only for the treatment named; the agent may suggest it and is told why) and a new dashboard browser test (Marcus: the note, an exception with its reason, removing it, Dana setting type III). All 501 unit tests pass, plus lint, typecheck and the copy check.
+
 ### What Joshua needs to do
 Nothing. To see it: open the dashboard as Dana and open Marcus. A judge's own live scan reads their type on the first scan (about 10 units each).
 

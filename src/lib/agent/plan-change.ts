@@ -7,7 +7,7 @@ import type { PlanSuggestion } from "@/lib/domain";
 import { formatPrice } from "@/lib/plan/build";
 import { priorityKeys } from "@/lib/rebook/engine";
 import { concernLabel } from "@/lib/skin/concerns";
-import { limitLabel, suitsSkinType } from "@/lib/skin/fitzpatrick";
+import { limitLabel, offered, skinRule } from "@/lib/skin/fitzpatrick";
 import { currentCourse, flagsFor, type AgentContext } from "./context";
 
 export type Change = NonNullable<PlanSuggestion["change"]>;
@@ -27,15 +27,16 @@ export function checkChange(ctx: AgentContext, proposal: { treatment: string; se
   if (stalled && stalled.id === treatment.id) {
     return { ok: false, error: `${treatment.name} is the course that stalled. Suggest a different treatment, or ask for a rescan if the scans can't be trusted.` };
   }
-  // Never a treatment the clinic doesn't offer to this skin type (D-094).
-  const skinType = ctx.facts.client.fitzpatrick?.type;
-  if (!suitsSkinType(treatment, skinType)) {
+  // Never a treatment the clinic doesn't offer to this skin type (D-094), unless Dana offered it to them anyway (D-095).
+  const skin = skinRule(ctx.facts.client);
+  const skinType = skin.type;
+  if (!offered(treatment, skin)) {
     return { ok: false, error: `${treatment.name} isn't offered to skin type ${skinType} at ${ctx.clinic.name} (skin ${limitLabel(treatment.fitzpatrickMax)} only). Choose another treatment.` };
   }
   const covers = treatment.concerns.filter((k) => keys.includes(k));
   if (covers.length === 0) {
     const fitting = ctx.treatments
-      .filter((t) => t.id !== stalled?.id && suitsSkinType(t, skinType) && t.concerns.some((k) => keys.includes(k)))
+      .filter((t) => t.id !== stalled?.id && offered(t, skin) && t.concerns.some((k) => keys.includes(k)))
       .map((t) => t.name);
     return {
       ok: false,

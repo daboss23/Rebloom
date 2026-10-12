@@ -188,6 +188,33 @@ test("Sofia unsubscribes from the link in an email: the queue texts her instead,
   expect((await request.post(`/api/unsubscribe/${token.slice(0, -1)}0`)).status()).toBe(404);
 });
 
+test("Marcus's skin type keeps IPL off his plan until Dana offers it anyway, and her call on his type is kept", async ({ page }) => {
+  await page.goto(await briefOf(page, "Marcus"));
+  const about = page.getByRole("region", { name: "About the client" });
+  await expect(about).toContainText("Type VEstimated from the scan");
+  await expect(page.getByText("IPL Photofacial isn't offered to skin type V.", { exact: false })).toBeVisible();
+
+  // An exception needs a reason, and is kept with her name.
+  await about.getByRole("button", { name: "Offer anyway" }).click();
+  const offer = about.getByRole("button", { name: "Offer to Marcus" });
+  await expect(offer).toBeDisabled();
+  await about.getByLabel("Why offer IPL Photofacial to Marcus, at type V? Kept with their record.").fill("Patch test clear");
+  await offer.click();
+  await expect(about).toContainText("IPL Photofacial: offered anyway");
+  await expect(about).toContainText("\u201cPatch test clear\u201d · Dana,");
+  await expect(page.getByText("isn't offered to skin type V", { exact: false })).toHaveCount(0);
+
+  // Taken back, the clinic's rule applies again.
+  await about.getByRole("button", { name: "Remove" }).click();
+  await expect(about).toContainText("IPL Photofacial: not offered");
+
+  // Dana sees type III in person: her call replaces the estimate, and IPL suits it.
+  await about.getByRole("button", { name: "Change" }).click();
+  await about.getByRole("button", { name: "III", exact: true }).click();
+  await expect(about).toContainText("Type IIISet by the clinic");
+  await expect(about).not.toContainText("For skin type");
+});
+
 test("Amelia asked to stop emails: Dana records it on her brief", async ({ page }) => {
   await page.goto(await briefOf(page, "Amelia"));
   const about = page.getByRole("region", { name: "About the client" });

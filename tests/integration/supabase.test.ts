@@ -89,6 +89,10 @@ describe.skipIf(!url || !secret)("Supabase store (live project)", () => {
     expect(updated.status).toBe("lead");
     const typed = await store.updateClient(clientId, { fitzpatrick: { type: "IV", source: "practitioner", at: "2026-10-13T10:00:00.000Z", scanId: null } });
     expect(typed.fitzpatrick).toEqual({ type: "IV", source: "practitioner", at: "2026-10-13T10:00:00.000Z", scanId: null });
+    // No exceptions until Dana makes one (D-095).
+    expect(typed.skinTypeExceptions).toEqual([]);
+    const exception = { treatmentId: "t-ipl", reason: "Patch test clear", by: "Dana", at: "2026-10-13T10:00:00.000Z", type: "IV" as const };
+    expect((await store.updateClient(clientId, { skinTypeExceptions: [exception] })).skinTypeExceptions).toEqual([exception]);
   });
 
   let scanId: string;
