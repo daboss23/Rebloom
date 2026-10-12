@@ -153,7 +153,13 @@ export function buildTools(ctx: AgentContext, state: RunState, onStep: (steps: A
     name: "submit_draft",
     description: `Hand the finished ${ctx.channel === "sms" ? "text" : "email"} to ${ctx.staffName}. It's checked first; any problems come back to fix.`,
     inputSchema: z.object({
-      message: z.string().describe(ctx.channel === "sms" ? "The text, as it will be sent." : `The email body, opening "Hi ${name}," with no sign-off.`),
+      message: z
+        .string()
+        .describe(
+          ctx.channel === "sms"
+            ? `The text, as it will be sent, ending with "${ctx.staffName}" on its own line.`
+            : `The email body, opening "Hi ${name}," and ending with "${ctx.staffName}" on its own line.`,
+        ),
       note_for_dana: z.string().describe(`One line for ${ctx.staffName}: what to check before sending.`),
     }),
     run: async (input) => {

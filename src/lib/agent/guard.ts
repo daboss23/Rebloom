@@ -20,6 +20,22 @@ export interface DraftFacts {
   extraCents: number[];
 }
 
+/** Closings that aren't Dana's: she ends with her name, or "Speak soon," and her name (Joshua, Oct 12). */
+const OTHER_CLOSINGS = /^(best|best wishes|all the best|warmly|warm regards|kind regards|regards|thanks|thank you|many thanks|cheers|take care|love|with love|xx?|sincerely)[,!.]?$/i;
+
+/**
+ * Every draft ends with her name on its own line: "Dana". When it fits, "Speak soon," on the line above. Null when it
+ * does; otherwise how to fix it.
+ */
+export function signOffProblem(text: string, staffName: string): string | null {
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  const [before, last] = [lines[lines.length - 2] ?? "", lines[lines.length - 1] ?? ""];
+  const how = `End with your name on its own line, "${staffName}", with "Speak soon," on the line above when it fits.`;
+  if (last.replace(/^[-\s]+/, "").toLowerCase() !== staffName.toLowerCase()) return how;
+  if (OTHER_CLOSINGS.test(before)) return `Sign off with "${staffName}" alone, or "Speak soon," and "${staffName}", not "${before}".`;
+  return null;
+}
+
 /** What's wrong with a draft, as instructions to fix it. Empty when it can go to Dana. */
 export function draftProblems(ctx: AgentContext, body: string, facts: DraftFacts): string[] {
   const problems: string[] = [];
@@ -39,11 +55,9 @@ export function draftProblems(ctx: AgentContext, body: string, facts: DraftFacts
     if (text.length > EMAIL_MAX_CHARS) problems.push(`Keep the email under ${EMAIL_MAX_CHARS} characters. It's a short note, not a letter.`);
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (name && !new RegExp(`^(hi|hello|dear)\\s+${escaped}(?![a-z])`, "i").test(text)) problems.push(`Open the email with "Hi ${name},".`);
-    // The signature, the clinic's name and address are added under every answer.
-    if (new RegExp(`\\n\\s*(-\\s*)?${ctx.staffName}\\s*$`, "i").test(text) || /\n\s*(best|warmly|kind regards|regards|thanks|cheers|xx?)[,!.]?\s*(\n.*)?$/i.test(text)) {
-      problems.push(`Leave off the sign-off. ${ctx.staffName}'s name and the clinic's details are added under the email.`);
-    }
   }
+  const signOff = signOffProblem(text, ctx.staffName);
+  if (signOff) problems.push(signOff);
 
   for (const t of bareTimesIn(text)) problems.push(`"${t}" needs am or pm. Write every time as 10am or 2:30pm.`);
   const times = allowedTimes(ctx, facts.offered);
