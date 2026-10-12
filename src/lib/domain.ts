@@ -337,6 +337,74 @@ export interface Appointment {
   createdAt: ISODateTime;
 }
 
+// ---------- The agent (DECISIONS D-093) ----------
+
+/** What the agent was asked for: an answer to a client's reply, or a second look at a stalled plan. */
+export type AgentDraftKind = "answer" | "plan_review";
+
+/**
+ * working: the agent is on it. ready: waiting for Dana. failed: it couldn't, so Dana writes it herself.
+ * used: Dana sent it, as written or changed. dismissed: Dana set it aside.
+ */
+export type AgentDraftStatus = "working" | "ready" | "failed" | "used" | "dismissed";
+
+/** One thing the agent did, said plainly for Dana: "Found Saturday at 10am open". */
+export interface AgentStep {
+  text: string;
+  at: ISODateTime;
+}
+
+/** What the agent made of a stalled plan (D-093 parts 2 and 3). Prices and dates are worked out in code. */
+export interface PlanSuggestion {
+  /** Whether the last scans can be compared at all: light, the photo checks, the same engine. */
+  measurement: { trustworthy: boolean; reasons: string[] };
+  /** Null when the agent asks for a rescan instead of a change. */
+  change: {
+    treatmentId: string;
+    treatmentName: string;
+    sessions: number;
+    priceCents: number;
+    /** The plan's treatment it would take over from, if any. */
+    replacesTreatmentId: string | null;
+    replacesName: string | null;
+    /** The stalled concerns it works on. */
+    covers: ConcernKey[];
+    /** Screening answers Dana should look at first. Prompts, never decisions. */
+    flags: string[];
+    why: string;
+  } | null;
+}
+
+/**
+ * A draft the agent wrote for Dana (D-093). Nothing in it reaches a client: Dana reads it, changes what she likes,
+ * and sends it herself. What she sent is kept beside what the agent wrote, so the next draft sounds more like her.
+ */
+export interface AgentDraft {
+  id: string;
+  clinicId: string;
+  clientId: string;
+  sandboxId: string | null;
+  kind: AgentDraftKind;
+  /** The reply it answers (its message id), or the queue item it reviews (its dedupe key). One draft each. */
+  forKey: string;
+  status: AgentDraftStatus;
+  channel: Message["channel"] | null;
+  subject: string | null;
+  body: string | null;
+  /** One line for Dana: what to check before sending. */
+  note: string | null;
+  steps: AgentStep[];
+  suggestion: PlanSuggestion | null;
+  /** Times the agent checked were open and may have named, so the brief can say if one has gone since. */
+  offeredTimes: string[];
+  model: string | null;
+  tokens: number;
+  /** What Dana actually sent, once she has. */
+  sentBody: string | null;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+
 /** "received" is a reply from the client (DECISIONS D-081); every other status is something the clinic sent. */
 export type MessageStatus = "draft" | "queued" | "sent" | "failed" | "skipped" | "received";
 

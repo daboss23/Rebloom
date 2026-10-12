@@ -223,6 +223,56 @@ describe.skipIf(!url || !secret)("Supabase store (live project)", () => {
     expect((await store.listMessages(clinic.id, sandboxId)).length).toBeGreaterThan(12);
   });
 
+  it("keeps one agent draft per reply, picks it up once, and never overwrites one Dana used (D-093)", async () => {
+    const clinic = (await store.getClinicBySlug("maison-verre"))!;
+    const daniel = (await store.listClients(clinic.id, sandboxId)).find((c) => c.demoKey === "daniel")!;
+    const at = new Date().toISOString();
+    const blank = {
+      clinicId: clinic.id,
+      clientId: daniel.id,
+      sandboxId,
+      kind: "answer" as const,
+      forKey: "integration-reply",
+      status: "working" as const,
+      channel: null,
+      subject: null,
+      body: null,
+      note: null,
+      steps: [],
+      suggestion: null,
+      offeredTimes: [],
+      model: null,
+      tokens: 0,
+      sentBody: null,
+      createdAt: at,
+      updatedAt: at,
+    };
+    const [a, b] = await Promise.all([store.startAgentDraft(blank), store.startAgentDraft(blank)]);
+    const draft = (a ?? b)!;
+    expect([a, b].filter(Boolean)).toHaveLength(1);
+    const ready = await store.updateAgentDraft(draft.id, ["working"], {
+      status: "ready",
+      channel: "sms",
+      body: "Hi Daniel, it's Dana. Saturday at 10am is open.",
+      steps: [{ text: "Read Daniel's message", at }],
+      suggestion: { measurement: { trustworthy: true, reasons: [] }, change: null },
+      offeredTimes: ["2027-01-02T18:00:00.000Z"],
+      tokens: 4200,
+      updatedAt: new Date().toISOString(),
+    });
+    expect(ready).toMatchObject({ status: "ready", channel: "sms", steps: [{ text: "Read Daniel's message" }], offeredTimes: ["2027-01-02T18:00:00.000Z"], tokens: 4200 });
+    expect(await store.updateAgentDraft(draft.id, ["working"], { status: "failed" })).toBeNull();
+    expect(await store.updateAgentDraft(draft.id, ["ready"], { status: "used", sentBody: "Sent." })).toMatchObject({ status: "used", sentBody: "Sent." });
+    expect((await store.listAgentDrafts(clinic.id, sandboxId)).map((d) => d.id)).toEqual([draft.id]);
+    expect(await store.getAgentDraft("not-a-uuid")).toBeNull();
+
+    const usage = { provider: "anthropic" as const, taskId: null, sandboxId, ipHash: null, createdAt: new Date().toISOString() };
+    await store.logUsage({ ...usage, feature: "agent_answer", units: 4200 });
+    await store.logUsage({ ...usage, feature: "goal_reading", units: 90 });
+    const since = new Date(Date.now() - 60_000);
+    expect(await store.sumUsage({ provider: "anthropic", since, sandboxId, features: ["agent_answer", "agent_plan_review"] })).toEqual({ units: 4200, count: 1 });
+  });
+
   it("books one visit per time: the database refuses an overlap, settles a deposit once, and keeps the owner's settings per sandbox", async () => {
     const { SlotTakenError } = await import("@/lib/store/types");
     const mv = (await store.getClinicBySlug("maison-verre"))!;

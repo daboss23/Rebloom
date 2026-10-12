@@ -1,4 +1,6 @@
 import type {
+  AgentDraft,
+  AgentDraftStatus,
   ApiUsage,
   Appointment,
   AppointmentStatus,
@@ -171,6 +173,17 @@ export interface Store {
    */
   deleteClientData(clientId: string, now: Date): Promise<{ storagePaths: string[] }>;
 
+  /** The agent's drafts for one clinic in one sandbox, oldest first (D-093). */
+  listAgentDrafts(clinicId: string, sandboxId: string): Promise<AgentDraft[]>;
+  getAgentDraft(id: string): Promise<AgentDraft | null>;
+  /** Starts a draft. Null when this client already has one for the same reply or queue item. */
+  startAgentDraft(draft: Omit<AgentDraft, "id">): Promise<AgentDraft | null>;
+  /**
+   * Changes a draft only while its status is one of `from`, so two requests can't both pick up the same draft, and a
+   * draft Dana has used can't be overwritten by a run that finishes late. Null when it no longer matches.
+   */
+  updateAgentDraft(id: string, from: AgentDraftStatus[], patch: Partial<Omit<AgentDraft, "id" | "clientId" | "forKey">>): Promise<AgentDraft | null>;
+
   logUsage(usage: Omit<ApiUsage, "id">): Promise<void>;
   /** Corrects the units on a logged call once the provider's real charge is known. */
   settleUsage(filter: { provider: ApiUsage["provider"]; taskId: string }, units: number): Promise<void>;
@@ -179,6 +192,8 @@ export interface Store {
     since: Date;
     sandboxId?: string;
     ipHash?: string;
+    /** Only calls for these features, so one feature's safety valve isn't spent by another's. */
+    features?: string[];
   }): Promise<{ units: number; count: number }>;
 }
 

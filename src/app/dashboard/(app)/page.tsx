@@ -17,6 +17,11 @@ import { TRIGGER_LABEL, daysBetween } from "@/lib/rebook/engine";
 import { at } from "@/lib/replies/thread";
 import { excerpt } from "@/components/dashboard/queue-row";
 import { isoDateInZone } from "@/lib/clock";
+import { openDesk } from "@/lib/agent/desk";
+import { draftFor } from "@/lib/agent/view";
+
+/** Today may start the agent's drafts (D-093), which run after the page has gone out. */
+export const maxDuration = 300;
 
 function greeting(now: Date, timeZone: string): string {
   const hour = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone }).format(now));
@@ -42,6 +47,9 @@ export default async function TodayPage() {
   const recent = queue.handled.slice(0, 4);
   // Demo only: a code that carries this demo to a phone, to scan in as a new prospect (D-090).
   const scanIn = env.DEMO_MODE ? scanLink(await appOrigin(), book.sandboxId, clinic) : null;
+  // The agent drafts answers for the replies below while Dana reads this page (D-093). A ready one changes the
+  // row's button, nothing more.
+  const desk = await openDesk(book, await appOrigin());
 
   // One line that reads the queue back in words: the best moment first, then who needs care.
   const first = (id: string) => byId.get(id)!.client.firstName!;
@@ -133,7 +141,7 @@ export default async function TodayPage() {
                     </span>
                     <span className="min-w-0 font-display text-[1.25rem] font-light italic leading-snug text-ink">&ldquo;{excerpt(reply.body, 140)}&rdquo;</span>
                     <span className="btn-sea justify-self-start sm:justify-self-end">
-                      Answer
+                      {draftFor(desk.drafts, f.client.id, reply.id)?.status === "ready" ? "Review draft" : "Answer"}
                       <IconArrowRight width={15} height={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
                     </span>
                   </Link>

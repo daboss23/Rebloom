@@ -29,6 +29,7 @@ import { getStore } from "@/lib/store";
 import { keptPlan } from "@/lib/plan/keep";
 import { suggestedPlan } from "@/lib/dashboard/brief";
 import { fullName } from "@/lib/dashboard/view";
+import { retryDraft } from "@/lib/agent/desk";
 
 export interface ActionResult {
   ok: boolean;
@@ -369,6 +370,8 @@ const answerInput = z.object({
   body: z.string().trim().min(1, "Write a message first.").max(5000, "Keep it under 5,000 characters."),
   /** Made once per answer in the browser, so pressing Send twice sends once. */
   nonce: z.string().min(8).max(64),
+  /** The agent's draft this answer started from (D-093), so what Dana changed can teach the next one. */
+  draftId: z.string().min(1).max(64).optional(),
 });
 
 /** Answers a demo browser can email back to whoever replied to one of its copies (D-064, D-081). */
@@ -489,6 +492,15 @@ export async function answerClient(input: z.input<typeof answerInput>): Promise<
         createdAt: sentAt,
       })
       .catch((e) => console.error(`Demo answer not recorded: ${e instanceof Error ? e.message : String(e)}`));
+  }
+  // The draft it started from is done with: keep what Dana actually sent beside what the agent wrote (D-093).
+  if (message && status === "sent" && parsed.data.draftId) {
+    const draft = await store.getAgentDraft(parsed.data.draftId).catch(() => null);
+    if (draft?.clientId === client.id) {
+      await store
+        .updateAgentDraft(draft.id, ["ready"], { status: "used", sentBody: body, updatedAt: new Date().toISOString() })
+        .catch((e) => console.error(`Draft not marked used: ${e instanceof Error ? e.message : String(e)}`));
+    }
   }
   revalidatePath("/dashboard", "layout");
   if (!message) return { ok: false, error: "This one has already been sent." };
@@ -631,4 +643,28 @@ export async function setDepositRequired(input: { on: boolean }): Promise<Action
   await getStore().setClinicSettings(session.clinic.id, session.sandboxId, { depositRequired: input.on }, await sandboxNow());
   revalidatePath("/dashboard/settings");
   return { ok: true, message: input.on ? "Deposits are on. New bookings take one." : "Deposits are off. Clients book with no payment." };
+}
+
+/** Sets the agent's draft aside (D-093). Dana writes her own; nothing was sent. */
+export async function dismissDraft(input: { draftId: string }): Promise<ActionResult> {
+  if (typeof input?.draftId !== "string") return { ok: false, error: "Something went wrong. Please try again." };
+  const session = await readSession();
+  if (!session) return { ok: false, error: "Please sign in again." };
+  const store = getStore();
+  const draft = await store.getAgentDraft(input.draftId).catch(() => null);
+  if (!draft || draft.sandboxId !== session.sandboxId) return { ok: false, error: "We couldn't find that draft." };
+  await store.updateAgentDraft(draft.id, ["ready", "failed"], { status: "dismissed", updatedAt: new Date().toISOString() });
+  revalidatePath("/dashboard", "layout");
+  return { ok: true };
+}
+
+/** "Try again" on a draft the agent couldn't finish (D-093). */
+export async function redraft(input: { draftId: string }): Promise<ActionResult> {
+  if (typeof input?.draftId !== "string") return { ok: false, error: "Something went wrong. Please try again." };
+  const session = await readSession();
+  if (!session) return { ok: false, error: "Please sign in again." };
+  const draft = await getStore().getAgentDraft(input.draftId).catch(() => null);
+  if (!draft || draft.sandboxId !== session.sandboxId) return { ok: false, error: "We couldn't find that draft." };
+  const started = await retryDraft(draft, await appOrigin());
+  return started ? { ok: true } : { ok: false, error: "Rebloom can't draft this one just now. Please write it yourself." };
 }

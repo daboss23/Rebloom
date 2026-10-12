@@ -3,11 +3,14 @@
 // A client's conversation with the clinic (DECISIONS D-081): what the clinic sent and what they wrote back, in order,
 // and the place Dana answers from. Nothing reaches the client until she presses Send.
 
+import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, useTransition } from "react";
-import { answerClient, markReplyHandled, undoDone } from "@/app/dashboard/actions";
+import { answerClient, dismissDraft, markReplyHandled, redraft, undoDone } from "@/app/dashboard/actions";
 import { cx } from "@/components/ui/cx";
 import { IconMail, IconMessage } from "@/components/ui/Icons";
+import type { DraftView } from "@/lib/agent/view";
 import { TEXT_MAX_CHARS, textParts } from "@/lib/sms/text";
+import { Bloom } from "./Bloom";
 import { ChannelSwitch } from "./Queue";
 
 export interface ConversationEntry {
@@ -51,6 +54,7 @@ export function Conversation({
   subject,
   waiting,
   demo,
+  draft = null,
 }: {
   clientId: string;
   firstName: string;
@@ -67,9 +71,14 @@ export function Conversation({
   subject: string;
   waiting: boolean;
   demo: boolean;
+  /** The agent's draft for what's in front of Dana (D-093): being written, ready to read, or not managed. */
+  draft?: DraftView | null;
 }) {
-  const [channel, setChannel] = useState<Channel>(defaultChannel);
-  const [body, setBody] = useState("");
+  // A draft the agent finished before the page opened goes straight into the composer (D-093).
+  const ready = draft?.status === "ready" && draft.body ? draft : null;
+  const draftChannel = (d: DraftView): Channel | null => (d.channel === "sms" && channels.text ? "text" : d.channel === "email" && channels.email ? "email" : null);
+  const [channel, setChannel] = useState<Channel>(() => (ready && draftChannel(ready)) || defaultChannel);
+  const [body, setBody] = useState(ready?.body ?? "");
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ text: string; id: number; undo?: () => void } | null>(null);
   const [all, setAll] = useState(false);
@@ -81,6 +90,83 @@ export function Conversation({
   // Entries that weren't there when the page opened arrive into focus: an answer landing in the thread.
   const [seen] = useState(() => new Set(entries.map((e) => e.id)));
   const say = (text: string, undo?: () => void) => setToast({ text, id: ++toastCount.current, undo });
+
+  // ---------- The agent's draft (D-093) ----------
+  const router = useRouter();
+  const [agent, setAgent] = useState<DraftView | null>(draft);
+  // The draft now in the composer. Sent with the answer, so what Dana changed teaches the next draft.
+  const [fromDraft, setFromDraft] = useState<string | null>(ready?.id ?? null);
+  const [how, setHow] = useState(false);
+  const filled = useRef(new Set<string>(ready ? [ready.id] : []));
+  const typed = useRef(body);
+  useEffect(() => {
+    typed.current = body;
+  }, [body]);
+  // A refreshed page brings the latest draft, such as one a reply started while Dana was elsewhere.
+  const draftKey = draft ? `${draft.id}:${draft.status}` : "";
+  const [seenKey, setSeenKey] = useState(draftKey);
+  if (draftKey !== seenKey) {
+    setSeenKey(draftKey);
+    setAgent(draft);
+  }
+  /** A finished draft goes into the composer once, and only if Dana hasn't started writing. */
+  const fill = (d: DraftView) => {
+    if (d.status !== "ready" || !d.body || filled.current.has(d.id) || typed.current.trim()) return;
+    filled.current.add(d.id);
+    setBody(d.body);
+    setFromDraft(d.id);
+    const c = draftChannel(d);
+    if (c) setChannel(c);
+  };
+  // While it's being written, follow along. Once it's done, the page refreshes, so the plan panel shows any suggestion.
+  useEffect(() => {
+    if (!agent || agent.status !== "working") return;
+    const stop = Date.now() + 5 * 60_000;
+    let cancelled = false;
+    const tick = async () => {
+      if (cancelled) return;
+      try {
+        const res = await fetch(`/api/agent/drafts/${agent.id}`, { cache: "no-store" });
+        if (res.ok) {
+          const next = (await res.json()) as DraftView;
+          if (cancelled) return;
+          setAgent(next);
+          if (next.status !== "working") {
+            fill(next);
+            return router.refresh();
+          }
+        }
+      } catch {
+        // A blip: the next tick tries again.
+      }
+      if (Date.now() < stop) timer = setTimeout(tick, 1500);
+    };
+    let timer = setTimeout(tick, 1200);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [agent?.id, agent?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const setAside = () =>
+    start(async () => {
+      if (!agent) return;
+      const id = agent.id;
+      setAgent(null);
+      setFromDraft(null);
+      setHow(false);
+      if (fromDraft === id) setBody("");
+      await dismissDraft({ draftId: id });
+      field_.current?.focus({ preventScroll: true });
+    });
+
+  const again = () =>
+    start(async () => {
+      if (!agent) return;
+      const result = await redraft({ draftId: agent.id });
+      if (result.ok) setAgent({ ...agent, status: "working", steps: [], body: null, note: null });
+      else setError(result.error ?? "Rebloom can't draft this one just now.");
+    });
 
   // Once nothing waits, the conversation moves below the brief (D-081). Follow it there, so the answer just sent
   // stays in view.
@@ -109,10 +195,13 @@ export function Conversation({
   const send = () =>
     start(async () => {
       setError(null);
-      const result = await answerClient({ clientId, channel, body, nonce: key.current });
+      const result = await answerClient({ clientId, channel, body, nonce: key.current, draftId: fromDraft ?? undefined });
       if (result.ok) {
         key.current = nonce();
         setBody("");
+        setFromDraft(null);
+        setAgent(null);
+        setHow(false);
         say(result.message ?? "Sent.");
       } else setError(result.error ?? "Something went wrong. Please try again.");
     });
@@ -196,6 +285,7 @@ export function Conversation({
               <span className="min-w-0 truncate text-text-3">· {subject}</span>
             )}
           </p>
+          {agent && <AgentLine agent={agent} inComposer={fromDraft === agent.id} how={how} onHow={() => setHow((o) => !o)} onClear={setAside} onRetry={again} busy={pending} />}
           <textarea
             id={`${countId}-body`}
             ref={field_}
@@ -208,7 +298,8 @@ export function Conversation({
                 send();
               }
             }}
-            rows={isText ? 3 : 5}
+            // Tall enough for a drafted email to be read whole, without scrolling inside the box.
+            rows={Math.min(14, Math.max(isText ? 3 : 5, Math.ceil(body.length / 78) + (body.match(/\n/g)?.length ?? 0)))}
             placeholder={isText ? `A short text to ${firstName}` : `Hi ${firstName},`}
             aria-describedby={isText ? countId : undefined}
             className={cx(field, "mt-3 resize-y p-4 focus-visible:outline-none! text-[0.9375rem] leading-relaxed placeholder:text-text-3")}
@@ -267,6 +358,95 @@ export function Conversation({
         )}
       </div>
     </>
+  );
+}
+
+/**
+ * One quiet line above the composer (D-093). While the agent writes: a breathing bloom and what it's doing now.
+ * Once the draft is in the composer: who wrote it, what to check, and how it was written behind one link. Never a
+ * panel of its own: the draft is the composer's content, and Dana's to change.
+ */
+function AgentLine({
+  agent,
+  inComposer,
+  how,
+  onHow,
+  onClear,
+  onRetry,
+  busy,
+}: {
+  agent: DraftView;
+  inComposer: boolean;
+  how: boolean;
+  onHow: () => void;
+  onClear: () => void;
+  onRetry: () => void;
+  busy: boolean;
+}) {
+  const what = agent.kind === "plan_review" ? "a note about their plan" : "an answer";
+  const stepsId = useId();
+  const quiet = "text-[0.8125rem] leading-relaxed text-text-3";
+  const link = "underline decoration-[#0c1a22]/20 underline-offset-4 transition-colors duration-150 hover:text-ink hover:decoration-ink";
+
+  // The bloom keeps its own column, so the words wrap beside it on a phone instead of under it.
+  const row = cx(quiet, "mt-3 grid grid-cols-[16px_minmax(0,1fr)] items-start gap-x-2.5");
+  const mark = "mt-[0.2em]";
+
+  if (agent.status === "working") {
+    const latest = agent.steps[agent.steps.length - 1];
+    return (
+      <p aria-live="polite" className={row}>
+        <Bloom size={16} className={cx(mark, "bloom-breathe text-[#9e4a5d]")} />
+        <span>
+          Rebloom is drafting {what}
+          {latest ? <span> · {latest}</span> : "."}
+        </span>
+      </p>
+    );
+  }
+  if (agent.status === "failed") {
+    return (
+      <p className={row}>
+        <Bloom size={16} className={cx(mark, "text-text-3")} />
+        <span>
+          Rebloom couldn&apos;t draft this one.{" "}
+          <button type="button" disabled={busy} onClick={onRetry} className={link}>
+            Try again
+          </button>
+        </span>
+      </p>
+    );
+  }
+  if (agent.status !== "ready" || !inComposer) return null;
+  return (
+    <div className={row}>
+      <Bloom size={16} unfurl className={cx(mark, "text-[#9e4a5d]")} />
+      <div>
+        <p>
+          <span className="text-ink">Drafted by Rebloom.</span> Read it, change anything, then send.{" "}
+          <span className="whitespace-nowrap">
+            <button type="button" onClick={onHow} aria-expanded={how} aria-controls={stepsId} className={link}>
+              How it was written
+            </button>
+            <span aria-hidden className="mx-2 text-text-3/60">·</span>
+            <button type="button" disabled={busy} onClick={onClear} className={link}>
+              Clear
+            </button>
+          </span>
+        </p>
+        {agent.note && <p className="mt-1.5 text-text-2">Before you send: {agent.note}</p>}
+        {how && (
+          <ol id={stepsId} className="focus-in mt-2 space-y-1">
+            {agent.steps.map((step, i) => (
+              <li key={i} className="flex gap-2.5">
+                <span aria-hidden className="mt-[0.6em] h-1 w-1 shrink-0 rounded-full bg-[#9e4a5d]/60" />
+                {step}
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </div>
   );
 }
 

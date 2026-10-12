@@ -4,7 +4,7 @@ import "server-only";
 // for every table with no policies, so the public keys can read nothing (see the migration).
 
 import { createClient, type PostgrestError, type SupabaseClient } from "@supabase/supabase-js";
-import { DEFAULT_CLINIC_SETTINGS, type Appointment, type Client, type ClientPlan, type ClinicSettings, type Consent, type Intake, type Message, type PlanItem, type Report, type Sandbox, type Scan, type Staff } from "@/lib/domain";
+import { DEFAULT_CLINIC_SETTINGS, type AgentDraft, type Appointment, type Client, type ClientPlan, type ClinicSettings, type Consent, type Intake, type Message, type PlanItem, type Report, type Sandbox, type Scan, type Staff } from "@/lib/domain";
 import { env, supabaseSecretKey } from "@/lib/env";
 import { newId, newToken } from "@/lib/ids";
 import { toUsE164 } from "@/lib/sms/text";
@@ -547,8 +547,41 @@ export const supabaseStore: Store = {
   async settleUsage({ provider, taskId }, units) {
     check(await db().from("api_usage").update({ units }).eq("provider", provider).eq("task_id", taskId), "settleUsage");
   },
-  async sumUsage({ provider, since, sandboxId, ipHash }) {
+  async listAgentDrafts(clinicId, sandboxId) {
+    if (!isUuid(sandboxId)) return [];
+    return many<AgentDraft>(
+      await db().from("agent_drafts").select("*").eq("clinic_id", clinicId).eq("sandbox_id", sandboxId).order("created_at"),
+      "listAgentDrafts",
+    );
+  },
+  async getAgentDraft(id) {
+    if (!isUuid(id)) return null;
+    return maybe<AgentDraft>(await db().from("agent_drafts").select("*").eq("id", id).maybeSingle(), "getAgentDraft");
+  },
+  async startAgentDraft(input) {
+    const inserted = await db().from("agent_drafts").insert(toRow({ id: newId(), ...input })).select().single();
+    // agent_drafts_for_idx: this client already has a draft for this reply or queue item.
+    if (inserted.error?.code === UNIQUE_VIOLATION) return null;
+    return one<AgentDraft>(inserted, "startAgentDraft");
+  },
+  async updateAgentDraft(id, from, patch) {
+    if (!isUuid(id)) return null;
+    return maybe<AgentDraft>(
+      await db().from("agent_drafts").update(toRow(patch)).eq("id", id).in("status", from).select().maybeSingle(),
+      "updateAgentDraft",
+    );
+  },
+
+  async sumUsage({ provider, since, sandboxId, ipHash, features }) {
     if (sandboxId !== undefined && !isUuid(sandboxId)) return { units: 0, count: 0 };
+    if (features) {
+      // A day's calls for a few features: few enough rows to add up here.
+      let query = db().from("api_usage").select("units").eq("provider", provider).gte("created_at", since.toISOString()).in("feature", features);
+      if (sandboxId !== undefined) query = query.eq("sandbox_id", sandboxId);
+      if (ipHash !== undefined) query = query.eq("ip_hash", ipHash);
+      const rows = check(await query, "sumUsage") as { units: number }[] | null;
+      return { units: (rows ?? []).reduce((n, r) => n + Number(r.units), 0), count: rows?.length ?? 0 };
+    }
     const rows = check(
       await db().rpc("usage_totals", {
         p_provider: provider,

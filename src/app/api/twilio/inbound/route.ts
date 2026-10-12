@@ -1,7 +1,10 @@
 // A client's text back to the clinic's number, delivered by Twilio (DECISIONS D-081). Point the number's "A message
 // comes in" webhook here. Twilio signs each request with the auth token. STOP and START are Twilio's to act on; they
 // are kept so the dashboard knows, and answered with nothing.
+import { after } from "next/server";
+import { draftForReply } from "@/lib/agent/desk";
 import { env } from "@/lib/env";
+import { appOrigin } from "@/lib/origin";
 import { REPLY_MAX_CHARS } from "@/lib/replies/parse";
 import { clientForPhone, saveReply } from "@/lib/replies/receive";
 import { json } from "@/lib/scans/access";
@@ -10,6 +13,9 @@ import { validTwilioSignature } from "@/lib/sms/twilio";
 /** An empty TwiML answer: Twilio sends nothing back to the client. */
 const nothing = () =>
   new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', { headers: { "content-type": "text/xml; charset=utf-8" } });
+
+/** A reply may start the agent's draft, which runs after the answer to Twilio (D-093). */
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   if (!env.TWILIO_AUTH_TOKEN) return json({ error: "Texts aren't set up." }, 503);
@@ -26,6 +32,13 @@ export async function POST(request: Request) {
   if (!client) return nothing();
   const pictures = Number(params.get("NumMedia") ?? 0);
   const body = (params.get("Body") ?? "").trim().slice(0, REPLY_MAX_CHARS) || (pictures > 0 ? (pictures === 1 ? "Sent a picture. Pictures aren't shown here yet." : `Sent ${pictures} pictures. Pictures aren't shown here yet.`) : "");
-  if (body) await saveReply(client, { channel: "sms", providerId: sid, sender: from, subject: null, body });
+  if (body) {
+    const saved = await saveReply(client, { channel: "sms", providerId: sid, sender: from, subject: null, body });
+    // The agent starts on an answer straight away (D-093), after Twilio has its reply.
+    if (saved.status === "saved") {
+      const origin = await appOrigin();
+      after(() => draftForReply(client, saved.messageId, origin));
+    }
+  }
   return nothing();
 }

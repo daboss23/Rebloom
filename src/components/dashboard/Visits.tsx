@@ -39,7 +39,10 @@ export function Visits({ visits, now, empty }: { visits: Visit[]; now: Date; emp
               </span>
               <span className="min-w-0">
                 <span className="flex items-baseline justify-between gap-3">
-                  <span className={cx("font-display text-[1.625rem] font-light leading-none", past ? "text-text-2" : "text-ink")}>{time}</span>
+                  <span className={cx("font-display text-[1.625rem] font-light leading-none", past ? "text-text-2" : "text-ink")}>
+                    {time.replace(/[ap]m$/, "")}
+                    <span className="ml-0.5 text-[1.0625rem]">{time.slice(-2)}</span>
+                  </span>
                   {next && (
                     <span className="rounded-full bg-[linear-gradient(180deg,#fff4dc,#f1d49a)] px-2 py-0.5 text-[0.75rem] font-medium uppercase tracking-[0.14em] text-[#5a3a08] ring-1 ring-inset ring-[#c99645]/45">
                       Next
