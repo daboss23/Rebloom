@@ -30,6 +30,7 @@ import { keptPlan } from "@/lib/plan/keep";
 import { suggestedPlan } from "@/lib/dashboard/brief";
 import { fullName } from "@/lib/dashboard/view";
 import { retryDraft } from "@/lib/agent/desk";
+import { FITZPATRICK_TYPES, skinTypeLabel } from "@/lib/skin/fitzpatrick";
 
 export interface ActionResult {
   ok: boolean;
@@ -554,6 +555,53 @@ export async function stopEmails(input: { clientId: string }): Promise<ActionRes
   revalidatePath("/dashboard", "layout");
   if (!now?.unsubscribedAt) return { ok: false, error: "That didn't save. Please try again." };
   return { ok: true, message: `Done. ${name} won't get reminder or update emails.` };
+}
+
+const skinTypeInput = z.object({ clientId: z.string().min(1), type: z.enum(FITZPATRICK_TYPES) });
+
+/** Dana's own call on a client's Fitzpatrick type (D-094). Kept over any later estimate from a scan. */
+export async function setSkinType(input: z.input<typeof skinTypeInput>): Promise<ActionResult> {
+  const parsed = skinTypeInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Choose a type from I to VI." };
+  if (!(await readSession())) return { ok: false, error: "Please sign in again." };
+  const book = await loadBook();
+  const facts = book.facts.find((f) => f.client.id === parsed.data.clientId);
+  if (!facts) return { ok: false, error: "This client isn't in your book." };
+  const at = (await sandboxNow()).toISOString();
+  await getStore().updateClient(facts.client.id, {
+    fitzpatrick: { type: parsed.data.type, source: "practitioner", at, scanId: facts.client.fitzpatrick?.scanId ?? null },
+  });
+  revalidatePath("/dashboard", "layout");
+  return { ok: true, message: `Saved: ${skinTypeLabel(parsed.data.type)}.` };
+}
+
+const exceptionInput = z.object({ clientId: z.string().min(1), treatmentId: z.string().min(1), reason: z.string().max(200).optional() });
+
+/**
+ * Dana offers one client a treatment the clinic doesn't usually offer to their skin type (D-095), with her reason.
+ * Without a reason, takes the exception back. Either way the plan follows at once.
+ */
+export async function setSkinTypeException(input: z.input<typeof exceptionInput>): Promise<ActionResult> {
+  const parsed = exceptionInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Keep the reason under 200 characters." };
+  if (!(await readSession())) return { ok: false, error: "Please sign in again." };
+  const book = await loadBook();
+  const facts = book.facts.find((f) => f.client.id === parsed.data.clientId);
+  const treatment = book.input.treatments.find((t) => t.id === parsed.data.treatmentId);
+  if (!facts || !treatment) return { ok: false, error: "That isn't in your book." };
+  const name = facts.client.firstName ?? "this client";
+  const others = (facts.client.skinTypeExceptions ?? []).filter((e) => e.treatmentId !== treatment.id);
+  if (parsed.data.reason === undefined) {
+    await getStore().updateClient(facts.client.id, { skinTypeExceptions: others });
+    revalidatePath("/dashboard", "layout");
+    return { ok: true, message: `${treatment.name} is back to the clinic's rule for ${name}.` };
+  }
+  const reason = parsed.data.reason.trim().replace(/\s+/g, " ");
+  if (reason.length < 3) return { ok: false, error: "Say why, in a few words. It's kept with the client's record." };
+  const exception = { treatmentId: treatment.id, reason, by: book.staff.name, at: (await sandboxNow()).toISOString(), type: facts.client.fitzpatrick?.type ?? null };
+  await getStore().updateClient(facts.client.id, { skinTypeExceptions: [...others, exception] });
+  revalidatePath("/dashboard", "layout");
+  return { ok: true, message: `${treatment.name} is offered to ${name}. Your reason is kept with their record.` };
 }
 
 const noteInput = z.object({ clientId: z.string().min(1), note: z.string().max(1200) });

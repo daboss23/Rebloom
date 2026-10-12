@@ -6,6 +6,7 @@ import { AGE_OPTIONS, BUDGET_OPTIONS, EVENT_OPTIONS, SCREENING_FLAG_TEXT, TREATM
 import { buildPlan, type Plan } from "@/lib/plan/build";
 import type { ClientFacts } from "@/lib/rebook/engine";
 import { concernLabel } from "@/lib/skin/concerns";
+import { skinRule } from "@/lib/skin/fitzpatrick";
 
 const labelOf = <K extends string>(options: [K, string][], key: K | null | undefined) => options.find(([k]) => k === key)?.[1] ?? null;
 
@@ -24,6 +25,7 @@ export function suggestedPlan(
     products: book.input.products,
     clinic: book.input.clinic,
     from,
+    skin: skinRule(facts.client),
   });
   return { scan, plan };
 }

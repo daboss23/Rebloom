@@ -5,7 +5,7 @@ import "server-only";
 import sharp from "sharp";
 import { env } from "@/lib/env";
 import { hdAction } from "@/lib/skin/concerns";
-import { createSkinAnalysisTask, deleteTask, getSkinAnalysisTask, uploadImage, YouCamError, type SkinTask } from "./client";
+import { createFitzpatrickTask, createSkinAnalysisTask, deleteTask, getSkinAnalysisTask, uploadImage, YouCamError, type SkinTask } from "./client";
 import { parseSkinOutput } from "./parse";
 import type { SkinAnalysisProvider } from "./types";
 import { unitCost, type SkinEngine } from "./units";
@@ -26,7 +26,7 @@ export function skinActions(engine: SkinEngine, concerns: readonly string[]): st
 export const liveProvider: SkinAnalysisProvider = {
   mode: "live",
 
-  async start({ scanId, image, concerns }) {
+  async start({ scanId, image, concerns, fitzpatrick }) {
     // An unreadable size means SD: HD is only for photos known to have the detail.
     const { width = 0, height = 0 } = await sharp(image.bytes).metadata().catch(() => ({ width: 0, height: 0 }));
     let engine = chooseEngine(width, height);
@@ -43,7 +43,16 @@ export const liveProvider: SkinAnalysisProvider = {
       actions = skinActions(engine, concerns);
       taskId = await createSkinAnalysisTask(fileId, actions);
     }
-    return { taskId, units: unitCost(engine, actions.length), engine };
+    // The skin type rides on the same upload. It's a prompt for the practitioner, so it never holds up or fails a scan.
+    let fitzpatrickTaskId: string | null = null;
+    if (fitzpatrick) {
+      try {
+        fitzpatrickTaskId = await createFitzpatrickTask(fileId);
+      } catch (error) {
+        console.warn(`[youcam] scan ${scanId}: skin type not started (${(error as Error).message})`);
+      }
+    }
+    return { taskId, units: unitCost(engine, actions.length), engine, ...(fitzpatrickTaskId ? { fitzpatrickTaskId } : {}) };
   },
 
   async poll({ taskId, scanId }) {

@@ -54,6 +54,8 @@ export const TREATMENT_TEMPLATES: TreatmentTemplate[] = [
     minDaysBeforeEvent: 14,
     concerns: ["age_spot", "redness"],
     screeningFlags: ["sun_exposure", "pregnant_breastfeeding", "isotretinoin", "sensitivities"],
+    // Light-based: a risk of burns and dark marks on deeper skin. Types I to III only (D-094).
+    fitzpatrickMax: 3,
   },
   {
     key: "hydrating-infusion",

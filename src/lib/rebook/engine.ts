@@ -21,6 +21,7 @@ import { buildPlan, rankPriorities, shiftDate, statedConcerns } from "@/lib/plan
 import { concernLabel, type ConcernKey } from "@/lib/skin/concerns";
 import { unsubscribedAddresses, unsubscribedAt } from "@/lib/email/opt-out";
 import { optedOutOfTexts, waitingReply } from "@/lib/replies/thread";
+import { skinRule } from "@/lib/skin/fitzpatrick";
 import { TEXT_OPT_OUT, toUsE164 } from "@/lib/sms/text";
 import type { PlanWithItems } from "@/lib/store/types";
 import {
@@ -511,6 +512,7 @@ export function buildQueue(input: EngineInput): Queue {
               products: input.products,
               clinic: input.clinic,
               from: local(lastScan.createdAt),
+              skin: skinRule(facts.client),
             })
           : null;
         const lead = suggested?.focus[0];

@@ -1,5 +1,35 @@
 # Progress
 
+## Session 15 · Tuesday October 13, 2026 · Skin type keeps unsafe treatments off the plan
+
+**Rebloom now reads each client's Fitzpatrick skin type with YouCam's third API, and the plan leaves out treatments the clinic doesn't offer to that type** (DECISIONS D-094). On Marcus's brief (type V, in for redness), the plan's note now says "IPL Photofacial isn't offered to skin type V"; if his scores had made IPL the best fit, it would have been left out.
+
+### What's done
+- **YouCam's AI Fitzpatrick Skin Type Analysis**, built from the API description Joshua supplied: started beside the skin analysis on a client's first live scan, on the same upload, and read when the scan finishes. 10 units, once per client, never repeated. It never slows down or fails a scan.
+- **The safety rule:** IPL Photofacial is offered to types I to III on the demo menu. The suggested plan, the lighter within-budget option and the agent's plan changes all leave out a treatment that doesn't suit the client's type. An unknown type hides nothing.
+- **On the brief:** "Fitzpatrick" beside skin type, "Type V, estimated from the scan", with Confirm and Change. Dana's choice is kept over any later estimate. If a confirmed plan already holds a treatment that doesn't suit, it shows under "Review before treatment".
+- **Never shown to the client.** The agent sees the type as Dana's only.
+- **Settings** shows the limit on the menu. **The landing page** lists it with the other YouCam features. **The README** now lists all three YouCam features, with endpoints and unit costs.
+- **Demo clients** each carry a type matching how they look.
+- **Fixed on the way:** the daily live-scan limits counted every YouCam call, so a report's simulation already used one of a judge's five scans a day, and the skin type would have used another. They now count scans only, as D-022 says. The unit reserve still counts everything.
+- **Applied the database change** (`20261013120000_fitzpatrick`) to the live project, and ran the Supabase integration test there with two new checks (the IPL limit, a client's type saved and read back): 20 of 20 pass.
+- **Tests:** 16 new unit tests (the types and the rule, the API calls and the result, one upload for both tasks, a refusal that doesn't stop the scan, the plan leaving IPL out for type V and keeping it for type II or unknown, the budget option, the agent refusing it and being told the type, and the daily limits counting scans only). All 499 unit tests pass (one skipped, as before), plus lint, typecheck and the copy check.
+- **Live-mode browser tests:** the YouCam stand-in now serves the Fitzpatrick endpoint as its API description sets out. The first live scan's test checks one upload for both tasks, 10 units logged to match what YouCam charged, the task deleted after it's read, nothing on the client's report, and "Type III, estimated from the scan" on Dana's brief. All 7 pass. On the way, that test's expected priorities were out of date (they fail the same way on `main`): the client wrote "smoother, more even skin", so pigmentation now joins texture as their own words, and the test says so.
+- **Dashboard browser tests:** 18 of 20 passed in one run; the other two pass on their own. One is Settings' reply alerts, which times out on the dev server's first compile, as before. The other, Sofia's unsubscribe, has a flaw of its own: it "tampers" with a link by setting its last character to 0, which changes nothing when it already is 0 (about 1 run in 16). Left as it is; worth a one-line fix.
+- **Checked on screen:** Marcus's brief and plan, changing the type, and Grace's IPL course flagged once her type is set to V, at desktop and phone widths.
+
+### Dana's exceptions (D-095), added after Joshua asked whether she can override the rule
+- **"Offer anyway"** on the brief, under "For skin type V": she gives a reason ("Patch test clear"), which is kept with her name and the date. The treatment can then come back into the plan and the agent's suggestions, a confirmed plan holding it isn't flagged, and "Remove" takes it back. Changing the type itself was already hers (D-094).
+- **A two-minute outage, fixed:** the new database column was first added as "never empty", which the demo seed's bulk insert broke against, so a brand-new demo couldn't be created on the live site for about two minutes. A follow-up change (`20261013131000`) fixed it; the Supabase test passes 20 of 20 against the live project.
+- **Tests:** 2 more unit tests (an exception brings IPL back into the plan, only for the treatment named; the agent may suggest it and is told why) and a new dashboard browser test (Marcus: the note, an exception with its reason, removing it, Dana setting type III). All 501 unit tests pass, plus lint, typecheck and the copy check.
+
+### What Joshua needs to do
+Nothing. To see it: open the dashboard as Dana and open Marcus. A judge's own live scan reads their type on the first scan (about 10 units each).
+
+### What's next
+1. **Week 4 submission work:** the MIT licence file, the full README (screenshots, architecture, demo login), the Devpost text and the demo video.
+
+---
 ## Session 14 · Monday October 12, 2026 · The agent prepares Dana's desk
 
 **Claude now drafts Dana's answers to client replies, and takes a second look at stalled plans, for her to read, change and send herself** (DECISIONS D-093). The hackathon asks for agentic workflows; this one works through tools over the app's own data, and everything it names is checked in code.

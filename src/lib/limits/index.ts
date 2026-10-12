@@ -14,6 +14,9 @@ export const LIMITS = {
   reserveUnits: 64,
 } as const;
 
+/** The usage rows that are scans, one per analysis, by engine (D-046). */
+export const SCAN_FEATURES = ["skin_analysis_sd", "skin_analysis_hd"];
+
 /** Why a scan ran in fixture mode. `live_unavailable`: YouCam refused or failed to start the task. */
 export type ModeReason = "fixture_mode" | "browser_limit" | "daily_cap" | "reserve" | "live_unavailable" | null;
 
@@ -26,10 +29,12 @@ export async function chooseAnalysisMode(input: {
   if (!features.youcamLive) return { mode: "fixture", reason: "fixture_mode" };
   const store = getStore();
   const since = new Date(Date.now() - DAY_MS); // real time on purpose: limits are about real spend
+  // The daily caps count scans (D-022): a scan's simulation or skin type (D-047, D-094) isn't another scan.
+  // The reserve below still counts every unit spent.
   const [mine, fromIp, today, ever] = await Promise.all([
-    input.sandboxId ? store.sumUsage({ provider: "youcam", since, sandboxId: input.sandboxId }) : null,
-    input.ipHash ? store.sumUsage({ provider: "youcam", since, ipHash: input.ipHash }) : null,
-    store.sumUsage({ provider: "youcam", since }),
+    input.sandboxId ? store.sumUsage({ provider: "youcam", since, sandboxId: input.sandboxId, features: SCAN_FEATURES }) : null,
+    input.ipHash ? store.sumUsage({ provider: "youcam", since, ipHash: input.ipHash, features: SCAN_FEATURES }) : null,
+    store.sumUsage({ provider: "youcam", since, features: SCAN_FEATURES }),
     store.sumUsage({ provider: "youcam", since: new Date(0) }),
   ]);
   if ((mine?.count ?? 0) >= LIMITS.perBrowserPerDay || (fromIp?.count ?? 0) >= LIMITS.perIpPerDay) {

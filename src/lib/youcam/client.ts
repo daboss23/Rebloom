@@ -5,6 +5,7 @@ import "server-only";
 
 import { z } from "zod";
 import { env } from "@/lib/env";
+import { isFitzpatrickType, type FitzpatrickType } from "@/lib/skin/fitzpatrick";
 
 /** File upload stays on v2.0. Skin analysis runs on v2.1, YouCam's updated engines. */
 const FILE_PATH = "/s2s/v2.0/file";
@@ -302,4 +303,36 @@ export async function downloadResultImage(url: string): Promise<Buffer> {
   }
   if (!res.ok) throw new YouCamError(res.status >= 500 ? "server" : "protocol", `result image returned HTTP ${res.status}`, res.status);
   return Buffer.from(await res.arrayBuffer());
+}
+
+// ── Fitzpatrick skin type (DECISIONS D-094) ─────────────────────────────────────────────────────
+// From YouCam's OpenAPI description (ai_fitzpatrick_skin_type.json, V1.0): POST with a source file and
+// version "1.0"; poll GET .../{task_id} until data.task_status is success or error; the result is
+// data.results.fitzpatrick_scale, "I" to "VI". 10 units, charged only on success. One face per photo, so
+// the optional pre-process step (choosing among several faces) is skipped and index stays 0.
+const FITZPATRICK_PATH = "/s2s/v2.0/task/fitzpatrick-scale-analyzer";
+
+/** Starts a Fitzpatrick estimate on an uploaded photo. */
+export async function createFitzpatrickTask(fileId: string): Promise<string> {
+  const body = await call(FITZPATRICK_PATH, { method: "POST", body: { src_file_id: fileId, version: "1.0" }, retries: 1 });
+  return read(taskCreated, body, FITZPATRICK_PATH).data.task_id;
+}
+
+export type FitzpatrickTask =
+  | { status: "running" }
+  | { status: "success"; type: FitzpatrickType }
+  | { status: "error"; code: string; message: string | null };
+
+/** One status check. */
+export async function getFitzpatrickTask(taskId: string): Promise<FitzpatrickTask> {
+  const { data } = read(taskState, await call(`${FITZPATRICK_PATH}/${taskId}`, { method: "GET" }), FITZPATRICK_PATH);
+  if (data.task_status === "success") {
+    const type = (data.results as { fitzpatrick_scale?: unknown } | null | undefined)?.fitzpatrick_scale;
+    if (!isFitzpatrickType(type)) throw new YouCamError("protocol", `${FITZPATRICK_PATH} succeeded without a type I to VI`);
+    return { status: "success", type };
+  }
+  if (data.task_status === "error" || data.task_status === "failed") {
+    return { status: "error", code: data.error || "unknown_internal_error", message: data.error_message ?? null };
+  }
+  return { status: "running" };
 }

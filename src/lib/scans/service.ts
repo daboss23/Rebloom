@@ -12,13 +12,13 @@ import { renderFixtureMask } from "@/lib/skin/fixture-masks";
 import { copyLiveMask } from "@/lib/skin/live-masks";
 import { normalizeResult } from "@/lib/skin/normalize";
 import { getStorage, getStore } from "@/lib/store";
-import { YouCamError } from "@/lib/youcam/client";
+import { deleteTask, getFitzpatrickTask, YouCamError, type FitzpatrickTask } from "@/lib/youcam/client";
 import { friendlyError } from "@/lib/youcam/errors";
 import { getProvider } from "@/lib/youcam";
 import { fixtureRescanResult } from "@/lib/youcam/fixture";
 import { withoutMaskUrls } from "@/lib/youcam/parse";
 import type { RawSkinResult } from "@/lib/youcam/types";
-import { unitCost } from "@/lib/youcam/units";
+import { FITZPATRICK_UNITS, unitCost } from "@/lib/youcam/units";
 
 /** A live analysis that hasn't finished by now is abandoned. YouCam usually takes 5 to 20 seconds. */
 export const ANALYSIS_TIMEOUT_MS = 3 * 60_000;
@@ -60,10 +60,12 @@ export async function startAnalysis(
   });
   if (!claimed) return { ok: true, reason };
 
-  const input = { scanId: scan.id, image, concerns: scan.concernsRequested };
+  // A client's skin type is estimated once, on their first live scan, and kept (D-094).
+  const client = provider.mode === "live" ? await store.getClient(scan.clientId) : null;
+  const input = { scanId: scan.id, image, concerns: scan.concernsRequested, fitzpatrick: Boolean(client && !client.fitzpatrick) };
   try {
-    const { taskId, units, engine = "sd" } = await provider.start(input);
-    await store.updateScan(scan.id, { providerTaskId: taskId });
+    const { taskId, units, engine = "sd", fitzpatrickTaskId = null } = await provider.start(input);
+    await store.updateScan(scan.id, { providerTaskId: taskId, ...(fitzpatrickTaskId ? { fitzpatrickTaskId } : {}) });
     if (provider.mode === "live") {
       // Logged now so limits count the attempt. Released if the task fails: YouCam only charges for success.
       await store.logUsage({
@@ -166,6 +168,7 @@ async function finalize(scan: Scan, analysed: RawSkinResult): Promise<Scan> {
   // A demo-mode rescan starts from this person's first scores, so it can't invent progress (D-073).
   const raw = scan.source === "fixture" && first?.result ? fixtureRescanResult(scan.id, first.result) : analysed;
   const result = normalizeResult(raw);
+  let skinType: Promise<void> = Promise.resolve();
 
   if (scan.source === "fixture" && scan.landmarks) {
     // Draw demo masks on this person's own face geometry (DECISIONS D-020).
@@ -185,6 +188,8 @@ async function finalize(scan: Scan, analysed: RawSkinResult): Promise<Scan> {
       }),
     );
   } else if (scan.source === "live") {
+    // Read alongside the masks, so it adds no wait of its own.
+    skinType = settleFitzpatrick(scan);
     // Copy YouCam's masks now: their links expire in about 2 hours. A mask that won't copy costs
     // that concern its overlay, never the scan: the scores are already safe.
     await Promise.all(
@@ -203,6 +208,8 @@ async function finalize(scan: Scan, analysed: RawSkinResult): Promise<Scan> {
       }),
     );
   }
+
+  await skinType;
 
   // A rescan compares like with like: a different source (demo or live) or engine (HD or SD) scores on a different
   // scale, so the comparison drops to lower confidence and earns no badges (DECISIONS D-011, D-073).
@@ -223,6 +230,50 @@ async function finalize(scan: Scan, analysed: RawSkinResult): Promise<Scan> {
   if (scan.source === "live") await releaseTask(scan);
   // The client becomes a lead at the report gate, once they leave contact details (see unlockReport).
   return done;
+}
+
+/** Checks on the skin type this long at most while finalising; it runs beside the analysis, so it's usually done. */
+const FITZPATRICK_CHECKS = 4;
+const FITZPATRICK_WAIT_MS = 1500;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Reads the Fitzpatrick estimate started beside a live analysis and keeps it on the client (D-094). Never fails or
+ * holds up a scan for long: no reading just means Dana sets it herself. The clinic's own call is never overwritten.
+ */
+async function settleFitzpatrick(scan: Scan): Promise<void> {
+  const taskId = scan.fitzpatrickTaskId;
+  if (!taskId) return;
+  const store = getStore();
+  try {
+    let task: FitzpatrickTask = { status: "running" };
+    for (let i = 0; i < FITZPATRICK_CHECKS && task.status === "running"; i++) {
+      if (i > 0) await sleep(FITZPATRICK_WAIT_MS);
+      try {
+        task = await getFitzpatrickTask(taskId);
+      } catch (error) {
+        if (!(error instanceof YouCamError && error.transient)) throw error;
+      }
+    }
+    if (task.status !== "success") {
+      console.warn(`[youcam] scan ${scan.id}: no skin type (${task.status === "error" ? task.code : "still running"})`);
+      return;
+    }
+    const at = new Date().toISOString();
+    await store.logUsage({ provider: "youcam", feature: "fitzpatrick", units: FITZPATRICK_UNITS, taskId, sandboxId: scan.sandboxId, ipHash: null, createdAt: at });
+    const client = await store.getClient(scan.clientId);
+    if (client && client.fitzpatrick?.source !== "practitioner") {
+      await store.updateClient(client.id, { fitzpatrick: { type: task.type, source: "scan", at, scanId: scan.id } });
+    }
+  } catch (error) {
+    console.warn(`[youcam] scan ${scan.id}: skin type not read (${describe(error)})`);
+  } finally {
+    try {
+      await deleteTask(taskId);
+    } catch {
+      // Removed with the account's 24-hour expiry anyway.
+    }
+  }
 }
 
 export interface ScanView {

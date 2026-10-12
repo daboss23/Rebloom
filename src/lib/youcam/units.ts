@@ -28,3 +28,6 @@ export function simulationUnitCost(concernCount: number): number {
   if (concernCount <= 10) return 6;
   throw new Error("Skin simulation supports at most 10 concerns per request");
 }
+
+/** Fitzpatrick skin type: 10 units a photo, only when it succeeds (YouCam's docs, DECISIONS D-094). */
+export const FITZPATRICK_UNITS = 10;
