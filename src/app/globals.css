@@ -496,6 +496,25 @@ html:has(.rebloom) body {
     opacity: 1;
   }
 }
+/* The agent at work (D-093): the bloom breathes, slowly, while a draft is being written. Still with reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .bloom-breathe {
+    animation: bloom-breathe 2400ms cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    transform-origin: 50% 50%;
+  }
+}
+@keyframes bloom-breathe {
+  0%,
+  100% {
+    transform: scale(0.86) rotate(0deg);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1) rotate(36deg);
+    opacity: 1;
+  }
+}
+
 /*
  * Rebloom's logo catches the light: every five seconds a soft glint crosses the gold letters, left to right, and
  * is gone. The light is masked to the letters' own shape, so it never touches the space around them.

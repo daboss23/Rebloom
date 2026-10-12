@@ -105,8 +105,9 @@ async function readAndKeep(
 
     const since = new Date(Date.now() - DAY_MS);
     const [mine, everyone] = await Promise.all([
-      input.sandboxId ? store.sumUsage({ provider: "anthropic", since, sandboxId: input.sandboxId }) : null,
-      store.sumUsage({ provider: "anthropic", since }),
+      // Its own calls only: the agent's drafts (D-093) keep their own valves.
+      input.sandboxId ? store.sumUsage({ provider: "anthropic", since, sandboxId: input.sandboxId, features: ["goal_reading"] }) : null,
+      store.sumUsage({ provider: "anthropic", since, features: ["goal_reading"] }),
     ]);
     if ((mine?.count ?? 0) >= GOAL_READING_LIMITS.perBrowserPerDay || everyone.count >= GOAL_READING_LIMITS.globalPerDay) {
       return;

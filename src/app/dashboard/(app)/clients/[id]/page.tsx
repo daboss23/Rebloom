@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Bloom } from "@/components/dashboard/Bloom";
 import { ConfirmPlan } from "@/components/dashboard/ConfirmPlan";
 import { Conversation, type ConversationEntry } from "@/components/dashboard/Conversation";
 import { NoteEditor } from "@/components/dashboard/NoteEditor";
@@ -22,8 +23,14 @@ import { formatPrice } from "@/lib/plan/build";
 import { TRIGGER_ORDER, courses, daysBetween } from "@/lib/rebook/engine";
 import { canWriteByEmail } from "@/lib/email/opt-out";
 import { canAnswerByText, optedOutOfTexts, replySubject, thread, threadSubject } from "@/lib/replies/thread";
+import { openDesk } from "@/lib/agent/desk";
+import { draftFor, draftView } from "@/lib/agent/view";
+import { appOrigin } from "@/lib/origin";
 import { formatUsPhone, toUsE164 } from "@/lib/sms/text";
 import { concernLabel } from "@/lib/skin/concerns";
+
+/** Opening a brief may start the agent's drafts (D-093), which run after the page has gone out. */
+export const maxDuration = 300;
 
 export async function generateMetadata({ params }: PageProps<"/dashboard/clients/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -53,6 +60,10 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
   const time = (instant: string) =>
     new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: tz }).format(new Date(instant)).replace(" ", "").toLowerCase();
   const item = book.queue.items.find((i) => i.clientId === client.id);
+  // The agent's draft for what's in front of Dana (D-093): an answer to their reply, else a second look at a stall.
+  const desk = await openDesk(book, await appOrigin());
+  const draft = draftFor(desk.drafts, client.id, facts.reply?.id) ?? (item?.kind === "stalled" ? draftFor(desk.drafts, client.id, item.dedupeKey) : null);
+  const review = draft?.kind === "plan_review" && draft.status === "ready" ? draft.suggestion : null;
   const status = statusOf(facts, item);
   const latest = facts.scans[facts.scans.length - 1];
   const first = facts.scans[0];
@@ -193,6 +204,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
           subject={replySubject(facts.reply?.channel === "email" ? facts.reply.subject : threadSubject(facts.messages), `A note from ${book.clinic.name}`)}
           waiting={Boolean(facts.reply)}
           demo={env.DEMO_MODE && client.isDemo}
+          draft={draft ? draftView(draft) : null}
         />
       </div>
     </section>
@@ -400,6 +412,38 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
                 </p>
               )}
               <p className="mt-4 text-[0.8125rem] leading-relaxed text-ink-soft">{planNote}</p>
+              {review && (
+                // The agent's second look at a stalled plan (D-093): two lines at most, priced in code.
+                <div className="mt-6 border-t border-white/10 pt-5 text-[0.8125rem] leading-relaxed">
+                  <p className="flex items-center gap-2 text-[0.75rem] uppercase tracking-[0.22em] text-[#e2c07a]">
+                    <Bloom size={14} className="text-[#e2c07a]" />
+                    Rebloom&apos;s second look
+                  </p>
+                  {review.change ? (
+                    <>
+                      <p className="mt-2 text-[0.9375rem] text-porcelain">
+                        {review.change.treatmentName} · {review.change.sessions}
+                        {review.change.replacesName ? <span className="text-ink-soft"> in place of {review.change.replacesName}</span> : null}
+                        <span className="text-ink-soft"> · {formatPrice(review.change.priceCents)}</span>
+                      </p>
+                      <p className="mt-1 text-ink-soft">
+                        {review.change.why} The last scans were taken in matching light, so the stall is real.
+                        {review.change.flags.length ? ` Check first: ${review.change.flags.join(" ")}` : ""}
+                      </p>
+                      <a href="#conversation" className="mt-2 inline-block text-[#e2c07a] underline decoration-[#e2c07a]/35 underline-offset-4 hover:decoration-[#e2c07a]">
+                        A note to {name} about it is in the composer below
+                      </a>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-ink-soft">
+                      <span className="text-porcelain">Rescan before changing anything.</span> {review.measurement.reasons[0]}{" "}
+                      <a href="#conversation" className="text-[#e2c07a] underline decoration-[#e2c07a]/35 underline-offset-4 hover:decoration-[#e2c07a]">
+                        A note asking for a rescan is in the composer below
+                      </a>
+                    </p>
+                  )}
+                </div>
+              )}
               {(!facts.plan || facts.plan.status === "proposed") && (
                 <div className="mt-7">
                   <ConfirmPlan clientId={client.id} />

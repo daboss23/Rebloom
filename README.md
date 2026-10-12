@@ -78,7 +78,7 @@ These need `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF`. Add `--print` to 
 
 ## Stack
 
-Next.js 16 (App Router, TypeScript), Tailwind CSS 4, Supabase (Postgres, Auth, private Storage), YouCam API, MediaPipe Tasks Vision, Anthropic Claude (reads the client's own words), Resend, Twilio (texts), Stripe (test mode only), Vercel.
+Next.js 16 (App Router, TypeScript), Tailwind CSS 4, Supabase (Postgres, Auth, private Storage), YouCam API, MediaPipe Tasks Vision, Anthropic Claude (reads the client's own words, and an agent that drafts Dana's answers and second looks at stalled plans for her to send), Resend, Twilio (texts), Stripe (test mode only), Vercel.
 
 ## Privacy by design
 

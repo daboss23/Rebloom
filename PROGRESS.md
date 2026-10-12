@@ -1,5 +1,30 @@
 # Progress
 
+## Session 14 · Monday October 12, 2026 · The agent prepares Dana's desk
+
+**Claude now drafts Dana's answers to client replies, and takes a second look at stalled plans, for her to read, change and send herself** (DECISIONS D-093). The hackathon asks for agentic workflows; this one works through tools over the app's own data, and everything it names is checked in code.
+
+### What's done
+- **Answers to replies (part 1):** for every reply waiting on Dana, the agent reads the conversation, the client's goals, scans, plan, the menu and the real calendar, then drafts her answer by the channel they wrote in. Daniel's "Could I come in on a Saturday morning?" gets real Saturday morning times for his second peel.
+- **Is the stall real? (part 2):** before a client is treated as stalled, code checks the last three scans were taken the same way (light, photo checks, engine). If not, the draft asks for a rescan instead.
+- **A change of plan (part 3):** when the stall is real, the agent proposes one change from the menu, checked and priced in code, shown as two lines in the brief's plan panel, with a note to the client in the composer.
+- **Dana's voice (part 4):** each run reads her own answers and the drafts she rewrote, with what she sent instead.
+- **Checked in code:** the copy rules, a list of machine-writing tells, and nothing named that the tools didn't give: times only from the calendar, prices only from the menu or plan, links only the client's own. A draft that fails is sent back to the agent to rewrite, in the same run.
+- **Minimal on screen:** no new panels or pop-ups. Today's reply rows say "Review draft" when one is ready. On the brief the draft is the composer's content, with one quiet line above it and "How it was written" behind a link.
+- **Safety valves:** 15 drafts per demo and 150 across all demos a day, logged in `api_usage`.
+- **Tests:** 20 new unit tests (the voice checks, the measurement check, open times, the draft checks, plan changes, which drafts a book needs, and whole runs with a stand-in for Claude: a draft sent back and rewritten, a failure, a reply answered meanwhile). All 479 unit tests (one skipped, as before), lint, typecheck and the copy check pass. The dashboard browser tests pass (one, Settings' reply alerts, timed out once on the dev server's first compile and passes on its own; it doesn't touch this work).
+- **Checked on screen** with sample drafts: Today, a drafted text (Daniel), a draft being written (Priya), and Grace's second look, at desktop and phone widths.
+
+### What Joshua needs to do
+1. **Apply the database change:** `pnpm db:migrate` (adds `agent_drafts`). Until then the agent stays off and nothing else changes.
+2. **Make sure `ANTHROPIC_API_KEY` is set in Vercel** (it already is if the goal reading works). No new keys.
+3. **Try it:** open the dashboard as Dana. Within a minute, Daniel's and Priya's rows say "Review draft". Open Grace's brief for the second look.
+
+### What's next
+1. **Listen to the drafts:** run the same three replies through the agent and read them side by side, then tune the voice.
+2. **For the video:** about 20 seconds of a reply landing, the draft appearing, "How it was written", and Dana sending it.
+
+---
 ## Session 13 · Saturday October 10, 2026 · A judge's demo follows them to any device
 
 **A judge who scans on their phone and opens the dashboard on their laptop now finds themselves there as a new client** (DECISIONS D-090). The demo stays private to each judge.

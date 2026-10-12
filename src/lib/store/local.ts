@@ -10,7 +10,7 @@ import path from "node:path";
 import { SEED_CLINICS } from "@/data/clinics";
 import { SEED_PRODUCTS, SEED_TREATMENTS } from "@/data/menu";
 import { SEED_STAFF } from "@/data/staff";
-import { DEFAULT_CLINIC_SETTINGS, type ApiUsage, type Appointment, type Client, type ClientPlan, type ClinicSettings, type Consent, type Intake, type Message, type PlanItem, type Report, type Sandbox, type Scan } from "@/lib/domain";
+import { DEFAULT_CLINIC_SETTINGS, type AgentDraft, type ApiUsage, type Appointment, type Client, type ClientPlan, type ClinicSettings, type Consent, type Intake, type Message, type PlanItem, type Report, type Sandbox, type Scan } from "@/lib/domain";
 import { localSecret } from "@/lib/env";
 import { newId, newToken } from "@/lib/ids";
 import { toUsE164 } from "@/lib/sms/text";
@@ -28,6 +28,7 @@ interface Db {
   planItems: PlanItem[];
   appointments: Appointment[];
   messages: Message[];
+  agentDrafts: AgentDraft[];
   settings: (ClinicSettings & { clinicId: string; sandboxId: string | null; updatedAt: string })[];
   usage: ApiUsage[];
   events: { id: string; clinicId: string; sandboxId: string | null; type: string; createdAt: string }[];
@@ -44,6 +45,7 @@ const emptyDb = (): Db => ({
   planItems: [],
   appointments: [],
   messages: [],
+  agentDrafts: [],
   settings: [],
   usage: [],
   events: [],
@@ -61,6 +63,7 @@ function dropClients(db: Db, ids: Set<string>): void {
   db.planItems = db.planItems.filter((i) => !plans.has(i.planId));
   db.appointments = db.appointments.filter((a) => !ids.has(a.clientId));
   db.messages = db.messages.filter((m) => !ids.has(m.clientId));
+  db.agentDrafts = db.agentDrafts.filter((d) => !ids.has(d.clientId));
 }
 
 /** A saved settings row, with the defaults for anything saved before it existed. */
@@ -470,6 +473,27 @@ export const localStore: Store = {
       return { storagePaths };
     }, true),
 
+  listAgentDrafts: (clinicId, sandboxId) =>
+    tx((db) =>
+      db.agentDrafts.filter((d) => d.clinicId === clinicId && d.sandboxId === sandboxId).sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    ),
+  getAgentDraft: (id) => tx((db) => db.agentDrafts.find((d) => d.id === id) ?? null),
+  startAgentDraft: (input) =>
+    tx((db) => {
+      // As agent_drafts_for_idx: one draft per client for each reply or queue item.
+      if (db.agentDrafts.some((d) => d.clientId === input.clientId && d.forKey === input.forKey)) return null;
+      const draft: AgentDraft = { id: newId(), ...input };
+      db.agentDrafts.push(draft);
+      return draft;
+    }, true),
+  updateAgentDraft: (id, from, patch) =>
+    tx((db) => {
+      const draft = db.agentDrafts.find((d) => d.id === id);
+      if (!draft || !from.includes(draft.status)) return null;
+      Object.assign(draft, patch);
+      return { ...draft };
+    }, true),
+
   logUsage: (usage) =>
     tx((db) => {
       db.usage.push({ id: newId(), ...usage });
@@ -478,14 +502,15 @@ export const localStore: Store = {
     tx((db) => {
       for (const u of db.usage) if (u.provider === provider && u.taskId === taskId) u.units = units;
     }, true),
-  sumUsage: ({ provider, since, sandboxId, ipHash }) =>
+  sumUsage: ({ provider, since, sandboxId, ipHash, features }) =>
     tx((db) => {
       const rows = db.usage.filter(
         (u) =>
           u.provider === provider &&
           new Date(u.createdAt) >= since &&
           (sandboxId === undefined || u.sandboxId === sandboxId) &&
-          (ipHash === undefined || u.ipHash === ipHash),
+          (ipHash === undefined || u.ipHash === ipHash) &&
+          (features === undefined || features.includes(u.feature)),
       );
       return { units: rows.reduce((n, u) => n + u.units, 0), count: rows.length };
     }),
