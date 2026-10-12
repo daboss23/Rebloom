@@ -48,7 +48,6 @@ export const revalidate = 3600;
 
 const wrap = "mx-auto w-full max-w-[1280px] px-5 sm:px-10";
 const sectionTitle = "font-display text-[clamp(40px,5vw,68px)] font-light leading-[1.02] tracking-[-0.02em] text-ink [text-wrap:balance]";
-const enter = "/dashboard/enter";
 
 const WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
 /** "twelve", from the data; numerals past twelve. */
@@ -67,12 +66,12 @@ export default function RebloomHome() {
       </a>
 
       <header className="sticky top-0 z-40 border-b border-white/10 bg-black/90 backdrop-blur-xl backdrop-saturate-150">
-        <div className={`${wrap} flex h-16 items-center justify-between gap-4 sm:gap-6 lg:h-[72px]`}>
-          <Link href="/" aria-label="Rebloom home" className="shrink-0">
+        <div className={`${wrap} grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-6 lg:h-[72px]`}>
+          <Link href="/" aria-label="Rebloom home" className="col-start-2 shrink-0">
             <RebloomWordmark height={22} className="!h-[19px] sm:!h-[22px]" shine />
           </Link>
-          <nav aria-label="On this page" className="hidden lg:block">
-            <ul className="flex items-center gap-9 text-[0.875rem] text-white/70">
+          <nav aria-label="On this page" className="hidden justify-self-end lg:block">
+            <ul className="flex items-center gap-8 text-[0.875rem] text-white/70">
               {[
                 ["#how", "How it works"],
                 ["#numbers", "The numbers"],
@@ -86,9 +85,6 @@ export default function RebloomHome() {
               ))}
             </ul>
           </nav>
-          <Link href={enter} className="btn-gold !hidden !h-11 whitespace-nowrap px-3.5 text-[0.8125rem] min-[390px]:!inline-flex sm:!h-10 sm:px-4 sm:text-[0.875rem]">
-            Enter the clinic dashboard
-          </Link>
         </div>
       </header>
 
