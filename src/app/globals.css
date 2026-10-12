@@ -801,7 +801,7 @@ body {
 .menu-sheet li:nth-child(2) { animation-delay: 40ms; }
 .menu-sheet li:nth-child(3) { animation-delay: 80ms; }
 .menu-sheet li:nth-child(4) { animation-delay: 120ms; }
-html:has(.menu-sheet[open]) {
+html:has(.menu-sheet[open], .clock-sheet[open]) {
   overflow: hidden;
 }
 @keyframes menu-in {
@@ -829,6 +829,59 @@ html:has(.menu-sheet[open]) {
   }
   .menu-sheet[open]:not([data-closing]) li {
     animation: none;
+  }
+}
+/* The demo clock, opened from the bar: up from the bottom edge on phones; above, a panel unfolding from the clock it
+   belongs to. It leaves faster than it came. */
+.clock-sheet[open] {
+  animation: clock-up 360ms var(--ease-drawer) both;
+}
+.clock-sheet[data-closing] {
+  animation: clock-down 220ms var(--ease-drawer) both;
+}
+.clock-sheet::backdrop {
+  background: rgb(6 20 30 / 0.34);
+  animation: fade 280ms var(--ease-gentle) both;
+}
+.clock-sheet[data-closing]::backdrop {
+  animation: fade 200ms var(--ease-gentle) reverse both;
+}
+@media (min-width: 40rem) {
+  .clock-sheet {
+    transform-origin: 28px 0;
+  }
+  .clock-sheet::backdrop {
+    background: rgb(6 20 30 / 0.16);
+  }
+  .clock-sheet[open] {
+    animation: clock-unfold 220ms var(--ease-out) both;
+  }
+  .clock-sheet[data-closing] {
+    animation: clock-unfold 160ms var(--ease-out) reverse both;
+  }
+}
+@keyframes clock-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes clock-down {
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes clock-unfold {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .clock-sheet[open] {
+    animation: fade 200ms ease both;
+  }
+  .clock-sheet[data-closing] {
+    animation: fade 160ms ease reverse both;
   }
 }
 /* Switching between email and text: the new draft comes into focus where the old one was (D-080). */

@@ -1,43 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
+import { CloseSheet, useSheet } from "./useSheet";
 
 /**
  * The menu on phones and tablets: the desktop's deep-sea menu, sliding in from the edge its button sits on
  * and leaving the way it came. A native modal dialog, so focus, Escape and the page behind are handled for us.
  */
 export function MobileMenu({ attention, children }: { attention: number; children: ReactNode }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-
-  const show = () => {
-    ref.current?.showModal();
-    setOpen(true);
-  };
-
-  // Plays the slide out, then closes. Safe to call twice.
-  const hide = () => {
-    const dialog = ref.current;
-    if (!dialog?.open || "closing" in dialog.dataset) return;
-    dialog.dataset.closing = "";
-    let done = false;
-    const finish = () => {
-      if (done) return;
-      done = true;
-      delete dialog.dataset.closing;
-      dialog.close();
-    };
-    dialog.addEventListener("animationend", (e) => e.target === dialog && !e.pseudoElement && finish(), { once: true });
-    setTimeout(finish, 360); // In case no animation runs.
-  };
-
-  // Back or forward while it's open: the new page shouldn't open under a menu.
-  useEffect(() => {
-    const dialog = ref.current;
-    if (dialog?.open) dialog.close();
-  }, [pathname]);
+  const { ref, open, show, hide, dialogProps } = useSheet();
 
   return (
     <>
@@ -46,7 +17,7 @@ export function MobileMenu({ attention, children }: { attention: number; childre
         onClick={show}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="relative -mr-1.5 flex h-11 shrink-0 items-center gap-2.5 rounded-full px-3 text-[0.875rem] text-ink transition-[background-color,transform] duration-150 ease-out hover:bg-white/70 active:scale-[0.96]"
+        className="relative -mr-1.5 flex h-11 shrink-0 items-center gap-2.5 rounded-full px-3 text-[0.875rem] text-white transition-[background-color,transform] duration-150 ease-out hover:bg-white/10 active:scale-[0.96]"
       >
         <span className="sr-only sm:not-sr-only">Menu</span>
         <span aria-hidden className="relative flex w-5 flex-col items-end gap-[5px]">
@@ -55,7 +26,7 @@ export function MobileMenu({ attention, children }: { attention: number; childre
         </span>
         {attention > 0 && (
           <>
-            <span aria-hidden className="absolute right-1.5 top-2 h-1.5 w-1.5 rounded-full bg-[#c99645] shadow-[0_0_0_3px_rgb(255_255_255/0.9)]" />
+            <span aria-hidden className="absolute right-1.5 top-2 h-1.5 w-1.5 rounded-full bg-[#e2c07a] shadow-[0_0_0_3px_#000]" />
             <span className="sr-only">
               , {attention} {attention === 1 ? "reply" : "replies"} waiting
             </span>
@@ -64,14 +35,8 @@ export function MobileMenu({ attention, children }: { attention: number; childre
       </button>
 
       <dialog
-        ref={ref}
+        {...dialogProps}
         aria-label="Menu"
-        onClose={() => setOpen(false)}
-        onCancel={(e) => {
-          // Escape: leave the way it came.
-          e.preventDefault();
-          hide();
-        }}
         onClick={(e) => {
           const target = e.target as Element;
           // The dimmed page, or a link inside: either way the menu's job is done.
@@ -90,7 +55,7 @@ export function MobileMenu({ attention, children }: { attention: number; childre
               <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
             </svg>
           </button>
-          {children}
+          <CloseSheet.Provider value={hide}>{children}</CloseSheet.Provider>
         </div>
       </dialog>
     </>
