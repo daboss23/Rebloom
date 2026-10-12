@@ -17,7 +17,7 @@ const waitingLabel = (n: number) => `, ${n} ${n === 1 ? "reply" : "replies"} wai
 
 const isActive = (pathname: string, href: string) => (href === "/dashboard" ? pathname === href : pathname.startsWith(href));
 
-/** The left menu on desktop, on deep sea. The current page carries a short gold rule. */
+/** The menu on deep sea: the sidebar on desktop, the sheet below it. The current page carries a short gold rule. */
 export function SideNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
   return (
@@ -54,41 +54,6 @@ export function SideNav({ items }: { items: NavItem[] }) {
                 item.count !== undefined && (
                   <span className={cx("tabular-nums text-[0.8125rem]", active ? "text-[#e2c07a]" : "text-ink-soft/80")}>{item.count}</span>
                 )
-              )}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-/** The same menu as a row of tabs on smaller screens. */
-export function TabNav({ items }: { items: NavItem[] }) {
-  const pathname = usePathname();
-  return (
-    <ul className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none]">
-      {items.map((item) => {
-        const active = isActive(pathname, item.href);
-        return (
-          <li key={item.href} className="shrink-0">
-            <Link
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              className={cx(
-                "flex h-11 items-center gap-2 border-b-2 px-2 text-[0.875rem] transition-colors duration-200",
-                active ? "border-[#c99645] text-ink" : "border-transparent text-text-3 hover:text-ink",
-              )}
-            >
-              {item.label}
-              {item.attention ? (
-                <span className="flex items-center gap-1 text-[0.8125rem] font-medium tabular-nums text-[#7a5014]">
-                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#c99645]" />
-                  {item.attention}
-                  <span className="sr-only">{waitingLabel(item.attention)}</span>
-                </span>
-              ) : (
-                item.count !== undefined && <span className="tabular-nums text-[0.8125rem] text-text-3">{item.count}</span>
               )}
             </Link>
           </li>
