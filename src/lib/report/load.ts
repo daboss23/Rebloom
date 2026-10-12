@@ -48,7 +48,7 @@ export const reportPlan = cache(async (token: string): Promise<{ plan: Plan; fro
   const [treatments, products] = await Promise.all([store.listTreatments(data.clinic.id), store.listProducts(data.clinic.id)]);
   // Dates count from the scan, so the plan doesn't drift each time the link is opened.
   const from = isoDateInZone(new Date(data.latest.completedAt ?? data.latest.createdAt), data.clinic.timezone);
-  const plan = buildPlan({ result: data.latest.result!, intake: data.intake, treatments, products, clinic: data.clinic, from });
+  const plan = buildPlan({ result: data.latest.result!, intake: data.intake, treatments, products, clinic: data.clinic, from, skinType: data.client.fitzpatrick?.type });
   return { plan, from };
 });
 

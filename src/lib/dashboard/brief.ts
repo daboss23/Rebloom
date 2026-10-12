@@ -24,6 +24,7 @@ export function suggestedPlan(
     products: book.input.products,
     clinic: book.input.clinic,
     from,
+    skinType: facts.client.fitzpatrick?.type,
   });
   return { scan, plan };
 }

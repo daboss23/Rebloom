@@ -511,6 +511,7 @@ export function buildQueue(input: EngineInput): Queue {
               products: input.products,
               clinic: input.clinic,
               from: local(lastScan.createdAt),
+              skinType: facts.client.fitzpatrick?.type,
             })
           : null;
         const lead = suggested?.focus[0];

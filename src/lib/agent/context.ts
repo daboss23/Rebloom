@@ -17,6 +17,7 @@ import { courses, priorityKeys, type ClientFacts, type QueueItem } from "@/lib/r
 import { canAnswerByText, isReply, thread } from "@/lib/replies/thread";
 import { buildProgress } from "@/lib/report/progress";
 import { concernLabel, type ConcernKey } from "@/lib/skin/concerns";
+import { limitLabel } from "@/lib/skin/fitzpatrick";
 
 export interface AgentContext {
   kind: AgentDraftKind;
@@ -90,6 +91,9 @@ export function describeClient(ctx: AgentContext): string {
     info.flags.length
       ? `Screening answers for ${ctx.staffName} to review in person (prompts for her judgement, never something to advise on in writing): ${info.flags.join(" ")}`
       : "No screening answers to review.",
+    client.fitzpatrick
+      ? `Skin type for ${ctx.staffName} only, never to mention in writing: Fitzpatrick ${client.fitzpatrick.type}, ${client.fitzpatrick.source === "practitioner" ? "confirmed by the clinic" : "estimated from their scan"}. Treatments the clinic doesn't offer to this type are left out of their plan; never suggest one.`
+      : null,
     ctx.facts.report?.practitionerNote ? `${ctx.staffName}'s note on their report: "${ctx.facts.report.practitionerNote}"` : null,
     `This draft goes by ${ctx.channel === "sms" ? "text" : "email"}.`,
   ];
@@ -165,6 +169,7 @@ export function suggested(ctx: AgentContext): Plan | null {
     products: ctx.products,
     clinic: ctx.clinic,
     from: isoDateInZone(new Date(scan.createdAt), ctx.clinic.timezone),
+    skinType: ctx.facts.client.fitzpatrick?.type,
   });
 }
 
@@ -218,6 +223,7 @@ export function describeMenu(ctx: AgentContext): string {
       `${x.durationMinutes} minutes.`,
       x.downtimeDays === 0 ? "No downtime." : `Visible downtime about ${x.downtimeDays} ${x.downtimeDays === 1 ? "day" : "days"}.`,
       x.minDaysBeforeEvent > 0 ? `Not within ${x.minDaysBeforeEvent} days before an event.` : null,
+      limitLabel(x.fitzpatrickMax) ? `Offered to skin ${limitLabel(x.fitzpatrickMax)} only.` : null,
       `Works on ${x.concerns.map((k) => concernLabel(k).toLowerCase()).join(", ")}.`,
       x.description,
     ]

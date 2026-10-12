@@ -7,6 +7,7 @@ import { CONCERN_OPTIONS } from "@/lib/flow/intake-options";
 import { currentReading, goalWords } from "@/lib/intake/goal-reading";
 import { PROGRESS_SCAN_AFTER_DAYS } from "@/lib/rebook/thresholds";
 import { CONCERNS, INTAKE_TO_CONCERNS, type ConcernKey } from "@/lib/skin/concerns";
+import { suitsSkinType, type FitzpatrickType } from "@/lib/skin/fitzpatrick";
 
 /** A concern the client ticked gets this many extra points of need, on a 0 to 100 scale. */
 export const STATED_BOOST = 12;
@@ -173,6 +174,8 @@ export interface Plan {
   homeCare: HomeCareItem[];
   /** True when the event is too close for the full course, so sessions were cut to fit. */
   shortenedForEvent: boolean;
+  /** Treatments that work on the focus but aren't offered to the client's skin type, so were never considered (D-094). */
+  heldBack: Treatment[];
 }
 
 export interface PlanInput {
@@ -183,6 +186,8 @@ export interface PlanInput {
   clinic: Pick<Clinic, "hours">;
   /** The scan date, "YYYY-MM-DD" in the clinic's time zone. Dates count from here, so the plan stays put. */
   from: string;
+  /** The client's Fitzpatrick type, if known. Treatments that don't suit it are left out (D-094). */
+  skinType?: FitzpatrickType | null;
 }
 
 // Dates are "YYYY-MM-DD" strings. The arithmetic runs at UTC noon, so no time zone or DST can shift a day.
@@ -372,7 +377,10 @@ export function buildPlan(input: PlanInput): Plan {
   const { hours } = input.clinic;
   const start = nextOpenDay(shiftDate(input.from, LEAD_DAYS), hours);
   const event = input.intake?.hasEvent && input.intake.eventDate && input.intake.eventDate > start ? input.intake.eventDate : null;
-  const treatments = input.treatments.filter((t) => t.active);
+  const active = input.treatments.filter((t) => t.active);
+  // A treatment the clinic doesn't offer to this skin type never reaches the plan or the budget option (D-094).
+  const treatments = active.filter((t) => suitsSkinType(t, input.skinType));
+  const heldBack = active.filter((t) => !treatments.includes(t) && t.concerns.some((k) => focus.some((f) => f.key === k)));
 
   // No session inside a treatment's rest period before the event (brief 8.3).
   const maxSessions = new Map(
@@ -399,6 +407,7 @@ export function buildPlan(input: PlanInput): Plan {
     timeline: timeline.steps,
     homeCare: chooseHomeCare(focus, recommendedLines, input.products.filter((p) => p.active)),
     shortenedForEvent: shortenedForEvent && recommendedLines.some((l) => l.sessions < l.course),
+    heldBack,
   };
 }
 

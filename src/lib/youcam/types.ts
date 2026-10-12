@@ -38,11 +38,13 @@ export interface StartInput {
   scanId: string;
   image: { bytes: Buffer; contentType: string };
   concerns: readonly ConcernKey[];
+  /** Also start a Fitzpatrick estimate on the same upload (live only, a client's first live scan, D-094). */
+  fitzpatrick?: boolean;
 }
 
 export interface SkinAnalysisProvider {
   readonly mode: "live" | "fixture";
-  start(input: StartInput): Promise<{ taskId: string; units: number; engine?: SkinEngine }>;
+  start(input: StartInput): Promise<{ taskId: string; units: number; engine?: SkinEngine; fitzpatrickTaskId?: string | null }>;
   poll(task: { taskId: string; scanId: string; startedAt: Date }): Promise<PollOutcome>;
   /** Deletes the photo and results from the provider once we hold our own copy. */
   release?(taskId: string): Promise<void>;

@@ -11,6 +11,7 @@ import { Queue } from "@/components/dashboard/Queue";
 import { toQueueRow } from "@/components/dashboard/queue-row";
 import { Sparkline } from "@/components/dashboard/Sparkline";
 import { StatusMark } from "@/components/dashboard/StatusMark";
+import { SkinTypeControl } from "@/components/dashboard/SkinTypeControl";
 import { StopEmails } from "@/components/dashboard/StopEmails";
 import { IconAlert, IconArrowLeft, IconArrowUpRight } from "@/components/ui/Icons";
 import { cx } from "@/components/ui/cx";
@@ -28,6 +29,7 @@ import { draftFor, draftView } from "@/lib/agent/view";
 import { appOrigin } from "@/lib/origin";
 import { formatUsPhone, toUsE164 } from "@/lib/sms/text";
 import { concernLabel } from "@/lib/skin/concerns";
+import { limitLabel, suitsSkinType } from "@/lib/skin/fitzpatrick";
 
 /** Opening a brief may start the agent's drafts (D-093), which run after the page has gone out. */
 export const maxDuration = 300;
@@ -71,6 +73,16 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
   const info = briefFacts(facts);
   const scores = lowestScores(facts);
   const name = client.firstName!;
+
+  // Fitzpatrick type (D-094): a treatment on their plan the clinic doesn't offer to it is flagged for review.
+  const skinType = client.fitzpatrick?.type ?? null;
+  const skinFlags = skinType
+    ? (facts.plan?.items ?? [])
+        .map((i) => book.input.treatments.find((t) => t.id === i.treatmentId))
+        .filter((t): t is NonNullable<typeof t> => Boolean(t) && !suitsSkinType(t!, skinType))
+        .map((t) => `${t.name} is offered to skin ${limitLabel(t.fitzpatrickMax)} only. ${name} is skin type ${skinType}${client.fitzpatrick?.source === "scan" ? ", estimated from their scan" : ""}.`)
+    : [];
+  const flags = [...skinFlags, ...info.flags];
 
   // ---------- The plan panel: the confirmed plan, or what the report suggests ----------
   const suggested = !facts.plan ? suggestedPlan(book, facts) : null;
@@ -135,7 +147,8 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
     total = plan.recommended.totalCents + plan.homeCare.reduce((n, h) => n + h.product.priceCents, 0);
     const fits = plan.budgetCapCents === null || plan.recommended.totalCents <= plan.budgetCapCents;
     budgetFit = plan.budgetCapCents === null ? null : fits ? "fits" : "over";
-    planNote = [fits ? null : "A lighter option is on their report", plan.shortenedForEvent ? "Shortened to finish before their event" : null, "Built only from the clinic's menu"]
+    const heldBack = plan.heldBack.length && skinType ? `${plan.heldBack.map((t) => t.name).join(" and ")} ${plan.heldBack.length === 1 ? "isn't" : "aren't"} offered to skin type ${skinType}` : null;
+    planNote = [fits ? null : "A lighter option is on their report", plan.shortenedForEvent ? "Shortened to finish before their event" : null, heldBack, "Built only from the clinic's menu"]
       .filter(Boolean)
       .join(". ")
       .concat(".");
@@ -309,22 +322,23 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
             {[
               ["Event", info.event ?? "None given"],
               ["Budget", info.budget ?? "Not given"],
-              ["Past treatments", info.pastTreatments],
               ["Skin type", info.skinType ?? "Unknown"],
+              ["Fitzpatrick", null],
+              ["Past treatments", info.pastTreatments],
               ["Emails", emails],
               ["Texts", texts],
             ].map(([term, value]) => (
               <div key={term} className="border-t border-[#0c1a22]/[0.07] py-4">
                 <dt className="t-label !text-[0.75rem]">{term}</dt>
                 <dd className={cx("mt-1.5 text-[0.9375rem]", term === "Budget" && info.budget ? "font-medium text-[color:var(--gold)]" : "text-ink")}>
-                  {value}
+                  {term === "Fitzpatrick" ? <SkinTypeControl clientId={client.id} firstName={name} reading={client.fitzpatrick ?? null} /> : value}
                   {term === "Emails" && facts.canEmail && <StopEmails clientId={client.id} firstName={name} />}
                 </dd>
               </div>
             ))}
           </dl>
 
-          {info.flags.length > 0 && (
+          {flags.length > 0 && (
             <div className="caution mt-4 p-5 sm:p-6">
               <p className="flex items-center gap-3">
                 <span className="caution-badge">
@@ -332,11 +346,11 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
                 </span>
                 <span className="font-display text-[1.375rem] leading-tight text-ink">Review before treatment</span>
                 <span className="ml-auto rounded-full bg-white/80 px-2.5 py-0.5 text-[0.75rem] font-medium tabular-nums text-[#8a4b12] ring-1 ring-inset ring-[#e98c3c]/30">
-                  {info.flags.length}
+                  {flags.length}
                 </span>
               </p>
               <ul className="mt-4">
-                {info.flags.map((flag) => (
+                {flags.map((flag) => (
                   <li key={flag} className="flex gap-3 border-t border-[#b8691f]/15 py-3 text-[0.875rem] leading-relaxed text-ink">
                     <span aria-hidden className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full bg-[#e07a2a]" />
                     {flag}

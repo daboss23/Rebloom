@@ -6,7 +6,7 @@
 // Scenarios are chosen by the uploaded photo's average colour:
 //   very dark            -> the task fails with error_lighting_dark
 //   magenta (#ff00ff)    -> starting the task fails with CreditInsufficiency
-//   anything else        -> success, with masks at the uploaded photo's size
+//   anything else        -> success, with masks at the uploaded photo's size (and skin type III)
 // Every task blips once (HTTP 503) on its first status check, then reports running, then finishes.
 
 import http from "node:http";
@@ -219,6 +219,39 @@ const server = http.createServer(async (req, res) => {
       const jpg = await sharp(files.get(task.fileId).bytes).modulate({ brightness: 1.06 }).blur(1.2).jpeg().toBuffer();
       res.writeHead(200, { "content-type": "image/jpeg" });
       return res.end(jpg);
+    }
+
+    // Fitzpatrick skin type (DECISIONS D-094), as its OpenAPI description sets out: a source file and version "1.0";
+    // the type arrives in results.fitzpatrick_scale. Running on the first check, then type III, 10 units on success.
+    // A very dark photo fails, as YouCam does with error_insufficient_lighting, and costs nothing.
+    if (route === "POST /s2s/v2.0/task/fitzpatrick-scale-analyzer") {
+      if (!authed(req)) return unauthorized(res);
+      const body = JSON.parse((await readBody(req)).toString() || "{}");
+      const file = files.get(body.src_file_id);
+      const bad = (error) => send(res, 400, { status: 400, error, error_code: "InvalidParameters" });
+      if (!file?.uploaded) return bad("src_file_id was never uploaded");
+      if (body.version !== "1.0") return bad("version must be 1.0");
+      const taskId = `fz_${++seq}`;
+      const [r, g, b] = file.mean;
+      const outcome = (r + g + b) / 3 < 40 ? "error_insufficient_lighting" : "success";
+      tasks.set(taskId, { taskId, kind: "fitzpatrick", fileId: file.fileId, outcome, polls: 0, deleted: false });
+      return send(res, 200, { status: 200, data: { task_id: taskId } });
+    }
+
+    if (req.method === "GET" && url.pathname.startsWith("/s2s/v2.0/task/fitzpatrick-scale-analyzer/")) {
+      if (!authed(req)) return unauthorized(res);
+      const task = tasks.get(url.pathname.split("/").pop());
+      if (!task || task.deleted) return send(res, 400, { status: 400, error: "Invalid task ID" });
+      if (++task.polls === 1) return send(res, 200, { status: 200, data: { task_status: "running", error: null } });
+      if (task.outcome !== "success") {
+        return send(res, 200, { status: 200, data: { task_status: "error", error: task.outcome, error_message: "The lighting is too dim" } });
+      }
+      if (!task.charged) {
+        task.cost = 10;
+        units -= task.cost;
+        task.charged = true;
+      }
+      return send(res, 200, { status: 200, data: { task_status: "success", error: null, results: { fitzpatrick_scale: "III", timed: 0.8 } } });
     }
 
     if (route === "POST /s2s/v2.0/task/delete") {

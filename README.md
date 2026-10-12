@@ -21,11 +21,22 @@ Cosmetic skin clinics sell treatment as a series: peels, microneedling, IPL, las
 
 ## How we use the YouCam API
 
-- **AI Skin Analysis (SD, v2.1), 15 scored concerns plus skin type**, server-side only: upload to a pre-signed URL, start the task, poll it from the browser one short request at a time. Concern names are mapped to client-friendly names and never shown raw.
+Three YouCam features, all server-side, all on one photo upload per scan (`src/lib/youcam/client.ts`).
+
+| Feature | Endpoint | Where it shows | Units |
+|---|---|---|---|
+| **AI Skin Analysis** (HD, SD fallback) | `POST /s2s/v2.1/task/skin-analysis` | The client's report and the practitioner brief: 15 scored concerns, skin type, skin age, detection masks | 16 to 22 |
+| **AI Skin Simulation** | `POST /s2s/v2.0/task/skin-simulation` | "What to expect" on the report: today's photo beside an illustration of the plan | 4 to 6 |
+| **AI Fitzpatrick Skin Type** | `POST /s2s/v2.0/task/fitzpatrick-scale-analyzer` | The practitioner brief only, and the plan's safety rule | 10 |
+
+- **AI Skin Analysis (v2.1), 15 scored concerns plus skin type.** HD when the photo's short side is at least 1080 pixels (wrinkles and pores scored by area of the face), SD otherwise; YouCam refusing HD falls back to SD. Upload to a pre-signed URL, start the task, poll it from the browser one short request at a time. Concern names are mapped to client-friendly names and never shown raw.
 - **Detection masks** are copied into our private storage on the poll that sees success (YouCam's mask links expire after about 2 hours), redrawn at the photo's exact size, and shown over the client's own photo as tappable overlays.
-- **Then we delete the task at YouCam.** Once the scores and masks are ours, YouCam no longer holds the client's photo.
+- **AI Skin Simulation** illustrates only the concerns the client's plan treats, at moderate strength, and less when fewer sessions are booked than a full course. Always labelled "An illustration of likely improvement based on your scan. Not a guaranteed result." Never run on demo readings.
+- **AI Fitzpatrick Skin Type** (types I to VI) starts beside the analysis on a client's first live scan, on the same upload, and is read when the scan finalises. It is kept on the client and never repeated, since a person's type doesn't change. It's a safety prompt for the practitioner, never shown to the client: each treatment carries the highest type the clinic offers it to (the demo menu's IPL: types I to III), and the plan, the within-budget option and the agent's suggestions leave out anything that doesn't suit. The practitioner confirms the estimate or sets the type she sees in person, and her call is kept. It never holds up or fails a scan.
+- **Then we delete each task at YouCam.** Once the scores, masks, image and type are ours, YouCam no longer holds the client's photo.
+- **Units are logged** in `api_usage` for every live call, the dashboard shows what's left, and the public scan is rate-limited so the account can't be drained. YouCam only charges for tasks that succeed, and our log follows suit.
 - **Every YouCam photo error has its own calm instruction** ("Face a window or a bright, even light"), and a network blip never fails a scan. If YouCam can't start a task at all, the scan finishes as a clearly labelled demo rather than a dead end.
-- **A browser quality gate** (MediaPipe Face Landmarker) checks face size, centering, head pose, light, evenness, sharpness, eyes and mouth before a photo is taken, so YouCam receives photos that give reliable results.
+- **A browser quality gate** (MediaPipe Face Landmarker) checks face size, centering, head pose, light, evenness, sharpness, eyes and mouth before a photo is taken, so YouCam receives photos that give reliable results. It is stricter than all three features' own photo rules.
 
 ### ui_score versus raw_score
 

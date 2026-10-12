@@ -14,7 +14,7 @@ await vi.hoisted(async () => {
 import { MAISON_VERRE } from "@/data/clinics";
 import { SEED_PRODUCTS, SEED_TREATMENTS } from "@/data/menu";
 import { SEED_STAFF } from "@/data/staff";
-import { bareTimesIn, draftChannel, findOpenTimes, pricesIn, timesIn, type AgentContext } from "@/lib/agent/context";
+import { bareTimesIn, describeClient, describeMenu, draftChannel, findOpenTimes, pricesIn, timesIn, type AgentContext } from "@/lib/agent/context";
 import { draftProblems, signOffProblem } from "@/lib/agent/guard";
 import { answerEmail } from "@/lib/email/answer";
 import { checkMeasurement } from "@/lib/agent/measure";
@@ -307,6 +307,28 @@ describe("a change of plan (part 3)", () => {
     if (!result.ok) return;
     expect(result.change).toMatchObject({ treatmentName: "Signature Peel Series", sessions: 2, priceCents: 39000, replacesName: "IPL Photofacial" });
     expect(result.change.covers).toContain("age_spot");
+  });
+});
+
+describe("skin type (D-094)", () => {
+  const why = "Light pulses work on her sun spots and redness from another angle than the peels.";
+
+  it("never suggests a treatment the clinic doesn't offer to their type", async () => {
+    const grace = await contextFor("grace", "plan_review");
+    // Nothing under way, so IPL isn't the course that stalled; only the skin type decides.
+    const fresh = { ...grace, facts: { ...grace.facts, plan: null, appointments: [] } };
+    const typed = (type: "III" | "V") => ({ ...fresh, facts: { ...fresh.facts, client: { ...fresh.facts.client, fitzpatrick: { type, source: "scan" as const, at: "" } } } });
+    expect(checkChange(typed("III"), { treatment: "IPL Photofacial", sessions: 2, why }).ok).toBe(true);
+    expect(checkChange(typed("V"), { treatment: "IPL Photofacial", sessions: 2, why })).toMatchObject({
+      ok: false,
+      error: expect.stringContaining("isn't offered to skin type V at Maison Verre (skin types I to III only)"),
+    });
+  });
+
+  it("tells the agent the limit, and the type as Dana's alone", async () => {
+    const marcus = await contextFor("marcus");
+    expect(describeMenu(marcus)).toContain("Offered to skin types I to III only.");
+    expect(describeClient(marcus)).toContain("Skin type for Dana only, never to mention in writing: Fitzpatrick V, estimated from their scan.");
   });
 });
 

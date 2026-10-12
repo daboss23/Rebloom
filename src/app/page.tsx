@@ -724,6 +724,10 @@ function Honest() {
     },
     { name: "Detection masks", detail: "Each concern drawn onto the client's own photo: a face map they can tap." },
     { name: "AI Skin Simulation", detail: "An illustration of what the plan could do, labeled every time and never shown at full strength." },
+    {
+      name: "Fitzpatrick Skin Type",
+      detail: "Read once from the first scan, for the practitioner only. Treatments the clinic doesn't offer to that skin type stay off the plan.",
+    },
   ];
   return (
     <section aria-labelledby="honest-title" className={`${wrap} pt-28 lg:pt-40`}>

@@ -188,6 +188,8 @@ export function buildDemoBundle(input: DemoInput): DemoBundle {
       status: demo.status,
       isDemo: true,
       demoKey: demo.key,
+      // As if YouCam had read it from their first scan (D-094).
+      fitzpatrick: { type: demo.fitzpatrick, source: "scan", at: iso(scanTimes[0] + 30_000), scanId: null },
       createdAt: iso(joined),
     };
     bundle.clients.push(client);

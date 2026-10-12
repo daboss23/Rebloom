@@ -30,6 +30,7 @@ import { keptPlan } from "@/lib/plan/keep";
 import { suggestedPlan } from "@/lib/dashboard/brief";
 import { fullName } from "@/lib/dashboard/view";
 import { retryDraft } from "@/lib/agent/desk";
+import { FITZPATRICK_TYPES, skinTypeLabel } from "@/lib/skin/fitzpatrick";
 
 export interface ActionResult {
   ok: boolean;
@@ -554,6 +555,24 @@ export async function stopEmails(input: { clientId: string }): Promise<ActionRes
   revalidatePath("/dashboard", "layout");
   if (!now?.unsubscribedAt) return { ok: false, error: "That didn't save. Please try again." };
   return { ok: true, message: `Done. ${name} won't get reminder or update emails.` };
+}
+
+const skinTypeInput = z.object({ clientId: z.string().min(1), type: z.enum(FITZPATRICK_TYPES) });
+
+/** Dana's own call on a client's Fitzpatrick type (D-094). Kept over any later estimate from a scan. */
+export async function setSkinType(input: z.input<typeof skinTypeInput>): Promise<ActionResult> {
+  const parsed = skinTypeInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Choose a type from I to VI." };
+  if (!(await readSession())) return { ok: false, error: "Please sign in again." };
+  const book = await loadBook();
+  const facts = book.facts.find((f) => f.client.id === parsed.data.clientId);
+  if (!facts) return { ok: false, error: "This client isn't in your book." };
+  const at = (await sandboxNow()).toISOString();
+  await getStore().updateClient(facts.client.id, {
+    fitzpatrick: { type: parsed.data.type, source: "practitioner", at, scanId: facts.client.fitzpatrick?.scanId ?? null },
+  });
+  revalidatePath("/dashboard", "layout");
+  return { ok: true, message: `Saved: ${skinTypeLabel(parsed.data.type)}.` };
 }
 
 const noteInput = z.object({ clientId: z.string().min(1), note: z.string().max(1200) });

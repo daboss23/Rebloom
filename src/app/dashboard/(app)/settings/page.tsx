@@ -11,6 +11,7 @@ import { env, features } from "@/lib/env";
 import { formatPrice } from "@/lib/plan/build";
 import { formatUsPhone } from "@/lib/sms/text";
 import { concernLabel } from "@/lib/skin/concerns";
+import { limitLabel } from "@/lib/skin/fitzpatrick";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -98,6 +99,9 @@ export default async function SettingsPage() {
                 <td className="py-4 pr-4">
                   <p className="text-[0.9375rem] text-ink">{t.name}</p>
                   <p className="t-caption mt-0.5 max-w-md !text-[0.8125rem]">{t.description}</p>
+                  {limitLabel(t.fitzpatrickMax) && (
+                    <p className="mt-1 text-[0.8125rem] text-text-2">Skin {limitLabel(t.fitzpatrickMax)} only</p>
+                  )}
                 </td>
                 <td className="hidden py-4 pr-4 text-[0.875rem] text-text-2 md:table-cell">
                   {t.sessionsTypical ? `${t.sessionsTypical} sessions` : "Ongoing"}

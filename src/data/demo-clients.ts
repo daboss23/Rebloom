@@ -11,6 +11,7 @@
 
 import type { AgeRange, BudgetBand, ClientStatus, EventType, IntakeConcern, PastTreatment, ScreeningAnswer, ScreeningKey } from "@/lib/domain";
 import type { ConcernKey } from "@/lib/skin/concerns";
+import type { FitzpatrickType } from "@/lib/skin/fitzpatrick";
 
 export type TreatmentKey = "peel-series" | "microneedling" | "ipl" | "hydrating-infusion" | "led" | "rf-tightening" | "signature-facial";
 export type ProductKey = "barrier-serum" | "spf-40" | "vitamin-c" | "cream-cleanser";
@@ -35,6 +36,8 @@ export interface DemoClient {
   starring: boolean;
   /** For whoever makes the portrait: how this person looks. */
   look: string;
+  /** Fitzpatrick type, as YouCam would estimate it from their first scan (D-094). Matches `look`. */
+  fitzpatrick: FitzpatrickType;
   /** Why they're in the demo. */
   role: string;
   /** Said yes to reminders. Without it the rebook engine may not email them. */
@@ -95,6 +98,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     status: "course_complete",
     starring: true,
     look: "34, fair skin with light freckles, shoulder-length auburn hair",
+    fitzpatrick: "II",
     role: "The hero. Course complete before her wedding, with a progress moment and one last facial booked.",
     reminders: true,
     intake: {
@@ -153,6 +157,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     status: "lead",
     starring: true,
     look: "29, South Asian, medium brown skin, long dark hair tied back",
+    fitzpatrick: "IV",
     role: "New lead. Got her report four days ago and hasn't booked: the follow-up is due.",
     reminders: true,
     texts: true,
@@ -190,6 +195,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     status: "booked",
     starring: true,
     look: "38, Black, deep brown skin, short cropped hair, clean-shaven",
+    fitzpatrick: "V",
     role: "Booked his first consult for today, deposit paid. Opens the practitioner brief.",
     reminders: true,
     intake: {
@@ -216,6 +222,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     status: "in_course",
     starring: true,
     look: "45, Latina, medium olive skin, dark brown hair",
+    fitzpatrick: "IV",
     role: "Mid-course. Her rescan shows real change, and her next session isn't booked: a great moment to rebook.",
     reminders: true,
     texts: true,
@@ -254,6 +261,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     status: "at_risk",
     starring: true,
     look: "52, East Asian, light skin, black hair with some grey, chin-length",
+    fitzpatrick: "III",
     role: "Stalled. Two rescans with almost no change, so she's flagged for Dana to adjust the plan before tomorrow's session.",
     reminders: true,
     intake: {
@@ -295,6 +303,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     status: "in_course",
     starring: false,
     look: "31, white, light skin, blonde hair",
+    fitzpatrick: "II",
     role: "Weekly LED course, on track. In today's schedule.",
     reminders: true,
     intake: {
@@ -332,6 +341,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     status: "booked",
     starring: false,
     look: "27, mixed heritage, light brown skin, curly dark hair",
+    fitzpatrick: "III",
     role: "Booked her first peel from the report, before a holiday.",
     reminders: true,
     intake: {
@@ -363,6 +373,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     status: "at_risk",
     starring: false,
     look: "41, white, fair skin, short brown hair, clean-shaven",
+    fitzpatrick: "II",
     role: "Missed. His second peel was due over two weeks ago and never booked.",
     reminders: true,
     texts: true,
@@ -407,6 +418,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     status: "course_complete",
     starring: false,
     look: "58, Middle Eastern, light olive skin, grey-streaked dark hair",
+    fitzpatrick: "III",
     role: "Finished her peel series three months ago: due for maintenance.",
     reminders: true,
     intake: {
@@ -445,6 +457,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     status: "lapsed",
     starring: false,
     look: "36, Black, medium brown skin, natural hair",
+    fitzpatrick: "IV",
     role: "Lapsed. One facial five months ago, nothing since, and no reminders: a call, not an email.",
     reminders: false,
     intake: {
@@ -476,6 +489,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     status: "lead",
     starring: false,
     look: "24, Filipina, light-medium skin, long black hair",
+    fitzpatrick: "III",
     role: "Scanned yesterday. Move the clock forward two days and her follow-up appears.",
     reminders: true,
     intake: {
@@ -502,6 +516,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     status: "in_course",
     starring: false,
     look: "47, white, medium skin with sun freckles, light brown hair",
+    fitzpatrick: "III",
     role: "Finished her three peels two weeks ago: her progress scan is due.",
     reminders: true,
     intake: {

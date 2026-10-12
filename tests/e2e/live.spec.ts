@@ -15,6 +15,8 @@ interface MockState {
   events: { route: string; auth: boolean }[];
 }
 const mockState = async (request: APIRequestContext) => (await (await request.get(`${MOCK}/__mock/state`)).json()) as MockState;
+/** The skin analyses, apart from simulations ("sim_") and skin types ("fz_"). */
+const analyses = (state: MockState) => state.tasks.filter((t) => t.taskId.startsWith("task_"));
 const ourLedger = async (request: APIRequestContext) =>
   (await (await request.get("/api/youcam/check", { headers: CHECK_AUTH })).json()).budget.remainingByOurLog as number;
 
@@ -75,6 +77,8 @@ test("the setup page checks the connection in the browser, behind the password",
 });
 
 test("a live scan reads YouCam's scores, copies its masks, then deletes the photo at YouCam", async ({ page }) => {
+  // Scan, report and the clinic's brief, each compiled on first visit by the dev server.
+  test.setTimeout(150_000);
   await completeIntake(page);
   const unitsBefore = (await mockState(page.request)).units;
   const ledgerBefore = await ourLedger(page.request);
@@ -82,10 +86,11 @@ test("a live scan reads YouCam's scores, copies its masks, then deletes the phot
   await unlockReport(page);
 
   // Real scores, no demo label. Priorities: the lowest score (eye bags, 58), then what matters most once the
-  // client's goal is weighed in: they wrote "smoother" skin, so texture (74) comes before lower eyelid (63).
+  // client's goal is weighed in: they wrote "smoother, more even skin", so pigmentation (72) and texture (74), both
+  // in their own words, come before lower eyelid (63).
   await expect(page.getByText("Demo analysis.")).toHaveCount(0);
   const priorities = page.getByRole("heading", { level: 2, name: "Your three priorities" }).locator("xpath=..").getByRole("heading", { level: 3 });
-  await expect(priorities).toHaveText(["Eye bags", "Texture", "Lower eyelid firmness"]);
+  await expect(priorities).toHaveText(["Eye bags", "Pigmentation", "Texture"]);
 
   // Masks were copied into our storage, at the photo's exact size, and are served only through the report link.
   const mask = await page.request.get(`${page.url()}/mask/${scanId}/eye_bag`);
@@ -96,16 +101,29 @@ test("a live scan reads YouCam's scores, copies its masks, then deletes the phot
   // What YouCam saw: one JPEG upload with its own headers and no API key, 16 SD actions, then deletion.
   await simulationShown(page);
   const state = await mockState(page.request);
-  const task = state.tasks.filter((t) => !t.taskId.startsWith("sim_")).at(-1)!;
+  const task = analyses(state).at(-1)!;
   expect(task).toMatchObject({ outcome: "success", deleted: true });
   expect(task.actions).toHaveLength(16);
   expect(task.polls).toBeGreaterThanOrEqual(3); // a 503 blip and a "running" were both ridden out
   expect(state.files.find((f) => f.fileId === task.fileId)).toMatchObject({ uploaded: true, width: 810, height: 1080, format: "jpeg" });
   expect(state.events.filter((e) => e.route.startsWith("PUT /upload/")).every((e) => !e.auth)).toBe(true);
 
-  // Units: the analysis cost 16, and our own ledger agrees with everything YouCam charged.
+  // The skin type (D-094) ran on the same upload, once, and was deleted at YouCam after it was read.
+  const types = state.tasks.filter((t) => t.taskId.startsWith("fz_") && t.fileId === task.fileId);
+  expect(types).toHaveLength(1);
+  expect(types[0]).toMatchObject({ outcome: "success", deleted: true, cost: 10 });
+
+  // Units: the analysis cost 16, and our own ledger agrees with everything YouCam charged (skin type and simulation included).
   expect(task.cost).toBe(16);
   expect(ledgerBefore - (await ourLedger(page.request))).toBe(unitsBefore - state.units);
+
+  // The type is for the practitioner: never on the client's report, and on Dana's brief as an estimate.
+  await expect(page.getByText(/Fitzpatrick/)).toHaveCount(0);
+  const clinicSide = await page.getByRole("link", { name: "See it from the clinic's side" }).first().getAttribute("href");
+  await page.goto(clinicSide!);
+  const about = page.getByRole("region", { name: "About the client" });
+  await expect(about).toContainText("Type III", { timeout: 30_000 });
+  await expect(about).toContainText("Estimated from the scan");
 });
 
 test("a camera-size photo runs YouCam's HD analysis, at the HD unit price", async ({ page }) => {
@@ -119,7 +137,7 @@ test("a camera-size photo runs YouCam's HD analysis, at the HD unit price", asyn
   await expect(page.getByText("Demo analysis.")).toHaveCount(0);
   await simulationShown(page);
   const state = await mockState(page.request);
-  const task = state.tasks.filter((t) => !t.taskId.startsWith("sim_")).at(-1)!;
+  const task = analyses(state).at(-1)!;
   expect(task.actions).toHaveLength(16);
   expect(task.actions.every((a) => a.startsWith("hd_"))).toBe(true);
 
@@ -159,8 +177,8 @@ test("the report shows a labelled simulation of the plan, made once and kept pri
   await expect(expect_.getByRole("img", { name: /An illustration of your skin/ })).toBeVisible();
   const after = await mockState(page.request);
   expect(after.tasks.filter((t) => t.taskId.startsWith("sim_"))).toHaveLength(simsBefore + 1);
-  // HD scan (22) plus one simulation (4 or 6), and nothing more.
-  expect(before.units - after.units).toBe(22 + sim.cost!);
+  // HD scan (22), the skin type on the first scan (10), one simulation (4 or 6), and nothing more.
+  expect(before.units - after.units).toBe(22 + 10 + sim.cost!);
 });
 
 test("a photo YouCam can't read gets that error's own retake instruction, and costs nothing", async ({ page }) => {
@@ -171,7 +189,7 @@ test("a photo YouCam can't read gets that error's own retake instruction, and co
   await expect(page.getByText("Face a window or a bright, even light, then try again.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Take a new photo" })).toHaveAttribute("href", "/c/maison-verre/capture");
   expect(await ourLedger(page.request)).toBe(ledgerBefore);
-  expect((await mockState(page.request)).tasks.at(-1)).toMatchObject({ outcome: "error_lighting_dark", deleted: true });
+  expect(analyses(await mockState(page.request)).at(-1)).toMatchObject({ outcome: "error_lighting_dark", deleted: true });
 });
 
 test("when YouCam won't start a task, the scan still finishes, clearly labelled as a demo", async ({ page }) => {

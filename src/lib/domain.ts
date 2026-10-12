@@ -2,6 +2,7 @@
 // Field names are camelCase here; the Supabase store maps them to snake_case columns.
 
 import type { ConcernKey } from "@/lib/skin/concerns";
+import type { FitzpatrickReading } from "@/lib/skin/fitzpatrick";
 
 export type ISODate = string; // "2026-10-05"
 export type ISODateTime = string; // full ISO timestamp
@@ -61,6 +62,8 @@ export interface Treatment {
   minDaysBeforeEvent: number;
   concerns: ConcernKey[];
   screeningFlags: ScreeningKey[];
+  /** The highest Fitzpatrick type (1 to 6) the clinic offers this to, e.g. 3 for IPL. Null or absent: every type (D-094). */
+  fitzpatrickMax?: number | null;
   active: boolean;
 }
 
@@ -97,6 +100,8 @@ export interface Client {
   isDemo: boolean;
   /** Which demo client this row was copied from ("amelia"). Null for real clients (DECISIONS D-049). */
   demoKey: string | null;
+  /** Fitzpatrick skin type: YouCam's estimate from the first live scan, or the clinic's own call (D-094). */
+  fitzpatrick?: FitzpatrickReading | null;
   createdAt: ISODateTime;
 }
 
@@ -227,6 +232,8 @@ export interface Scan {
   landmarks: [number, number][] | null;
   concernsRequested: ConcernKey[];
   providerTaskId: string | null;
+  /** YouCam's Fitzpatrick task, started beside the analysis on a client's first live scan (D-094). */
+  fitzpatrickTaskId?: string | null;
   analysisStartedAt: ISODateTime | null;
   errorCode: string | null;
   youcamRaw: unknown;

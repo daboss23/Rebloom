@@ -48,6 +48,9 @@ describe.skipIf(!url || !secret)("Supabase store (live project)", () => {
     const treatments = await store.listTreatments(mv.id);
     expect(treatments[0].name).toBe("Signature Peel Series");
     expect(treatments.find((t) => t.name === "Hydrating Infusion Facial")?.sessionsTypical).toBeNull();
+    // Skin type limits (D-094): IPL is offered to types I to III; the rest to every type.
+    expect(treatments.find((t) => t.name === "IPL Photofacial")?.fitzpatrickMax).toBe(3);
+    expect(treatments.find((t) => t.name === "Microneedling")?.fitzpatrickMax).toBeNull();
     expect((await store.listProducts(mv.id)).length).toBeGreaterThan(0);
   });
 
@@ -84,6 +87,8 @@ describe.skipIf(!url || !secret)("Supabase store (live project)", () => {
 
     const updated = await store.updateClient(clientId, { firstName: "Test", email: "test@example.com", status: "lead" });
     expect(updated.status).toBe("lead");
+    const typed = await store.updateClient(clientId, { fitzpatrick: { type: "IV", source: "practitioner", at: "2026-10-13T10:00:00.000Z", scanId: null } });
+    expect(typed.fitzpatrick).toEqual({ type: "IV", source: "practitioner", at: "2026-10-13T10:00:00.000Z", scanId: null });
   });
 
   let scanId: string;
