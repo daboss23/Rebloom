@@ -1065,6 +1065,29 @@ html:has(.landing) {
       animation-timeline: view();
       animation-range: entry 0% cover 38%;
     }
+    /* The agent at work (D-093): its steps tick in one by one, then the draft writes itself. */
+    .landing .agent-step {
+      animation: agent-step linear both;
+      animation-timeline: view();
+      animation-range: entry 40% cover 32%;
+    }
+    .landing .agent-step:nth-child(2) {
+      animation-range: entry 55% cover 34%;
+    }
+    .landing .agent-step:nth-child(3) {
+      animation-range: entry 70% cover 36%;
+    }
+    .landing .agent-step:nth-child(4) {
+      animation-range: entry 85% cover 38%;
+    }
+    .landing .agent-step:nth-child(5) {
+      animation-range: entry 100% cover 40%;
+    }
+    .landing .agent-write {
+      animation: reveal-line linear both;
+      animation-timeline: view();
+      animation-range: entry 60% cover 45%;
+    }
     .landing .grow-bar {
       animation: grow-bar linear both;
       animation-timeline: view();
@@ -1086,6 +1109,16 @@ html:has(.landing) {
   }
   to {
     opacity: 1;
+  }
+}
+@keyframes agent-step {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 @keyframes reveal-line {

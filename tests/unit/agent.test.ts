@@ -15,7 +15,8 @@ import { MAISON_VERRE } from "@/data/clinics";
 import { SEED_PRODUCTS, SEED_TREATMENTS } from "@/data/menu";
 import { SEED_STAFF } from "@/data/staff";
 import { bareTimesIn, draftChannel, findOpenTimes, pricesIn, timesIn, type AgentContext } from "@/lib/agent/context";
-import { draftProblems } from "@/lib/agent/guard";
+import { draftProblems, signOffProblem } from "@/lib/agent/guard";
+import { answerEmail } from "@/lib/email/answer";
 import { checkMeasurement } from "@/lib/agent/measure";
 import { checkChange } from "@/lib/agent/plan-change";
 import { systemPrompt } from "@/lib/agent/prompt";
@@ -238,7 +239,7 @@ describe("what the agent may name", () => {
   it("sends back a time without am or pm, even one that was open", async () => {
     const daniel = await contextFor("daniel");
     const found = findOpenTimes(daniel, { weekdays: ["saturday"], partOfDay: "morning" });
-    const problems = draftProblems(daniel, "Hi Daniel, it's Dana. Saturday at 10 is open. Want me to put you in for 10?", { offered: found.offered, extraCents: [] });
+    const problems = draftProblems(daniel, "Hi Daniel, it's Dana. Saturday at 10 is open. Want me to put you in for 10?\nDana", { offered: found.offered, extraCents: [] });
     expect(problems).toEqual(['"at 10" needs am or pm. Write every time as 10am or 2:30pm.', '"for 10" needs am or pm. Write every time as 10am or 2:30pm.']);
   });
 
@@ -257,16 +258,35 @@ describe("what the agent may name", () => {
     const found = findOpenTimes(daniel, { weekdays: ["saturday"], partOfDay: "morning" });
     const at = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: MAISON_VERRE.timezone }).format(new Date(found.offered[0]));
     const time = at.replace(":00", "").replace(" ", "").toLowerCase();
-    const body = `Hi Daniel, it's Dana. Sorry nobody got back to you sooner. Saturday at ${time} is open for your second peel ($195). You can take it here: ${ORIGIN}/r/${daniel.facts.report!.token}/book`;
+    const body = `Hi Daniel, it's Dana. Sorry nobody got back to you sooner. Saturday at ${time} is open for your second peel ($195). You can take it here: ${ORIGIN}/r/${daniel.facts.report!.token}/book\nDana`;
     expect(daniel.channel).toBe("sms");
     expect(draftProblems(daniel, body, { offered: found.offered, extraCents: [] })).toEqual([]);
   });
 
-  it("asks an email to open with their name and leave off the sign-off", async () => {
+  it("asks an email to open with their name, and to close with Dana's own sign-off", async () => {
     const priya = await contextFor("priya");
     expect(priya.channel).toBe("email");
     const problems = draftProblems(priya, "Thanks for asking.\n\nMost people look a little pink for a day.\n\nWarmly,\nDana", { offered: [], extraCents: [] });
-    expect(problems).toEqual(expect.arrayContaining(['Open the email with "Hi Priya,".', expect.stringMatching(/Leave off the sign-off/)]));
+    expect(problems).toEqual(['Open the email with "Hi Priya,".', 'Sign off with "Dana" alone, or "Speak soon," and "Dana", not "Warmly,".']);
+  });
+
+  it("signs every draft as Dana: her name alone, or Speak soon above it", () => {
+    expect(signOffProblem("Hi Priya,\n\nSee you then.\n\nDana", "Dana")).toBeNull();
+    expect(signOffProblem("Hi Priya,\n\nSee you then.\n\nSpeak soon,\nDana", "Dana")).toBeNull();
+    expect(signOffProblem("Hi Daniel, it's Dana. Saturday at 10am is open.\nDana", "Dana")).toBeNull();
+    expect(signOffProblem("Hi Priya,\n\nSee you then.", "Dana")).toMatch(/^End with your name on its own line/);
+    expect(signOffProblem("Hi Priya,\n\nSee you then. Dana", "Dana")).toMatch(/^End with your name/);
+    expect(signOffProblem("Hi Priya,\n\nBest,\nDana", "Dana")).toMatch(/not "Best,"/);
+  });
+
+  it("doesn't put her name under an email twice when she has signed it", () => {
+    const quoted = null;
+    const signed = answerEmail({ clinic: MAISON_VERRE, subject: "Re: Hi", body: "Hi Priya,\n\nSee you Saturday.\n\nSpeak soon,\nDana", signedBy: "Dana", quoted });
+    expect(signed.text.match(/Dana/g)).toHaveLength(1);
+    expect(signed.text).toMatch(/Speak soon,\nDana\n\nMaison Verre\n/);
+    expect(signed.html).not.toMatch(/Dana<br>/);
+    const unsigned = answerEmail({ clinic: MAISON_VERRE, subject: "Re: Hi", body: "Hi Priya,\n\nSee you Saturday.", signedBy: "Dana", quoted });
+    expect(unsigned.text).toMatch(/See you Saturday\.\n\nDana\nMaison Verre\n/);
   });
 });
 
@@ -358,7 +378,7 @@ describe("a run", () => {
       const first = times.text.match(/Saturday, \w+ \d+ at (\S+)/)![1];
       rejected = (await callTool(tools, "submit_draft", { message: "Hi Daniel! Great question! Saturday at 7am works.", note_for_dana: "x" })).text;
       const ok = await callTool(tools, "submit_draft", {
-        message: `Hi Daniel, it's Dana. Sorry for the slow reply. Saturday at ${first} is open for your second peel. Reply yes and I'll book it.`,
+        message: `Hi Daniel, it's Dana. Sorry for the slow reply. Saturday at ${first} is open for your second peel. Reply yes and I'll book it.\nDana`,
         note_for_dana: "He asked weeks ago, so the apology matters.",
       });
       expect(ok.ok).toBe(true);
@@ -386,7 +406,7 @@ describe("a run", () => {
       expect((await callTool(tools, "submit_draft", { message: "Hi Grace,\n\nA note before tomorrow.", note_for_dana: "x" })).text).toMatch(/suggest_plan_change before drafting/);
       expect((await callTool(tools, "suggest_plan_change", { treatment: "Signature Peel Series", sessions: 2, why: "Another angle on the sun spots, which IPL hasn't moved." })).ok).toBe(true);
       const ok = await callTool(tools, "submit_draft", {
-        message: "Hi Grace,\n\nYour last two scans show your sun spots haven't moved the way we hoped. Before tomorrow's session, I'd like to talk through a small change to your plan with you.",
+        message: "Hi Grace,\n\nYour last two scans show your sun spots haven't moved the way we hoped. Before tomorrow's session, I'd like to talk through a small change to your plan with you.\n\nSpeak soon,\nDana",
         note_for_dana: "Talk it through at tomorrow's visit before switching.",
       });
       expect(ok.ok).toBe(true);

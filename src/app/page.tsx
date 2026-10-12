@@ -12,9 +12,10 @@ import { HeroFace } from "@/components/landing/HeroFace";
 import { MiniBars } from "@/components/landing/MiniBars";
 import { ScoreLine } from "@/components/landing/ScoreLine";
 import { cx } from "@/components/ui/cx";
-import { IconArrowRight, IconCheckCircle, IconMail, IconPlus } from "@/components/ui/Icons";
+import { IconArrowRight, IconCheckCircle, IconMail, IconMessage, IconPlus } from "@/components/ui/Icons";
 import { ClinicWordmark, RebloomWordmark } from "@/components/ui/Wordmarks";
 import { MAISON_VERRE, SEED_CLINICS } from "@/data/clinics";
+import { DEMO_CLIENTS } from "@/data/demo-clients";
 import { clinicThemeStyle } from "@/lib/brand";
 import type { MonthBar } from "@/lib/dashboard/insights";
 import { landingPreview, type LandingPreview, type PreviewRow } from "@/lib/landing/preview";
@@ -35,7 +36,7 @@ import { SCORED_CONCERNS } from "@/lib/skin/concerns";
  * in gold; the promise and the gold "Enter the clinic dashboard" on the left; on the right, the result itself:
  * a sample client's face read and marked as her report shows it, with her measured change (D-076).
  * FORM: a direct-response page in the dashboard's grammar: the result, then the live queue it feeds, problem,
- * mechanism, honesty, arithmetic, white label, objections, close.
+ * mechanism, the agent that drafts the answers (D-093), honesty, arithmetic, white label, objections, close.
  */
 
 export const metadata: Metadata = {
@@ -74,6 +75,7 @@ export default function RebloomHome() {
             <ul className="flex items-center gap-8 text-[0.875rem] text-white/70">
               {[
                 ["#how", "How it works"],
+                ["#agent", "The agent"],
                 ["#numbers", "The numbers"],
                 ["#questions", "Questions"],
               ].map(([href, label]) => (
@@ -93,6 +95,7 @@ export default function RebloomHome() {
         <Today p={p} />
         <Problem p={p} />
         <How p={p} />
+        <Agent p={p} />
         <Honest />
         <Numbers p={p} />
         <Try />
@@ -583,6 +586,134 @@ function CatchCell({ p }: { p: LandingPreview }) {
   );
 }
 
+/* ---------- The agent: the answer, written before the practitioner opens it (D-093) ---------- */
+
+function Agent({ p }: { p: LandingPreview }) {
+  const name = p.practitioner;
+  // The demo's own story: a sample client asked for a time, and nobody answered.
+  const daniel = DEMO_CLIENTS.find((c) => c.key === "daniel");
+  const asked = daniel?.conversation?.find((l) => l.from === "client");
+  const waited = asked ? Math.abs(asked.day) : null;
+  const promises: [string, string][] = [
+    [
+      "It sounds like her.",
+      `It learns from every message ${name} writes and every draft she changes. No \u201CGreat question!\u201D, no \u201Creach out\u201D. It signs off the way she does.`,
+    ],
+    [
+      "It only says what it can check.",
+      "Every time it offers was open on your calendar moments before. Every price is on your menu. Every link is the client's own. A draft that slips is sent back and rewritten before she sees it.",
+    ],
+    [
+      "It takes a second look before anyone gives up.",
+      "When progress stalls, it first checks the scans were taken in the same light. If not, it asks for a two-minute rescan. If so, it suggests one change from your menu, priced, to talk through at the next visit.",
+    ],
+  ];
+  const steps = [
+    `Read ${daniel?.firstName ?? "the client"}'s message`,
+    "Checked his plan: second peel of three, not booked",
+    "Found Saturday at 10am open, and 10:45am",
+    "Sent back to rewrite: \u201CGreat question\u201D reads as machine-written",
+    "Drafted the text",
+  ];
+  return (
+    <section id="agent" aria-labelledby="agent-title" className={`${wrap} scroll-mt-24 pt-28 lg:pt-40`}>
+      <h2 id="agent-title" className={`${sectionTitle} max-w-4xl`}>
+        The reply is written before you open it.
+      </h2>
+      <p className="mt-6 max-w-[40rem] text-[1.0625rem] leading-relaxed text-text-2">
+        &ldquo;Could I come in on a Saturday morning?&rdquo; is a booking, if someone answers.
+        {waited ? ` At the demo clinic, that text sat unanswered for ${waited} days.` : ""} Rebloom reads every reply as it
+        lands, checks your calendar, your menu and the client&apos;s scans, and writes {name}&apos;s answer. She reads it,
+        changes what she likes, and presses Send.
+      </p>
+
+      <div className="sea on-dark relative mt-14 overflow-clip rounded-[32px] px-5 py-8 shadow-[0_40px_80px_-44px_rgba(12,26,34,0.65)] sm:px-10 sm:py-12 lg:px-14 lg:py-16">
+        <LightField variant="sea" className="opacity-50" />
+        <div className="relative grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-14">
+          {/* The brief's own composer, as the practitioner sees it: the draft already in it, and how it was made. */}
+          <figure className="lg:col-span-7">
+            <div className="rounded-[22px] bg-[linear-gradient(180deg,rgba(248,251,253,0.98),rgba(233,242,246,0.96))] p-4 shadow-[inset_0_1px_0_#fff,0_30px_60px_-30px_rgba(0,0,0,0.6)] sm:p-6">
+              {asked && (
+                <div className="flex items-start gap-3">
+                  <span
+                    aria-hidden
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[linear-gradient(150deg,#1b3a4e_0%,#0b1a24_100%)] font-display text-[1rem] text-[#e2c07a]"
+                  >
+                    {daniel?.firstName[0]}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="rounded-[22px] rounded-bl-[6px] bg-white px-4 py-3 text-[0.9375rem] leading-relaxed text-ink ring-2 ring-[#f49543]/70">
+                      {asked.body}
+                    </p>
+                    <p className="mt-2 flex items-center gap-1.5 px-1 text-[0.8125rem] text-text-3">
+                      <IconMessage aria-hidden width={13} height={13} />
+                      {daniel?.firstName} · Text{waited ? ` · waiting ${waited} days` : ""}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-5 rounded-[18px] bg-white/90 p-4 ring-1 ring-inset ring-[#0c1a22]/[0.07] sm:p-5">
+                <p className="flex items-baseline justify-between gap-4">
+                  <span className="font-display text-[1.375rem] font-light leading-none text-ink">Answer {daniel?.firstName}</span>
+                  <span className="flex items-center gap-1.5 text-[0.8125rem] text-text-3">
+                    <IconMessage aria-hidden width={14} height={14} />
+                    By text
+                  </span>
+                </p>
+                <p className="mt-4 grid grid-cols-[16px_minmax(0,1fr)] gap-x-2.5 border-t border-[#0c1a22]/[0.07] pt-3 text-[0.8125rem] leading-relaxed text-text-3">
+                  <Bloom size={16} className="mt-[0.2em] text-[#9e4a5d]" />
+                  <span>
+                    <span className="text-ink">Drafted by Rebloom.</span> Read it, change anything, then send.
+                  </span>
+                </p>
+                <ol aria-label="How it was written" className="mt-2 space-y-1 pl-[26px] text-[0.8125rem] leading-relaxed text-text-2">
+                  {steps.map((step) => (
+                    <li key={step} className="agent-step flex gap-2">
+                      <IconCheckCircle aria-hidden width={14} height={14} className="mt-[0.28em] shrink-0 text-[#1f7a63]" />
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+                <p className="agent-write mt-4 whitespace-pre-line rounded-[14px] border border-[#0c1a22]/10 bg-white px-4 py-3 text-[0.9375rem] leading-relaxed text-ink">
+                  {`Hi ${daniel?.firstName ?? "there"}, sorry this one slipped past us. Saturday at 10am is open for your second peel, and so is 10:45am. Want me to put you in for 10am?\n\nSpeak soon,\n${name}`}
+                </p>
+                <div className="mt-4 flex items-center justify-between gap-4">
+                  <span className="text-[0.8125rem] text-text-3">Nothing goes until she sends it.</span>
+                  <span aria-hidden className="btn-gold pointer-events-none !h-10 shrink-0 whitespace-nowrap px-5 text-[0.875rem]">
+                    Send text
+                  </span>
+                </div>
+              </div>
+            </div>
+            <figcaption className="mt-4 text-[0.8125rem] leading-relaxed text-ink-soft">
+              An example for a sample client. Real drafts are written fresh from your calendar, your menu and the client&apos;s
+              scans.
+            </figcaption>
+          </figure>
+
+          <dl className="lg:col-span-5">
+            {promises.map(([title, body]) => (
+              <div key={title} className="border-t border-white/12 py-6 first:border-t-0 first:pt-0 last:pb-0">
+                <dt className="font-display text-[1.625rem] font-light leading-tight text-white sm:text-[1.75rem]">{title}</dt>
+                <dd className="mt-2 text-[0.96875rem] leading-relaxed text-[#dbe8ef]">{body}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </div>
+
+      <div className="mt-12 flex flex-col items-start gap-6 border-t border-[#0c1a22]/10 pt-10 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-display text-[clamp(24px,2.4vw,30px)] font-light leading-snug text-ink">Rebloom drafts. Your practitioner decides.</p>
+          <p className="mt-2 text-[0.9375rem] leading-relaxed text-text-2">Open the demo and watch it answer the replies waiting this morning.</p>
+        </div>
+        <EnterDemo className="w-full shrink-0 sm:w-auto" buttonClassName="!h-14 px-6 text-[0.96875rem]" />
+      </div>
+    </section>
+  );
+}
+
 /* ---------- Honesty, and the YouCam work underneath ---------- */
 
 function Honest() {
@@ -713,7 +844,11 @@ function Questions({ p }: { p: LandingPreview }) {
     ],
     [
       "Does anything go out on its own?",
-      "No. Rebloom writes the draft. Your practitioner reads it, edits it if they like, and presses Send. In the demo, sent messages land in an on-screen outbox, never a real inbox.",
+      "No. Rebloom drafts every message, including the answer to every client who writes back. Your practitioner reads it, edits it if they like, and presses Send. In the demo, messages to sample clients land in an on-screen outbox, never a real inbox.",
+    ],
+    [
+      "Is the agent a chatbot my clients talk to?",
+      `No. It never speaks to a client. It works behind the desk: it reads the reply, checks your calendar, your menu and the client's scans, and leaves a draft for ${p.practitioner} to send. Clients only ever hear from your practitioner.`,
     ],
     [
       "Will clients see Rebloom?",
