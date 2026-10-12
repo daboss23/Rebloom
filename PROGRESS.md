@@ -12,13 +12,15 @@
 - **Checked in code:** the copy rules, a list of machine-writing tells, and nothing named that the tools didn't give: times only from the calendar, prices only from the menu or plan, links only the client's own. A draft that fails is sent back to the agent to rewrite, in the same run.
 - **Minimal on screen:** no new panels or pop-ups. Today's reply rows say "Review draft" when one is ready. On the brief the draft is the composer's content, with one quiet line above it and "How it was written" behind a link.
 - **Safety valves:** 15 drafts per demo and 150 across all demos a day, logged in `api_usage`.
-- **Tests:** 20 new unit tests (the voice checks, the measurement check, open times, the draft checks, plan changes, which drafts a book needs, and whole runs with a stand-in for Claude: a draft sent back and rewritten, a failure, a reply answered meanwhile). All 479 unit tests (one skipped, as before), lint, typecheck and the copy check pass. The dashboard browser tests pass (one, Settings' reply alerts, timed out once on the dev server's first compile and passes on its own; it doesn't touch this work).
+- **Tests:** 22 new unit tests (the voice checks, the measurement check, open times, the draft checks including am and pm, plan changes, which drafts a book needs, and whole runs with a stand-in for Claude: a draft sent back and rewritten, a failure, a reply answered meanwhile). All 481 unit tests (one skipped, as before), lint, typecheck and the copy check pass. The dashboard browser tests pass (one, Settings' reply alerts, timed out once on the dev server's first compile and passes on its own; it doesn't touch this work).
 - **Checked on screen** with sample drafts: Today, a drafted text (Daniel), a draft being written (Priya), and Grace's second look, at desktop and phone widths.
 
+- **Applied the database change** (`20261012120000_agent_drafts`) to the live project, and ran the Supabase integration test there with a new check for drafts: 20 of 20 pass.
+- **Times always say am or pm** (Joshua): a draft that writes "10", "10:45" or "16:00" is sent back to the agent to say "10am" or "10:45am". "Today's visits" now reads "4:00pm" instead of "16:00".
+
 ### What Joshua needs to do
-1. **Apply the database change:** `pnpm db:migrate` (adds `agent_drafts`). Until then the agent stays off and nothing else changes.
-2. **Make sure `ANTHROPIC_API_KEY` is set in Vercel** (it already is if the goal reading works). No new keys.
-3. **Try it:** open the dashboard as Dana. Within a minute, Daniel's and Priya's rows say "Review draft". Open Grace's brief for the second look.
+1. **Make sure `ANTHROPIC_API_KEY` is set in Vercel** (it already is if the goal reading works). No new keys.
+2. **Try it:** open the dashboard as Dana. Within a minute, Daniel's and Priya's rows say "Review draft". Open Grace's brief for the second look.
 
 ### What's next
 1. **Listen to the drafts:** run the same three replies through the agent and read them side by side, then tune the voice.

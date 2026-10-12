@@ -14,7 +14,7 @@ await vi.hoisted(async () => {
 import { MAISON_VERRE } from "@/data/clinics";
 import { SEED_PRODUCTS, SEED_TREATMENTS } from "@/data/menu";
 import { SEED_STAFF } from "@/data/staff";
-import { draftChannel, findOpenTimes, pricesIn, timesIn, type AgentContext } from "@/lib/agent/context";
+import { bareTimesIn, draftChannel, findOpenTimes, pricesIn, timesIn, type AgentContext } from "@/lib/agent/context";
 import { draftProblems } from "@/lib/agent/guard";
 import { checkMeasurement } from "@/lib/agent/measure";
 import { checkChange } from "@/lib/agent/plan-change";
@@ -226,6 +226,20 @@ describe("what the agent may name", () => {
   it("reads times and prices the way people write them", () => {
     expect(timesIn("Saturday at 10am, or 2:30 PM, or 11:00 a.m.")).toEqual(["10am", "2:30pm", "11am"]);
     expect(pricesIn("$195 a session, $1,185 in all, $42.50")).toEqual([195, 1185, 42.5]);
+  });
+
+  it("finds every time written without am or pm, and nothing that isn't a time", () => {
+    expect(bareTimesIn("Saturday at 10, or 10:45, or 16:00. Want me to put you in for 10?")).toEqual(["10:45", "16:00", "at 10", "for 10"]);
+    expect(
+      bareTimesIn("Saturday at 10am or 10:45 am, 2:30pm, 11 a.m. A peel every 3 weeks, for 2 sessions, from 1 to 3 days of downtime, about 3 days, after 2 sessions, $195."),
+    ).toEqual([]);
+  });
+
+  it("sends back a time without am or pm, even one that was open", async () => {
+    const daniel = await contextFor("daniel");
+    const found = findOpenTimes(daniel, { weekdays: ["saturday"], partOfDay: "morning" });
+    const problems = draftProblems(daniel, "Hi Daniel, it's Dana. Saturday at 10 is open. Want me to put you in for 10?", { offered: found.offered, extraCents: [] });
+    expect(problems).toEqual(['"at 10" needs am or pm. Write every time as 10am or 2:30pm.', '"for 10" needs am or pm. Write every time as 10am or 2:30pm.']);
   });
 
   it("sends back an invented time, an invented price, a stranger's link and an em dash", async () => {

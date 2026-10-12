@@ -82,7 +82,7 @@ export interface Visit {
   appointment: Appointment;
   facts: ClientFacts;
   treatment: Treatment | null;
-  /** "11:00" in the clinic's time zone. */
+  /** "11:00am" in the clinic's time zone. */
   time: string;
   minutes: number;
   /** Which session of the course this is, when it's part of one: "Session 4 of 6". */
@@ -91,7 +91,9 @@ export interface Visit {
 
 /** One day's visits in time order. */
 export function visitsOn(day: ISODate, facts: ClientFacts[], treatments: Treatment[], timeZone: string): Visit[] {
-  const time = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone });
+  // "11:00am", "4:30pm": US time, never a bare "16:00".
+  const clock = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone });
+  const time = { format: (d: Date) => clock.format(d).replace(/\s/g, "").toLowerCase() };
   return facts
     .flatMap((f) =>
       f.appointments

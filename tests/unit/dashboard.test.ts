@@ -102,7 +102,9 @@ describe("what the dashboard shows", () => {
 
   it("lists a day's visits in time order, with the session number", () => {
     const tuesday = visitsOn("2026-12-29", facts, treatments, MAISON_VERRE.timezone);
-    expect(tuesday.map((v) => v.time)).toEqual([...tuesday.map((v) => v.time)].sort());
+    expect(tuesday.map((v) => v.appointment.startsAt)).toEqual([...tuesday.map((v) => v.appointment.startsAt)].sort());
+    // US time, with am or pm.
+    for (const v of tuesday) expect(v.time).toMatch(/^(1[0-2]|[1-9]):[0-5]\d[ap]m$/);
     const led = tuesday.find((v) => v.facts.client.demoKey === "hannah");
     expect(led?.session).toBe("Session 4 of 6");
   });

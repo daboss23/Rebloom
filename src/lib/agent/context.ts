@@ -349,6 +349,22 @@ export function timesIn(text: string): string[] {
   );
 }
 
+// After a number, these say it isn't a time: "for 3 weeks", "from 1 to 3", "after 2 sessions".
+const NOT_A_TIME = String.raw`(?:-|to|and|or|of|x|%|days?|weeks?|months?|years?|sessions?|minutes?|mins?|hours?|hrs?|points?|percent|times?|people|products?|treatments?|visits?|scans?|nights?|parts?|texts?|more)\b`;
+const BARE_CLOCK = /\b([01]?\d|2[0-3]):([0-5]\d)\b(?!\s?(?:a\.?m\.?|p\.?m\.?)(?![a-z]))/gi;
+const BARE_HOUR = new RegExp(
+  String.raw`\b(?:at|for|from|by|until|till|til|around|after|before|about)\s+(?:1[0-2]|[1-9])\b(?!:\d)(?!\s?(?:a\.?m\.?|p\.?m\.?)(?![a-z]))(?!\s*${NOT_A_TIME})`,
+  "gi",
+);
+
+/**
+ * Times written without am or pm: "10:45", "16:00", "at 10", "in for 10?". A US client reads "10" two ways, so every
+ * time a draft names says which (Joshua, Oct 12).
+ */
+export function bareTimesIn(text: string): string[] {
+  return [...[...text.matchAll(BARE_CLOCK)].map((m) => m[0]), ...[...text.matchAll(BARE_HOUR)].map((m) => m[0])];
+}
+
 /** Dollar amounts in a text, in whole dollars. */
 export function pricesIn(text: string): number[] {
   return [...text.matchAll(/\$\s?(\d{1,3}(?:,\d{3})*|\d+)(?:\.(\d{2}))?/g)].map((m) => Number(m[1].replace(/,/g, "")) + Number(m[2] ?? 0) / 100);

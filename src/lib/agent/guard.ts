@@ -5,7 +5,7 @@
 
 import { checkCopy } from "@/lib/copy/check";
 import { TEXT_MAX_CHARS } from "@/lib/sms/text";
-import { allowedLink, allowedPrices, allowedTimes, pricesIn, timesIn, type AgentContext } from "./context";
+import { allowedLink, allowedPrices, allowedTimes, bareTimesIn, pricesIn, timesIn, type AgentContext } from "./context";
 import { checkVoice } from "./voice";
 
 /** Answers are short. An email answer that runs past this has stopped being a note. */
@@ -45,6 +45,7 @@ export function draftProblems(ctx: AgentContext, body: string, facts: DraftFacts
     }
   }
 
+  for (const t of bareTimesIn(text)) problems.push(`"${t}" needs am or pm. Write every time as 10am or 2:30pm.`);
   const times = allowedTimes(ctx, facts.offered);
   for (const t of timesIn(text)) {
     if (!times.has(t)) {
