@@ -227,7 +227,7 @@ test("Settings says where reply alerts go, and checks the address", async ({ pag
 
 test("news that lands while the dashboard is open rises in: a reply, then someone who scanned in", async ({ page }) => {
   // Daniel and Priya were already waiting when Dana came in: Today lists them, the menu counts them, nothing pops up.
-  await expect(page.getByRole("link", { name: /^Today.*2 replies waiting/ }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Menu.*2 replies waiting/ })).toBeVisible();
   const sofia = (await briefOf(page, "Sofia Morales")).split("/").pop()!;
   const priya = (await briefOf(page, "Priya Shah")).split("/").pop()!;
   await page.goto("/dashboard");
@@ -263,6 +263,28 @@ test("news that lands while the dashboard is open rises in: a reply, then someon
   await expect(arrival).toContainText("Joshua Reed · First scan · Just now");
   await arrival.getByRole("link", { name: "Open Joshua's brief" }).click();
   await expect(page).toHaveURL(new RegExp(`/dashboard/clients/${priya}$`));
+});
+
+test("on a phone the menu slides in, takes Dana where she taps, and gets out of the way", async ({ page }) => {
+  const open = page.getByRole("button", { name: /^Menu/ });
+  const menu = page.getByRole("dialog", { name: "Menu" });
+  await expect(menu).toBeHidden();
+
+  await open.click();
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("link", { name: /^Today.*2 replies waiting/ })).toHaveAttribute("aria-current", "page");
+  await page.keyboard.press("Escape");
+  await expect(menu).toBeHidden();
+  await expect(open).toBeFocused();
+
+  await open.click();
+  await menu.getByRole("link", { name: /^Clients/ }).click();
+  await expect(page).toHaveURL(/\/dashboard\/clients$/);
+  await expect(menu).toBeHidden();
+  await open.click();
+  await expect(menu.getByRole("link", { name: /^Clients/ })).toHaveAttribute("aria-current", "page");
+  await menu.getByRole("button", { name: "Close menu" }).click();
+  await expect(menu).toBeHidden();
 });
 
 test("the dashboard's code carries the demo to a phone, to scan in as a new prospect", async ({ page, browser }) => {
