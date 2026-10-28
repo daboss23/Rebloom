@@ -1,5 +1,16 @@
 # Progress
 
+## Session 18 · Wednesday October 28, 2026 · New clients, on the landing page
+
+**The landing page now sells the scan as a way in for new clients, not only for rebooking** (DECISIONS D-098).
+
+### What's done
+- **A new section after "From first scan to second visit": "It brings in new clients, too."** Three steps: a working QR code for Maison Verre's scan (on phones, a "Start a scan" link), the report waiting behind name, email and phone, and Priya as the queue shows a new lead, with her $1,140 suggested plan. One figure, computed from the demo: 10 of 12 sample clients booked from their report.
+- **Also:** a sentence in the hero, "New clients" in the page's menu (it no longer wraps), and a paragraph in the README's "How it works".
+- **Tests:** one new landing test. All 508 unit tests pass (one skipped), plus lint, typecheck and the copy check. Checked on screen at 1440px and on a phone.
+
+---
+
 ## Session 17 · Wednesday October 28, 2026 · The morning run
 
 **When Dana opens Today, the agent now works through her whole book, on screen, and leaves a draft in every row** (DECISIONS D-097). Before, it answered replies and took a second look at stalled plans; now it also writes Dana's own version of every message the rebook queue would send.

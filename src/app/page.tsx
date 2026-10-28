@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Bloom } from "@/components/dashboard/Bloom";
 import { CountUp } from "@/components/dashboard/CountUp";
+import { qrPath } from "@/components/dashboard/ScanYourselfIn";
 import { KindChip, Monogram } from "@/components/dashboard/Kind";
 import { LightField } from "@/components/dashboard/LightField";
 import { ClientPagePreview } from "@/components/flow/ClientPagePreview";
@@ -17,6 +18,7 @@ import { ClinicWordmark, RebloomWordmark } from "@/components/ui/Wordmarks";
 import { MAISON_VERRE, SEED_CLINICS } from "@/data/clinics";
 import { DEMO_CLIENTS } from "@/data/demo-clients";
 import { clinicThemeStyle } from "@/lib/brand";
+import { env } from "@/lib/env";
 import type { MonthBar } from "@/lib/dashboard/insights";
 import { landingPreview, type LandingPreview, type PreviewRow } from "@/lib/landing/preview";
 import { formatPrice } from "@/lib/plan/build";
@@ -36,7 +38,7 @@ import { SCORED_CONCERNS } from "@/lib/skin/concerns";
  * in gold; the promise and the gold "Enter the clinic dashboard" on the left; on the right, the result itself:
  * a sample client's face read and marked as her report shows it, with her measured change (D-076).
  * FORM: a direct-response page in the dashboard's grammar: the result, then the live queue it feeds, problem,
- * mechanism, the agent that drafts the answers (D-093), honesty, arithmetic, white label, objections, close.
+ * mechanism, the scan as a way in for new clients (D-098), the agent that drafts the answers (D-093), honesty, arithmetic, white label, objections, close.
  */
 
 export const metadata: Metadata = {
@@ -72,9 +74,10 @@ export default function RebloomHome() {
             <RebloomWordmark height={22} className="!h-[19px] sm:!h-[22px]" shine />
           </Link>
           <nav aria-label="On this page" className="hidden justify-self-end lg:block">
-            <ul className="flex items-center gap-8 text-[0.875rem] text-white/70">
+            <ul className="flex items-center gap-7 whitespace-nowrap text-[0.875rem] text-white/70">
               {[
                 ["#how", "How it works"],
+                ["#leads", "New clients"],
                 ["#agent", "The agent"],
                 ["#numbers", "The numbers"],
                 ["#questions", "Questions"],
@@ -95,6 +98,7 @@ export default function RebloomHome() {
         <Today p={p} />
         <Problem p={p} />
         <How p={p} />
+        <Leads p={p} />
         <Agent p={p} />
         <Honest />
         <Numbers p={p} />
@@ -160,7 +164,7 @@ function Hero({ p }: { p: LandingPreview }) {
           <div className="focus-in mt-8" style={{ animationDelay: "180ms" }}>
             <p className="max-w-[31rem] text-[1.125rem] leading-relaxed text-text-2 sm:text-[1.1875rem]">
               Rebloom measures each client&apos;s skin with YouCam&apos;s AI, shows them what changed, and tells your team
-              who to rebook today.
+              who to rebook today. Shared on your site or socials, the same scan brings in new clients.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <EnterDemo buttonClassName="!h-14 px-6 text-[0.96875rem]" />
@@ -583,6 +587,150 @@ function CatchCell({ p }: { p: LandingPreview }) {
         </p>
       </div>
     </Cell>
+  );
+}
+
+/* ---------- New clients: the scan as the clinic's way in (D-098) ---------- */
+
+function Leads({ p }: { p: LandingPreview }) {
+  const clinic = MAISON_VERRE;
+  const scanUrl = `${(env.APP_URL ?? "https://www.rebloom.skin").replace(/\/$/, "")}/c/${clinic.slug}`;
+  const { d, box } = qrPath(scanUrl);
+  const { reports } = p.leads;
+  const step = "font-display text-[0.9375rem] tracking-[0.08em] text-[#86601f]";
+  return (
+    <section id="leads" aria-labelledby="leads-title" className={`${wrap} scroll-mt-24 pt-28 lg:pt-40`}>
+      <div className="grid gap-8 lg:grid-cols-12 lg:items-end lg:gap-16">
+        <div className="lg:col-span-7">
+          <h2 id="leads-title" className={sectionTitle}>
+            It brings in new clients, too.
+          </h2>
+          <p className="mt-6 max-w-[36rem] text-[1.0625rem] leading-relaxed text-text-2">
+            People are curious about their own skin. Put the clinic&apos;s scan on the front desk, in a post or on the
+            website, and anyone can take it at home in two minutes. The report opens once they leave a name, email and
+            phone, so every scan leaves the clinic someone to call, with a plan already priced.
+          </p>
+        </div>
+        {reports.of > 0 && (
+          <p className="flex items-baseline gap-4 lg:col-span-5 lg:justify-self-end">
+            <span className="whitespace-nowrap font-display text-[clamp(56px,6vw,84px)] font-light leading-none tracking-[-0.03em] text-ink">
+              {reports.yes}
+              <span className="text-[0.5em] text-text-3"> of {reports.of}</span>
+            </span>
+            <span className="max-w-[13rem] text-[0.9375rem] leading-snug text-text-2">
+              sample clients booked from their report at the demo clinic.
+            </span>
+          </p>
+        )}
+      </div>
+
+      <ol className="mt-14 grid gap-5 lg:grid-cols-3">
+        {/* 1 · The way in: a real code for the demo clinic's scan. */}
+        <li className="glass flex flex-col p-7 sm:p-8">
+          <span className={step}>01</span>
+          <h3 className="mt-3 font-display text-[1.75rem] font-light leading-[1.1] text-ink">Anyone can scan.</h3>
+          <p className="mt-3 text-[0.9375rem] leading-relaxed text-text-2">
+            The clinic&apos;s own link and code, in its name and colours. No appointment, no app.
+          </p>
+          <div style={clinicThemeStyle(clinic.accentHex)} className="mt-7 flex flex-1 flex-col justify-between rounded-[18px] bg-white/70 p-4 ring-1 ring-white/90">
+            <span className="flex h-7 items-center">
+              <ClinicWordmark clinic={clinic} />
+            </span>
+            <span className="mt-4 flex items-center gap-4">
+            <figure className="relative shrink-0 rounded-[12px] bg-white p-2 shadow-[0_14px_30px_-18px_rgba(12,44,62,0.45)] ring-1 ring-[#0c1a22]/[0.06]">
+              <svg viewBox={`0 0 ${box} ${box}`} width={112} height={112} role="img" aria-label={`Code that opens ${clinic.name}'s scan on your phone`} shapeRendering="crispEdges">
+                <path d={d} fill="#0c1a22" />
+              </svg>
+              <span aria-hidden className="absolute left-1/2 top-1/2 grid h-7 w-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white">
+                <Bloom size={17} className="text-[#b0802c]" />
+              </span>
+            </figure>
+            <span className="min-w-0">
+              <span className="block font-display text-[1.25rem] font-light leading-tight text-ink">See your skin clearly.</span>
+              <span className="mt-2 hidden text-[0.8125rem] leading-snug text-text-3 sm:block">This code works. Point your phone at it.</span>
+              <Link href={`/c/${clinic.slug}`} className="mt-2 inline-flex min-h-11 items-center gap-1.5 text-[0.875rem] text-[#1e5a78] sm:hidden">
+                Start a scan
+                <IconArrowRight width={15} height={15} />
+              </Link>
+            </span>
+            </span>
+          </div>
+        </li>
+
+        {/* 2 · The gate (D-021): the report waits behind their details. Placeholder bars, never real scores. */}
+        <li className="glass flex flex-col p-7 sm:p-8">
+          <span className={step}>02</span>
+          <h3 className="mt-3 font-display text-[1.75rem] font-light leading-[1.1] text-ink">Their report, for their details.</h3>
+          <p className="mt-3 text-[0.9375rem] leading-relaxed text-text-2">
+            The analysis finishes behind frosted glass. A name, email and phone open it, with a clear yes or no to
+            reminders.
+          </p>
+          <div aria-hidden className="relative mt-7 flex-1 overflow-hidden rounded-[18px] bg-[linear-gradient(180deg,#f6fbfd_0%,#dcebf2_100%)] p-5 ring-1 ring-white/90">
+            <span className="block space-y-3.5 blur-[5px]">
+              {[78, 62, 70].map((w, i) => (
+                <span key={i} className="block">
+                  <span className="block h-2.5 w-20 rounded-full bg-[#0c1a22]/25" />
+                  <span className="mt-2 block h-2 rounded-full bg-white">
+                    <span className="block h-2 rounded-full bg-[#1e5a78]/60" style={{ width: `${w}%` }} />
+                  </span>
+                </span>
+              ))}
+            </span>
+            <span className="absolute inset-x-4 bottom-4 block rounded-[14px] bg-white/85 p-3.5 shadow-[0_18px_36px_-20px_rgba(12,44,62,0.55)] ring-1 ring-white backdrop-blur-md">
+              <span className="grid grid-cols-3 gap-2">
+                {["Name", "Email", "Phone"].map((f) => (
+                  <span key={f} className="flex h-8 items-center rounded-[8px] bg-[#f3f7f9] px-2.5 text-[0.75rem] text-text-3 ring-1 ring-[#0c1a22]/[0.07]">
+                    {f}
+                  </span>
+                ))}
+              </span>
+              <span className="mt-2.5 flex h-9 items-center justify-center rounded-[10px] bg-[linear-gradient(100deg,#c99645_0%,#f1d49a_45%,#d9ae62_70%,#b98a3c_100%)] text-[0.8125rem] text-[#1a1206] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
+                See my report
+              </span>
+            </span>
+          </div>
+        </li>
+
+        {/* 3 · Where it lands: the demo's own new lead, as the queue shows her. */}
+        <li className="glass flex flex-col p-7 sm:p-8">
+          <span className={step}>03</span>
+          <h3 className="mt-3 font-display text-[1.75rem] font-light leading-[1.1] text-ink">A lead in the morning queue.</h3>
+          <p className="mt-3 text-[0.9375rem] leading-relaxed text-text-2">
+            With the plan their report suggested, priced from the menu, and the follow-up already written for{" "}
+            {p.practitioner} to send.
+          </p>
+          {p.leads.row && (
+            <ol className="mt-7 flex flex-1 flex-col justify-end">
+              <LeadRow row={p.leads.row} />
+            </ol>
+          )}
+        </li>
+      </ol>
+    </section>
+  );
+}
+
+/** The queue's new lead, stacked to fit a third of the page. */
+function LeadRow({ row }: { row: PreviewRow }) {
+  return (
+    <li className="rounded-[18px] bg-white/75 p-4 ring-1 ring-white/90">
+      <p className="flex items-center gap-3">
+        <Monogram row={row} className="!h-11 !w-11 !rounded-[13px] !text-[1rem]" />
+        <span className="min-w-0">
+          <span className="block font-display text-[1.3125rem] leading-tight text-ink">{row.name}</span>
+          <span className="mt-1 block">
+            <KindChip row={row} />
+          </span>
+        </span>
+      </p>
+      <p className="mt-3 text-[0.875rem] leading-relaxed text-text-2">{row.reason}</p>
+      {row.valueCents ? (
+        <p className="mt-3 flex items-baseline gap-2 border-t border-[#0c1a22]/[0.07] pt-3">
+          <span className="gold-foil font-display text-[1.625rem] font-light leading-none">{formatPrice(row.valueCents)}</span>
+          <span className="text-[0.8125rem] text-text-3">{row.valueNote}</span>
+        </p>
+      ) : null}
+    </li>
   );
 }
 

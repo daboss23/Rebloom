@@ -6,18 +6,23 @@ import { IconArrowRight } from "@/components/ui/Icons";
 /** Modules of quiet margin around the code, as scanners expect. */
 const QUIET = 2;
 
+/** A QR code as one SVG path, with room at the centre for the bloom. */
+export function qrPath(url: string): { d: string; box: number } {
+  // High error correction leaves room for the bloom at the centre.
+  const { modules } = QRCode.create(url, { errorCorrectionLevel: "H" });
+  const size = modules.size;
+  let d = "";
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (modules.get(y, x)) d += `M${x + QUIET} ${y + QUIET}h1v1h-1z`;
+  return { d, box: size + QUIET * 2 };
+}
+
 /**
  * Demo only (DECISIONS D-090): the way to see a scan arrive. A judge on a laptop points their phone at the code, takes
  * a scan as a new prospect, and lands in the dashboard they're looking at. The code carries this demo to the phone;
  * on a phone already, the link starts a scan right here.
  */
 export function ScanYourselfIn({ url, clinic }: { url: string; clinic: { name: string; slug: string } }) {
-  // High error correction leaves room for the bloom at the centre.
-  const { modules } = QRCode.create(url, { errorCorrectionLevel: "H" });
-  const size = modules.size;
-  const box = size + QUIET * 2;
-  let d = "";
-  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (modules.get(y, x)) d += `M${x + QUIET} ${y + QUIET}h1v1h-1z`;
+  const { d, box } = qrPath(url);
 
   return (
     <section aria-labelledby="scan-in" className="glass focus-in overflow-hidden px-6 py-6" style={{ animationDelay: "120ms" }}>
