@@ -1105,36 +1105,6 @@ html:has(.landing) {
       animation-timeline: view();
       animation-range: entry 20% cover 45%;
     }
-    /*
-     * The page breathes as it scrolls (D-100): each section's headline surfaces out of soft focus, its first line
-     * follows, and its cards settle in a short cascade. Tied to scroll, so it plays at the reader's own pace and
-     * reverses if they scroll back.
-     */
-    .landing main h2 {
-      animation: surface linear both;
-      animation-timeline: view();
-      animation-range: entry 5% cover 28%;
-    }
-    .landing main h2 + p {
-      animation: surface linear both;
-      animation-timeline: view();
-      animation-range: entry 15% cover 32%;
-    }
-    .landing .scroll-rise {
-      animation: settle linear both;
-      animation-timeline: view();
-      animation-range: entry 0% cover 24%;
-    }
-    .landing .scroll-rise:nth-child(2) {
-      animation-range: entry 12% cover 28%;
-    }
-    .landing .scroll-rise:nth-child(3) {
-      animation-range: entry 24% cover 32%;
-    }
-    .landing .scroll-rise:nth-child(4),
-    .landing .scroll-rise:nth-child(5) {
-      animation-range: entry 30% cover 34%;
-    }
     /* The result drifts a little slower than the page, so the hero has depth as it leaves. */
     .landing .hero-parallax {
       animation: hero-recede linear both;
@@ -1142,39 +1112,37 @@ html:has(.landing) {
       animation-range: 0 90vh;
     }
     /* A gold line reads the code once, the way a phone would. */
-    .landing .qr-sweep {
-      animation: qr-sweep linear both;
-      animation-timeline: view();
-      animation-range: cover 30% cover 62%;
-    }
   }
 }
-@keyframes surface {
-  from {
-    opacity: 0;
-    transform: translateY(22px);
-    filter: blur(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    filter: none;
-  }
+/*
+ * Entrances (D-100), played once as each piece comes well into view (ScrollReveal): headlines surface out of soft
+ * focus, their first line follows, and cards settle in a cascade. ScrollReveal marks only what starts below the
+ * screen, and nothing at all when the reader prefers less motion, so without it every element simply shows.
+ */
+.landing [data-reveal] {
+  transition:
+    opacity 900ms var(--ease-out),
+    transform 1100ms var(--ease-out),
+    filter 900ms var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
 }
-@keyframes settle {
-  from {
-    opacity: 0;
-    transform: translateY(36px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+.landing [data-reveal=""] {
+  opacity: 0;
+  transform: translateY(48px);
+  filter: blur(10px);
+}
+.landing .scroll-rise[data-reveal=""] {
+  transform: translateY(64px) scale(0.96);
+  filter: blur(4px);
+}
+/* A gold line reads the new-client code once its card is in, the way a phone would. */
+.landing [data-reveal="in"] .qr-sweep {
+  animation: qr-sweep 1600ms var(--ease-in-out, cubic-bezier(0.77, 0, 0.175, 1)) calc(var(--reveal-delay, 0ms) + 700ms) both;
 }
 @keyframes hero-recede {
   to {
-    transform: translateY(64px) scale(0.97);
-    opacity: 0.55;
+    transform: translateY(110px) scale(0.94);
+    opacity: 0.4;
   }
 }
 @keyframes qr-sweep {

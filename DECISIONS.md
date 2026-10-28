@@ -629,9 +629,9 @@ Joshua asked for headlines, structure and style in the manner of Eugene Schwartz
 - **Headlines that speak to the reader:** "Then it tells your team who to call this morning, and why.", "New clients, from a two-minute scan.", "Your name on every page. Ours in the footer.", "What one more visit is worth to you."
 - **Left out on purpose:** deadlines, scarcity and invented proof. There are no customers yet, so no testimonials; every number on the page is the demo's, labelled as such.
 ### D-100 · The landing page moves with the reader (J + C, Oct 28)
-Joshua asked for subtle motion to liven the page. All of it is CSS tied to scroll (`animation-timeline`), so it plays at the reader's pace, reverses when they scroll back, runs off the main thread, and only where the browser supports it and motion is welcome. Elsewhere the page is unchanged and fully visible.
-- **Headlines surface out of soft focus** (opacity, a 22px rise, a 6px blur clearing), and each section's first line follows a beat later.
+Joshua asked for subtle motion to liven the page. A first version tied every entrance to the scroll position (`animation-timeline`); Joshua saw nothing at all, because it finished near the bottom of the screen at normal scrolling speed and some browsers don't support it. Entrances now play once, on time, as each piece comes well into view (`ScrollReveal`, an IntersectionObserver), in every browser. Only the hero's recede stays tied to scroll. Without script, or when the reader prefers less motion, nothing is hidden and nothing moves.
+- **Headlines surface out of soft focus** (a 48px rise and a 10px blur clearing over about a second), and each section's first line follows a beat later.
 - **Cards settle in a short cascade:** the five "how it works" cells, the three new-client steps and the two clinic cards.
-- **The hero's face recedes a little as the page leaves it** (drifts down 64px, to 97% and slightly faded), so the first screen has depth.
-- **A gold line reads the new-client QR code once** as it crosses the middle of the screen, the way a phone would.
+- **The hero's face recedes a little as the page leaves it** (drifts down 110px, to 94% and faded), so the first screen has depth.
+- **A gold line reads the new-client QR code once** just after its card arrives, the way a phone would.
 - **Not added:** hover lifts on cards that aren't links (they'd suggest a click that does nothing), and nothing that loops forever beyond what was already there.

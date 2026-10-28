@@ -11,6 +11,7 @@ import { Calculator } from "@/components/landing/Calculator";
 import { EnterDemo } from "@/components/landing/EnterDemo";
 import { HeroFace } from "@/components/landing/HeroFace";
 import { MiniBars } from "@/components/landing/MiniBars";
+import { ScrollReveal } from "@/components/landing/ScrollReveal";
 import { ScoreLine } from "@/components/landing/ScoreLine";
 import { cx } from "@/components/ui/cx";
 import { IconArrowRight, IconCheckCircle, IconMail, IconMessage, IconPlus } from "@/components/ui/Icons";
@@ -93,6 +94,7 @@ export default function RebloomHome() {
         </div>
       </header>
 
+      <ScrollReveal />
       <main id="main" tabIndex={-1}>
         <Hero p={p} />
         <Today p={p} />
