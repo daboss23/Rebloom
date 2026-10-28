@@ -162,16 +162,20 @@ function Hero({ p }: { p: LandingPreview }) {
             </span>
           </h1>
           <div className="focus-in mt-8" style={{ animationDelay: "180ms" }}>
-            <p className="max-w-[31rem] text-[1.125rem] leading-relaxed text-text-2 sm:text-[1.1875rem]">
-              Rebloom measures each client&apos;s skin with YouCam&apos;s AI, shows them what changed, and tells your team
-              who to rebook today. Shared on your site or socials, the same scan brings in new clients.
+            <p className="max-w-[34rem] text-[1.125rem] leading-relaxed text-text-2 sm:text-[1.1875rem]">
+              Clients come back when they can see it working. Rebloom measures their skin with YouCam&apos;s AI, shows
+              them what changed, and tells your team who to rebook today. Shared online, the same scan brings in new
+              clients.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <EnterDemo buttonClassName="!h-14 px-6 text-[0.96875rem]" />
               <a href="#try" className="btn-ghost !h-14 w-full px-6 text-[0.9375rem] sm:w-auto">
-                Try the client experience
+                Scan your own face
               </a>
             </div>
+            <p className="mt-4 text-[0.875rem] text-text-3">
+              No sign-up. One click opens your own private demo clinic, with {words(p.clientCount)} sample clients.
+            </p>
           </div>
         </div>
 
@@ -217,7 +221,7 @@ function Today({ p }: { p: LandingPreview }) {
       <div className="grid gap-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-16 xl:gap-20">
         <div className="lg:sticky lg:top-28 lg:self-start">
           <h2 id="today-title" className="font-display text-[clamp(34px,4vw,52px)] font-light leading-[1.05] tracking-[-0.02em] text-ink [text-wrap:balance]">
-            Then it tells the clinic who to rebook, and why.
+            Then it tells your team who to call this morning, and why.
           </h2>
           <p className="mt-5 max-w-[31rem] text-[1.03125rem] leading-relaxed text-text-2">
             Every morning the same engine reads each client&apos;s scans and visits, and puts the people worth a call at
@@ -603,12 +607,12 @@ function Leads({ p }: { p: LandingPreview }) {
       <div className="grid gap-8 lg:grid-cols-12 lg:items-end lg:gap-16">
         <div className="lg:col-span-7">
           <h2 id="leads-title" className={sectionTitle}>
-            It brings in new clients, too.
+            New clients, from a two-minute scan.
           </h2>
           <p className="mt-6 max-w-[36rem] text-[1.0625rem] leading-relaxed text-text-2">
-            People are curious about their own skin. Put the clinic&apos;s scan on the front desk, in a post or on the
-            website, and anyone can take it at home in two minutes. The report opens once they leave a name, email and
-            phone, so every scan leaves the clinic someone to call, with a plan already priced.
+            People are curious about their own skin. Put your scan on the front desk, in a post or on your website, and
+            anyone can take it from their sofa. The report opens once they leave a name, email and phone, so every scan
+            leaves your team someone to call, with a plan already priced.
           </p>
         </div>
         {reports.of > 0 && (
@@ -919,7 +923,7 @@ function Numbers({ p }: { p: LandingPreview }) {
   return (
     <section id="numbers" aria-labelledby="numbers-title" className={`${wrap} scroll-mt-24 pt-28 lg:pt-40`}>
       <h2 id="numbers-title" className={`${sectionTitle} max-w-3xl`}>
-        What one more visit is worth.
+        What one more visit is worth to you.
       </h2>
       <div className="mt-12 grid gap-5 lg:grid-cols-12">
         <div className="glass !rounded-[22px] p-7 sm:p-10 lg:col-span-7">
@@ -958,11 +962,11 @@ function Try() {
       <div className="grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-16">
         <div className="lg:col-span-5">
           <h2 id="try-title" className={sectionTitle}>
-            One platform. Each clinic&apos;s own brand.
+            Your name on every page. Ours in the footer.
           </h2>
           <p className="mt-6 max-w-[30rem] text-[1.0625rem] leading-relaxed text-text-2">
-            Scan your face as a client of either demo clinic. Clients see the clinic&apos;s name, logo and voice. Rebloom is
-            one small line at the foot of the page.
+            Scan your face as a client of either demo clinic. Clients see the clinic&apos;s name, logo and voice, and
+            Rebloom only as one small line at the foot of the page.
           </p>
         </div>
         <ul className="grid gap-5 sm:grid-cols-2 lg:col-span-7">
@@ -1065,7 +1069,7 @@ function Close() {
               href="#try"
               className="inline-flex h-14 items-center justify-center rounded-[12px] border border-white/25 px-7 text-[0.9375rem] text-white transition-[background-color,border-color,transform] duration-200 hover:border-white/45 hover:bg-white/10 active:scale-[0.97]"
             >
-              Try the client experience
+              Scan your own face
             </a>
           </div>
         </div>
