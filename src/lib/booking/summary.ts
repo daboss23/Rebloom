@@ -19,7 +19,9 @@ export async function bookingSummary(token: string): Promise<BookingSummary | nu
   const when = (iso: string) => {
     const at = new Date(iso);
     const day = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: clinic.timezone }).format(at).replace(",", "");
-    return `${day} at ${new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: clinic.timezone }).format(at)}`;
+    // "10:00 AM" stays on one line: a lone "AM" at the start of a line reads as a mistake.
+    const time = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: clinic.timezone }).format(at).replace(/\s(AM|PM)$/, "\u00a0$1");
+    return `${day} at ${time}`;
   };
   const course = courseSummary(ctx, clinic.timezone);
   if (ctx.upcoming) {
