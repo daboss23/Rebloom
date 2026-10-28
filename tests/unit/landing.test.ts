@@ -25,6 +25,16 @@ describe("the landing preview", () => {
     expect(landingPreview(new Date("2026-11-03T17:00:00Z")).visits.day).toBe("today");
   });
 
+  it("shows a new lead from the demo, and how many reports became bookings", () => {
+    for (const day of days) {
+      const { leads } = landingPreview(new Date(`${day}T17:00:00Z`));
+      expect(leads.row, day).toMatchObject({ kind: "report_follow_up", label: "New lead" });
+      expect(leads.row!.valueCents, day).toBeGreaterThan(0);
+      expect(leads.reports.of, day).toBeGreaterThan(0);
+      expect(leads.reports.yes, day).toBeLessThanOrEqual(leads.reports.of);
+    }
+  });
+
   it("tells the fullest progress story, from the first scan's own scores", () => {
     const p = landingPreview(new Date("2026-10-06T17:00:00Z"));
     expect(p.story).toMatchObject({ name: "Amelia Reyes", label: "Texture", series: [58, 62, 67, 71], delta: 13, weeks: 12 });

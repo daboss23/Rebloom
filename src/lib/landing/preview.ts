@@ -47,6 +47,9 @@ export interface LandingPreview {
   months: MonthBar[];
   rebook: { rate: number | null; of: number; yes: number };
   atRisk: number;
+  /** New clients who came in through a scan: of everyone given a report, how many booked, and the newest one
+   * still deciding, as the queue shows them. */
+  leads: { reports: { rate: number | null; of: number; yes: number }; row: PreviewRow | null; firstName: string | null };
   /** The demo's fullest progress story: the most improved client across the most scans. */
   story: {
     name: string;
@@ -144,20 +147,22 @@ export function landingPreview(now: Date = virtualNow({ demoToday: env.DEMO_TODA
     treatments.find((t) => (t.sessionsTypical ?? 0) > 1) ??
     treatments[0];
   const momentItem = queue.items.find((i) => i.kind === "progress_moment" && i.draft);
+  const rowOf = (item: (typeof queue.items)[number]): PreviewRow => ({
+    name: fullName(byId.get(item.clientId)!.client),
+    kind: item.kind,
+    label: TRIGGER_LABEL[item.kind],
+    atRisk: item.atRisk,
+    reason: item.reason,
+    valueCents: item.valueCents,
+    valueNote: item.valueNote,
+  });
+  const leadItem = queue.items.find((i) => i.kind === "report_follow_up");
 
   return {
     clinicName: clinic.name,
     practitioner: DANA.name,
     today,
-    rows: queue.items.map((item) => ({
-      name: fullName(byId.get(item.clientId)!.client),
-      kind: item.kind,
-      label: TRIGGER_LABEL[item.kind],
-      atRisk: item.atRisk,
-      reason: item.reason,
-      valueCents: item.valueCents,
-      valueNote: item.valueNote,
-    })),
+    rows: queue.items.map(rowOf),
     clientCount: facts.filter((f) => f.client.demoKey).length,
     visits: { count: visitsOn(visitsDay, facts, treatments, clinic.timezone).length, day: visitsLabel },
     readyCents: queue.items.reduce((n, i) => n + (i.valueCents ?? 0), 0),
@@ -165,6 +170,11 @@ export function landingPreview(now: Date = virtualNow({ demoToday: env.DEMO_TODA
     months: insights.months,
     rebook: insights.rebook,
     atRisk: insights.atRisk,
+    leads: {
+      reports: insights.reportsToBookings,
+      row: leadItem ? rowOf(leadItem) : null,
+      firstName: leadItem ? (byId.get(leadItem.clientId)!.client.firstName ?? null) : null,
+    },
     ...storyOf(facts, treatments),
     moment: momentItem
       ? {

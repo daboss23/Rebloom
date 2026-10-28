@@ -57,6 +57,7 @@ Clinics already know clients should come back. What's missing is **proof the cli
 ## How it works
 
 1. **A scan in the clinic's name.** The clinic's scan page (`/c/maison-verre`) takes a new client through consent, seven short questions and a guided photo. Everything carries the clinic's name, logo and colour; Rebloom is one small line in the footer.
+   **It's also how new clients find the clinic.** Shared as a link or QR code on the clinic's website, socials or front desk, anyone can scan at home in two minutes. The report opens once they leave their name, email and phone, so every scan becomes a lead in the morning queue, with the plan their report suggested already priced.
 2. **A report that tells one story.** Three priorities on their own face map, a plan built only from the clinic's menu with every price shown, an illustration of what the plan could do, and booking with a deposit.
 3. **A brief before they walk in.** The practitioner sees the client's goal in their own words, their scores, skin type, screening answers, budget and a suggested plan.
 4. **Progress, measured honestly.** Rescans between sessions are compared like with like: same light, same angle, same engine. Real change earns a "progress moment"; a change caused by lighting doesn't.
