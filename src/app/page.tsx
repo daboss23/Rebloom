@@ -601,7 +601,11 @@ function Agent({ p }: { p: LandingPreview }) {
     ],
     [
       "It only says what it can check.",
-      "Every time it offers was open on your calendar moments before. Every price is on your menu. Every link is the client's own. A draft that slips is sent back and rewritten before she sees it.",
+      "Every time it offers was open on your calendar moments before. Every price is on your menu. Every change it mentions is one the scans measured. Every link is the client's own. A draft that slips is sent back and rewritten before she sees it.",
+    ],
+    [
+      "It works through the morning with her.",
+      `As ${name} opens the dashboard, it goes through everyone the queue picked: their scans, their own words, the times actually open. Each message lands in its row, in her voice, ready to read. She watches it work.`,
     ],
     [
       "It takes a second look before anyone gives up.",

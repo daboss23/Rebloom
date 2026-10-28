@@ -4,8 +4,8 @@
 // no time that wasn't checked open, no price that isn't the menu's, no link but the client's own. Pure.
 
 import { checkCopy } from "@/lib/copy/check";
-import { TEXT_MAX_CHARS } from "@/lib/sms/text";
-import { allowedLink, allowedPrices, allowedTimes, bareTimesIn, pricesIn, timesIn, type AgentContext } from "./context";
+import { TEXT_MAX_CHARS, TEXT_OPT_OUT } from "@/lib/sms/text";
+import { allowedLink, allowedPoints, allowedPrices, allowedTimes, bareTimesIn, pointsIn, pricesIn, timesIn, type AgentContext } from "./context";
 import { checkVoice } from "./voice";
 
 /** Answers are short. An email answer that runs past this has stopped being a note. */
@@ -49,8 +49,14 @@ export function draftProblems(ctx: AgentContext, body: string, facts: DraftFacts
   for (const issue of checkVoice(text)) problems.push(`"${issue.match}" reads as machine-written. Say it the way ${ctx.staffName} would.`);
 
   if (ctx.channel === "sms") {
-    if (text.length > DRAFT_TEXT_MAX_CHARS) problems.push(`A text answer should be short: this is ${text.length} characters. Keep it under ${DRAFT_TEXT_MAX_CHARS}.`);
+    // A text the clinic starts gets its opt-out line added after her name (D-097), so leave room for it.
+    const room = ctx.kind === "outreach" ? DRAFT_TEXT_MAX_CHARS - TEXT_OPT_OUT.length - 2 : DRAFT_TEXT_MAX_CHARS;
+    if (text.length > room) problems.push(`A text should be short: this is ${text.length} characters. Keep it under ${room}.`);
     if (text.length > TEXT_MAX_CHARS) problems.push(`Texts can't run past ${TEXT_MAX_CHARS} characters.`);
+    // Nobody wrote first, so the text says who it's from, as the clinic's own texts do (D-080).
+    if (ctx.kind === "outreach" && !text.toLowerCase().includes(ctx.clinic.name.toLowerCase())) {
+      problems.push(`Say who's writing in the first line: "Hi ${name}, it's ${ctx.staffName} at ${ctx.clinic.name}."`);
+    }
   } else {
     if (text.length > EMAIL_MAX_CHARS) problems.push(`Keep the email under ${EMAIL_MAX_CHARS} characters. It's a short note, not a letter.`);
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -74,8 +80,24 @@ export function draftProblems(ctx: AgentContext, body: string, facts: DraftFacts
   for (const p of pricesIn(text)) {
     if (!prices.has(p)) problems.push(`$${p} isn't a price on the menu or on their plan. Quote only those, exactly.`);
   }
-  for (const url of text.match(/https?:\/\/\S+/g) ?? []) {
+  const links = text.match(/https?:\/\/\S+/g) ?? [];
+  for (const url of links) {
     if (!allowedLink(ctx, url)) problems.push(`${url} isn't one of their links. Use only their report, booking or rescan link, exactly as the tools give it.`);
+  }
+  // A message the clinic starts gives them a way to act on it (D-097): their booking, report or rescan link.
+  if (ctx.kind === "outreach" && ctx.facts.report && !links.some((url) => allowedLink(ctx, url))) {
+    problems.push("Give them a way to act on it: include their booking link (or their rescan link, for a progress scan), exactly as the tools give it.");
+  }
+  // Progress is claimed only as the report measures it: in points it calls a real change (D-097).
+  const points = allowedPoints(ctx);
+  for (const n of pointsIn(text)) {
+    if (!points.has(n)) {
+      problems.push(
+        points.size
+          ? `${n} points isn't a change their scans support. Use only what read_scans says you may claim.`
+          : `Don't claim ${n} points of change: their scans don't support a claim yet.`,
+      );
+    }
   }
   return [...new Set(problems)];
 }

@@ -348,8 +348,11 @@ export interface Appointment {
 
 // ---------- The agent (DECISIONS D-093) ----------
 
-/** What the agent was asked for: an answer to a client's reply, or a second look at a stalled plan. */
-export type AgentDraftKind = "answer" | "plan_review";
+/**
+ * What the agent was asked for: an answer to a client's reply, a second look at a stalled plan, or Dana's own
+ * version of a queue item's message, written in the morning run (D-097).
+ */
+export type AgentDraftKind = "answer" | "plan_review" | "outreach";
 
 /**
  * working: the agent is on it. ready: waiting for Dana. failed: it couldn't, so Dana writes it herself.
@@ -394,7 +397,7 @@ export interface AgentDraft {
   clientId: string;
   sandboxId: string | null;
   kind: AgentDraftKind;
-  /** The reply it answers (its message id), or the queue item it reviews (its dedupe key). One draft each. */
+  /** The reply it answers (its message id), or the queue item it reviews or writes for (its dedupe key). One each. */
   forKey: string;
   status: AgentDraftStatus;
   channel: Message["channel"] | null;

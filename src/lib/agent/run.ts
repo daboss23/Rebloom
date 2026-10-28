@@ -8,6 +8,7 @@ import { sandboxClock, isoDateInZone, virtualNow } from "@/lib/clock";
 import type { AgentDraft, AgentStep, Message } from "@/lib/domain";
 import { env, features } from "@/lib/env";
 import { buildQueue, clientFacts, type EngineInput } from "@/lib/rebook/engine";
+import { TEXT_OPT_OUT } from "@/lib/sms/text";
 import { getStore } from "@/lib/store";
 import { draftChannel, type AgentContext } from "./context";
 import { systemPrompt, taskPrompt } from "./prompt";
@@ -21,7 +22,7 @@ export const AGENT_MODEL = "claude-opus-5-5";
 export const MAX_TURNS = 14;
 
 /** The usage feature each kind of run is logged as, against its own safety valves. */
-export const AGENT_FEATURES = { answer: "agent_answer", plan_review: "agent_plan_review" } as const;
+export const AGENT_FEATURES = { answer: "agent_answer", plan_review: "agent_plan_review", outreach: "agent_outreach" } as const;
 
 let client: Anthropic | null = null;
 function anthropic(): Anthropic {
@@ -88,12 +89,16 @@ async function contextFor(draft: AgentDraft, origin: string): Promise<{ ctx: Age
   };
   const facts = clientFacts(input).find((f) => f.client.id === draft.clientId);
   if (!facts) return null;
-  const item = draft.kind === "plan_review" ? (buildQueue(input).items.find((i) => i.clientId === draft.clientId && i.dedupeKey === draft.forKey) ?? null) : null;
+  const item = draft.kind !== "answer" ? (buildQueue(input).items.find((i) => i.clientId === draft.clientId && i.dedupeKey === draft.forKey) ?? null) : null;
   const reply = draft.kind === "answer" && facts.reply?.id === draft.forKey ? facts.reply : null;
   // Gone stale while it waited: answered already, or no longer in the queue.
-  if ((draft.kind === "answer" && !reply) || (draft.kind === "plan_review" && !item)) return null;
-  const channel = draftChannel(facts, reply?.channel ?? null);
-  if (!channel) return null;
+  if ((draft.kind === "answer" && !reply) || (draft.kind !== "answer" && !item)) return null;
+  // The morning run (D-097) writes the queue's own message, by the way the queue sends it. Not for someone who has
+  // written back since: their answer comes first.
+  if (draft.kind === "outreach" && (facts.reply || (item!.action !== "email" && item!.action !== "text"))) return null;
+  const prefer = draft.kind === "outreach" ? (item!.action === "text" ? "sms" : "email") : (reply?.channel ?? null);
+  const channel = draftChannel(facts, prefer);
+  if (!channel || (draft.kind === "outreach" && channel !== prefer)) return null;
   const ctx: AgentContext = {
     kind: draft.kind,
     clinic,
@@ -161,7 +166,9 @@ export async function runDraft(draftId: string, origin: string, call: AgentCall 
     return await save({
       status: "ready",
       channel: ctx.channel,
-      body: state.submitted.body,
+      // A queue email keeps the engine's subject line (D-097): it's exact, and says what the email is for.
+      subject: ctx.kind === "outreach" && ctx.channel === "email" ? (ctx.item?.draft?.subject ?? null) : null,
+      body: ctx.kind === "outreach" ? withOptOut(state.submitted.body, ctx.channel) : state.submitted.body,
       note: state.submitted.note,
       steps: [...state.steps],
       suggestion: ctx.kind === "plan_review" && state.measurement ? { measurement: state.measurement, change: state.change } : null,
@@ -173,6 +180,14 @@ export async function runDraft(draftId: string, origin: string, call: AgentCall 
     console.error(`Agent draft ${draftId} failed after ${Math.round((Date.now() - started) / 1000)}s.`, error instanceof Error ? error.message : error);
     return await save({ status: "failed", steps: [...state.steps, { text: "Couldn't finish a draft", at: new Date().toISOString() }] }).catch(() => null);
   }
+}
+
+/**
+ * A text the clinic starts carries the way out (D-080), as the engine's own texts do. Added in code after Dana's name,
+ * so the agent never has to write it and the send check always finds it. An answer doesn't need it: they wrote first.
+ */
+export function withOptOut(body: string, channel: Message["channel"]): string {
+  return channel === "sms" && !/\bSTOP\b/.test(body) ? `${body.trimEnd()}\n\n${TEXT_OPT_OUT}` : body;
 }
 
 /** The agent runs only with a key. Without one, the dashboard is exactly as it was. */

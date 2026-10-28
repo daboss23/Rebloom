@@ -273,7 +273,7 @@ export default async function BriefPage({ params }: PageProps<"/dashboard/client
 
       {/* Mounted even when nothing is queued, so handling the row keeps its toast and Undo on screen. */}
       <section aria-label={item ? "In the queue" : undefined} className={item ? "mt-10" : undefined}>
-        <Queue rows={item ? [toQueueRow(item, facts, book.clinic.name)] : []} demo={env.DEMO_MODE} realCopy={env.DEMO_MODE && features.email} empty="" onBrief />
+        <Queue rows={item ? [toQueueRow(item, facts, book.clinic.name, draftFor(desk.drafts, client.id, item.dedupeKey))] : []} demo={env.DEMO_MODE} realCopy={env.DEMO_MODE && features.email} empty="" onBrief />
       </section>
 
       {/* A reply waiting on Dana comes first; otherwise the conversation follows the brief. Moved by order, not
