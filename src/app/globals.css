@@ -1115,29 +1115,256 @@ html:has(.landing) {
   }
 }
 /*
- * Entrances (D-100), played once as each piece comes well into view (ScrollReveal): headlines surface out of soft
- * focus, their first line follows, and cards settle in a cascade. ScrollReveal marks only what starts below the
- * screen, and nothing at all when the reader prefers less motion, so without it every element simply shows.
+ * Entrances (D-100). Each section moves the way it reads, once, as it comes well into view (ScrollReveal marks it
+ * "" before and "in" after). Headlines elsewhere only fade, so the moments that mean something stand out.
+ * ScrollReveal marks only what starts below the screen, and nothing when the reader prefers less motion, so without
+ * it every element simply shows in its final state.
  */
 .landing [data-reveal] {
   transition:
-    opacity 900ms var(--ease-out),
-    transform 1100ms var(--ease-out),
-    filter 900ms var(--ease-out);
+    opacity 700ms var(--ease-out),
+    transform 1000ms var(--ease-out);
   transition-delay: var(--reveal-delay, 0ms);
 }
 .landing [data-reveal=""] {
   opacity: 0;
-  transform: translateY(48px);
-  filter: blur(10px);
 }
-.landing .scroll-rise[data-reveal=""] {
-  transform: translateY(64px) scale(0.96);
-  filter: blur(4px);
+.landing h2[data-reveal=""],
+.landing h2 + p[data-reveal=""] {
+  transform: translateY(14px);
 }
-/* A gold line reads the new-client code once its card is in, the way a phone would. */
+/* Order within a list: each child knows its place. */
+.landing [data-seq] > :nth-child(2) { --i: 1; }
+.landing [data-seq] > :nth-child(3) { --i: 2; }
+.landing [data-seq] > :nth-child(4) { --i: 3; }
+.landing [data-seq] > :nth-child(5) { --i: 4; }
+.landing [data-seq] > :nth-child(6) { --i: 5; }
+.landing [data-seq] > :nth-child(7) { --i: 6; }
+.landing [data-seq] > :nth-child(8) { --i: 7; }
+.landing [data-seq] > :nth-child(9) { --i: 8; }
+.landing [data-seq] > :nth-child(10) { --i: 9; }
+
+/* "One session, then silence.": the second half arrives slowly, and stays quiet. */
+.landing .m-silence {
+  opacity: 0.6;
+}
+.landing [data-reveal] .m-silence {
+  display: inline-block;
+}
+.landing [data-reveal=""] .m-silence {
+  opacity: 0;
+}
+.landing [data-reveal="in"] .m-silence {
+  animation: silence 2600ms var(--ease-out) 700ms both;
+}
+
+/* "From first scan to second visit.": the path draws itself. */
+.landing h2[data-motion="path"]::after {
+  content: "";
+  display: block;
+  height: 2px;
+  width: min(280px, 45%);
+  margin-top: 26px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #b98a3c, #f1d49a 60%, rgba(241, 212, 154, 0));
+  transform-origin: left;
+}
+.landing h2[data-motion="path"][data-reveal=""]::after {
+  transform: scaleX(0);
+}
+.landing h2[data-motion="path"][data-reveal="in"]::after {
+  animation: draw-x 1600ms var(--ease-out) 350ms both;
+}
+
+/* The five steps: each card arrives, then does its own thing. */
+.landing [data-motion="checks"][data-reveal=""] li,
+.landing [data-motion="flags"][data-reveal=""] li {
+  opacity: 0;
+}
+.landing [data-motion="checks"][data-reveal="in"] li {
+  animation: tick 520ms var(--ease-out) calc(var(--i, 0) * 110ms + 250ms) both;
+}
+.landing [data-motion="checks"][data-reveal="in"] li svg {
+  animation: check-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--i, 0) * 110ms + 300ms) both;
+}
+.landing [data-motion="checks"][data-reveal="in"] .m-pop {
+  animation: pop 600ms cubic-bezier(0.34, 1.4, 0.64, 1) 1050ms both;
+}
+.landing [data-motion="bars"] .m-bar {
+  transform-origin: left;
+}
+.landing [data-motion="bars"][data-reveal=""] .m-bar {
+  transform: scaleX(0);
+}
+.landing [data-motion="bars"][data-reveal="in"] .m-bar {
+  animation: draw-x 1300ms var(--ease-out) calc(var(--i, 0) * 160ms + 300ms) both;
+}
+.landing [data-motion="write"][data-reveal=""] [data-seq] > * {
+  clip-path: inset(0 100% 0 0);
+}
+.landing [data-motion="write"][data-reveal="in"] [data-seq] > * {
+  animation: write 1100ms cubic-bezier(0.65, 0, 0.35, 1) calc(var(--i, 0) * 900ms + 400ms) both;
+}
+.landing [data-motion="write"][data-reveal="in"] .m-send {
+  animation: send-glow 1400ms ease-out 2300ms both;
+}
+.landing [data-motion="flags"][data-reveal="in"] li {
+  animation: tick 600ms var(--ease-out) calc(var(--i, 0) * 160ms + 300ms) both;
+}
+.landing [data-motion="flags"][data-reveal="in"] .m-flag {
+  animation: flag-flash 1400ms ease-out calc(var(--i, 0) * 160ms + 500ms) both;
+}
+
+/* New clients: three steps in order; the gate closes over the report, the lead lands in the queue. */
+.landing [data-motion="step"][data-reveal=""] {
+  transform: translateY(40px);
+}
+.landing [data-motion="step"][data-reveal=""] .m-gate {
+  transform: translateY(120%);
+}
+.landing [data-motion="step"][data-reveal="in"] .m-gate {
+  animation: gate-up 1000ms cubic-bezier(0.32, 0.72, 0, 1) calc(var(--reveal-delay, 0ms) + 600ms) both;
+}
+.landing [data-motion="step"][data-reveal=""] .m-arrive {
+  opacity: 0;
+}
+.landing [data-motion="step"][data-reveal="in"] .m-arrive {
+  animation: arrive 1600ms var(--ease-out) calc(var(--reveal-delay, 0ms) + 600ms) both;
+}
 .landing [data-reveal="in"] .qr-sweep {
-  animation: qr-sweep 1600ms var(--ease-in-out, cubic-bezier(0.77, 0, 0.175, 1)) calc(var(--reveal-delay, 0ms) + 700ms) both;
+  animation: qr-sweep 1600ms cubic-bezier(0.77, 0, 0.175, 1) calc(var(--reveal-delay, 0ms) + 700ms) both;
+}
+
+/* Two clinics, from either side, meeting in the middle. */
+.landing [data-motion="from-left"][data-reveal=""] {
+  transform: translateX(-56px);
+}
+.landing [data-motion="from-right"][data-reveal=""] {
+  transform: translateX(56px);
+}
+
+/* The close, word by word. */
+.landing [data-motion="words"] .m-word {
+  display: inline-block;
+}
+.landing [data-motion="words"][data-reveal=""] {
+  opacity: 1;
+  transform: none;
+}
+.landing [data-motion="words"][data-reveal=""] .m-word {
+  opacity: 0;
+  transform: translateY(0.5em);
+}
+.landing [data-motion="words"][data-reveal="in"] .m-word {
+  animation: word-up 900ms var(--ease-out) calc(var(--i, 0) * 70ms + 100ms) both;
+}
+
+@keyframes silence {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 0.6;
+    filter: none;
+    transform: none;
+  }
+}
+@keyframes draw-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes tick {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes check-pop {
+  from {
+    transform: scale(0.4);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes write {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes send-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(226, 192, 122, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(226, 192, 122, 0);
+  }
+}
+@keyframes flag-flash {
+  0% {
+    background-color: rgba(233, 163, 95, 0.55);
+  }
+  100% {
+    background-color: rgba(233, 163, 95, 0.15);
+  }
+}
+@keyframes gate-up {
+  from {
+    transform: translateY(120%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes arrive {
+  0% {
+    opacity: 0;
+    transform: translateY(-22px) scale(0.98);
+    box-shadow: 0 0 0 0 rgba(226, 192, 122, 0);
+  }
+  40% {
+    opacity: 1;
+    transform: none;
+    box-shadow: 0 0 0 3px rgba(226, 192, 122, 0.65);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    box-shadow: 0 0 0 10px rgba(226, 192, 122, 0);
+  }
+}
+@keyframes word-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.5em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 @keyframes hero-recede {
   to {

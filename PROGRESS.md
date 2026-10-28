@@ -8,7 +8,7 @@
 - **A new section after "From first scan to second visit": "It brings in new clients, too."** Three steps: a working QR code for Maison Verre's scan (on phones, a "Start a scan" link), the report waiting behind name, email and phone, and Priya as the queue shows a new lead, with her $1,140 suggested plan. One figure, computed from the demo: 10 of 12 sample clients booked from their report.
 - **Also:** a sentence in the hero, "New clients" in the page's menu (it no longer wraps), and a paragraph in the README's "How it works".
 - **A copy pass on the whole page** (D-099): the hero's line opens on why clients come back, a no-sign-up line sits under the buttons, the second button is "Scan your own face", and four headlines now speak to the reader.
-- **Motion as you scroll** (D-100): headlines surface out of soft focus, cards settle in a cascade, the hero face recedes, and a gold line reads the QR code. Played once as each piece comes into view, in every browser, and off when the reader prefers reduced motion.
+- **Motion as you scroll** (D-100): each section moves the way it reads: the silence arrives slowly, a gold path draws, the checklist ticks, bars fill, the email writes itself, the form closes over the report like a gate, the lead lands in the queue, the clinics meet, and the close rises word by word. Played once as each piece comes into view, in every browser; off when the reader prefers reduced motion.
 - **Tests:** one new landing test. All 508 unit tests pass (one skipped), plus lint, typecheck and the copy check. Checked on screen at 1440px and on a phone.
 
 ---

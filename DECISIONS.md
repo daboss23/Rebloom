@@ -630,8 +630,12 @@ Joshua asked for headlines, structure and style in the manner of Eugene Schwartz
 - **Left out on purpose:** deadlines, scarcity and invented proof. There are no customers yet, so no testimonials; every number on the page is the demo's, labelled as such.
 ### D-100 · The landing page moves with the reader (J + C, Oct 28)
 Joshua asked for subtle motion to liven the page. A first version tied every entrance to the scroll position (`animation-timeline`); Joshua saw nothing at all, because it finished near the bottom of the screen at normal scrolling speed and some browsers don't support it. Entrances now play once, on time, as each piece comes well into view (`ScrollReveal`, an IntersectionObserver), in every browser. Only the hero's recede stays tied to scroll. Without script, or when the reader prefers less motion, nothing is hidden and nothing moves.
-- **Headlines surface out of soft focus** (a 48px rise and a 10px blur clearing over about a second), and each section's first line follows a beat later.
-- **Cards settle in a short cascade:** the five "how it works" cells, the three new-client steps and the two clinic cards.
+- **Each section moves the way it reads** (Joshua: one effect everywhere looked like wallpaper):
+  - "One session, then silence.": "One session," lands; "then silence." arrives slowly, out of blur, and stays dim.
+  - "From first scan to second visit.": a gold path draws itself under the headline.
+  - The five steps: the scan checklist ticks itself off, then "That's it. Hold still" pops; the report's score bars fill; the progress line draws (as before); the email writes itself line by line, then Send glows; the drift flags slide in and flash amber.
+  - New clients: "10 of 12" counts up, the three steps arrive in order, a gold line reads the QR code, the contact form slides up over the blurred report like a gate, and the new lead drops into the queue with a soft gold ring.
+  - The two clinic cards come in from either side and meet. The closing headline rises word by word.
+  - Every other headline and its first line only fade in, so the moments that mean something stand out.
 - **The hero's face recedes a little as the page leaves it** (drifts down 110px, to 94% and faded), so the first screen has depth.
-- **A gold line reads the new-client QR code once** just after its card arrives, the way a phone would.
 - **Not added:** hover lifts on cards that aren't links (they'd suggest a click that does nothing), and nothing that loops forever beyond what was already there.

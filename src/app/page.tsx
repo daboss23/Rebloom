@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { Bloom } from "@/components/dashboard/Bloom";
 import { CountUp } from "@/components/dashboard/CountUp";
 import { qrPath } from "@/components/dashboard/ScanYourselfIn";
@@ -304,8 +304,8 @@ function Problem({ p }: { p: LandingPreview }) {
         <LightField variant="sea" className="opacity-55" />
         <div className="relative grid gap-14 lg:grid-cols-2 lg:items-center lg:gap-20">
           <div>
-            <h2 id="problem-title" className="font-display text-[clamp(40px,5vw,68px)] font-light leading-[1.02] tracking-[-0.02em] text-white">
-              One session, then silence.
+            <h2 id="problem-title" data-motion="silence" className="font-display text-[clamp(40px,5vw,68px)] font-light leading-[1.02] tracking-[-0.02em] text-white">
+              One session, <span className="m-silence">then silence.</span>
             </h2>
             <p className="mt-6 max-w-[33rem] text-[1.0625rem] leading-relaxed text-[#dbe8ef]">
               Peels, microneedling and light treatments are sold as courses. When clients can&apos;t see the first session
@@ -389,7 +389,7 @@ function Problem({ p }: { p: LandingPreview }) {
 function How({ p }: { p: LandingPreview }) {
   return (
     <section id="how" aria-labelledby="how-title" className={`${wrap} scroll-mt-24 pt-28 lg:pt-40`}>
-      <h2 id="how-title" className={`${sectionTitle} max-w-3xl`}>
+      <h2 id="how-title" data-motion="path" className={`${sectionTitle} max-w-3xl`}>
         From first scan to second visit.
       </h2>
       <p className="mt-5 max-w-[36rem] text-[1.0625rem] leading-relaxed text-text-2">
@@ -414,9 +414,13 @@ function How({ p }: { p: LandingPreview }) {
   );
 }
 
-function Cell({ className, children }: { className?: string; children: ReactNode }) {
+function Cell({ className, motion = "card", children }: { className?: string; motion?: string; children: ReactNode }) {
   // Clip, not hidden: a hidden overflow is a scroll container, and scroll-linked animations inside would track it instead of the page.
-  return <article className={cx("scroll-rise relative overflow-clip rounded-[22px] p-7 sm:p-9", className)}>{children}</article>;
+  return (
+    <article data-motion={motion} className={cx("relative overflow-clip rounded-[22px] p-7 sm:p-9", className)}>
+      {children}
+    </article>
+  );
 }
 
 function CellTitle({ children, onDark }: { children: ReactNode; onDark?: boolean }) {
@@ -426,13 +430,13 @@ function CellTitle({ children, onDark }: { children: ReactNode; onDark?: boolean
 function ScanCell() {
   const checks = ["One face in the frame", "Close and centered", "Looking straight ahead", "Even, bright light", "Eyes open, lips closed", "Still and in focus"];
   return (
-    <Cell className="glass !rounded-[22px] lg:col-span-5">
+    <Cell motion="checks" className="glass !rounded-[22px] lg:col-span-5">
       <CellTitle>A fair scan, every time.</CellTitle>
       <p className="mt-3 max-w-[30rem] text-[0.96875rem] leading-relaxed text-text-2">
         Clients scan on their phone, in your clinic&apos;s brand. A live check waits for even light and a straight-on
         face, so every rescan compares like with like.
       </p>
-      <ul className="mt-7 grid gap-x-5 gap-y-3 sm:grid-cols-2">
+      <ul data-seq className="mt-7 grid gap-x-5 gap-y-3 sm:grid-cols-2">
         {checks.map((c) => (
           <li key={c} className="flex items-center gap-2.5 text-[0.875rem] text-text-2">
             <IconCheckCircle width={18} height={18} className="shrink-0 text-[#1e5a78]" />
@@ -440,7 +444,7 @@ function ScanCell() {
           </li>
         ))}
       </ul>
-      <p className="mt-7 inline-flex h-10 items-center rounded-full bg-[#0e2230] px-5 text-[0.875rem] text-white shadow-[0_12px_24px_-14px_rgba(12,26,34,0.8)]">
+      <p className="m-pop mt-7 inline-flex h-10 items-center rounded-full bg-[#0e2230] px-5 text-[0.875rem] text-white shadow-[0_12px_24px_-14px_rgba(12,26,34,0.8)]">
         That&apos;s it. Hold still
       </p>
     </Cell>
@@ -450,7 +454,7 @@ function ScanCell() {
 function ReportCell({ p }: { p: LandingPreview }) {
   const r = p.report;
   return (
-    <Cell className="glass !rounded-[22px] lg:col-span-7">
+    <Cell motion="bars" className="glass !rounded-[22px] lg:col-span-7">
       <div className="grid gap-8 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div>
           <CellTitle>A report in your clinic&apos;s name.</CellTitle>
@@ -464,7 +468,7 @@ function ReportCell({ p }: { p: LandingPreview }) {
           <div style={clinicThemeStyle(MAISON_VERRE.accentHex)} className="rounded-[18px] bg-[radial-gradient(90%_60%_at_100%_0%,rgba(255,210,191,0.55)_0%,rgba(255,210,191,0)_60%),linear-gradient(180deg,#f8fbfd_0%,#e1edf3_100%)] px-6 py-6 shadow-[0_24px_40px_-30px_rgba(12,26,34,0.45)] ring-1 ring-white/80">
             <ClinicWordmark clinic={MAISON_VERRE} />
             <p className="mt-6 font-display text-[1.4375rem] font-light leading-snug text-ink">{r.firstName}, here&apos;s where we&apos;d begin.</p>
-            <ul className="mt-4 space-y-2.5">
+            <ul data-seq className="mt-4 space-y-2.5">
               {r.priorities.map((pr) => (
                 <li key={pr.label} className="rounded-[12px] bg-white/75 px-3 py-2.5 ring-1 ring-inset ring-white">
                   <span className="flex items-baseline justify-between text-[0.875rem] text-text-2">
@@ -472,7 +476,7 @@ function ReportCell({ p }: { p: LandingPreview }) {
                     <span className="font-display text-[1.25rem] leading-none text-ink">{pr.score}</span>
                   </span>
                   <span aria-hidden className="mt-2 block h-1 overflow-hidden rounded-full bg-[#0c1a22]/[0.07]">
-                    <span className="block h-full rounded-full bg-[linear-gradient(90deg,#9fc9dd,#1e5a78)]" style={{ width: `${pr.score}%` }} />
+                    <span className="m-bar block h-full rounded-full bg-[linear-gradient(90deg,#9fc9dd,#1e5a78)]" style={{ width: `${pr.score}%` }} />
                   </span>
                 </li>
               ))}
@@ -532,7 +536,7 @@ function ProofCell({ p }: { p: LandingPreview }) {
 function MomentCell({ p }: { p: LandingPreview }) {
   const m = p.moment;
   return (
-    <Cell className="glass !rounded-[22px] lg:col-span-5">
+    <Cell motion="write" className="glass !rounded-[22px] lg:col-span-5">
       {m && (
         <figure className="rounded-[16px] bg-white/90 p-5 shadow-[0_18px_36px_-24px_rgba(12,44,62,0.45)] ring-1 ring-[#0c1a22]/[0.06]">
           <figcaption className="sr-only">The drafted email, as the practitioner sees it before sending.</figcaption>
@@ -541,14 +545,14 @@ function MomentCell({ p }: { p: LandingPreview }) {
             To {m.name}
           </p>
           <p className="mt-2 text-[0.9375rem] text-ink">{m.subject}</p>
-          <div className="mt-3 space-y-2 text-[0.875rem] leading-relaxed text-text-2">
+          <div data-seq className="mt-3 space-y-2 text-[0.875rem] leading-relaxed text-text-2">
             {m.paragraphs.slice(0, 2).map((para) => (
               <p key={para}>{para}</p>
             ))}
           </div>
           <div className="mt-4 flex items-center justify-between">
             <span className="text-[0.8125rem] text-text-3">{p.practitioner}</span>
-            <span aria-hidden className="btn-gold pointer-events-none !h-9 px-4 text-[0.8125rem]">
+            <span aria-hidden className="m-send btn-gold pointer-events-none !h-9 px-4 text-[0.8125rem]">
               Send email
             </span>
           </div>
@@ -572,16 +576,16 @@ function CatchCell({ p }: { p: LandingPreview }) {
     { label: "Lapsed", rule: `A session ${LAPSED_AFTER_DAYS} days overdue` },
   ];
   return (
-    <Cell className="sea on-dark lg:col-span-5">
+    <Cell motion="flags" className="sea on-dark lg:col-span-5">
       <div>
         <CellTitle onDark>Drift, caught early.</CellTitle>
         <p className="mt-3 text-[0.96875rem] leading-relaxed text-[#dbe8ef]">
           Each one becomes a flag with the reason in one sentence, before the client quietly leaves.
         </p>
-        <ul className="mt-6 space-y-3">
+        <ul data-seq className="mt-6 space-y-3">
           {rules.map((r) => (
             <li key={r.label} className="flex flex-col items-start gap-1.5 text-[0.875rem] text-[#dbe8ef] sm:flex-row sm:items-center sm:gap-3">
-              <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-[#e9a35f]/15 px-2.5 text-[0.75rem] uppercase tracking-[0.12em] text-[#f0bd85]">
+              <span className="m-flag inline-flex h-6 items-center gap-1.5 rounded-full bg-[#e9a35f]/15 px-2.5 text-[0.75rem] uppercase tracking-[0.12em] text-[#f0bd85]">
                 <span aria-hidden className="inline-block h-[7px] w-[7px] rounded-[2px] border border-[#f0bd85]" />
                 {r.label}
               </span>
@@ -620,9 +624,9 @@ function Leads({ p }: { p: LandingPreview }) {
           </p>
         </div>
         {reports.of > 0 && (
-          <p className="flex items-baseline gap-4 lg:col-span-5 lg:justify-self-end">
+          <p data-motion="count" className="flex items-baseline gap-4 lg:col-span-5 lg:justify-self-end">
             <span className="whitespace-nowrap font-display text-[clamp(56px,6vw,84px)] font-light leading-none tracking-[-0.03em] text-ink">
-              {reports.yes}
+              <span data-count={reports.yes}>{reports.yes}</span>
               <span className="text-[0.5em] text-text-3"> of {reports.of}</span>
             </span>
             <span className="max-w-[13rem] text-[0.9375rem] leading-snug text-text-2">
@@ -634,7 +638,7 @@ function Leads({ p }: { p: LandingPreview }) {
 
       <ol className="mt-14 grid gap-5 lg:grid-cols-3">
         {/* 1 · The way in: a real code for the demo clinic's scan. */}
-        <li className="glass scroll-rise flex flex-col p-7 sm:p-8">
+        <li data-motion="step" className="glass flex flex-col p-7 sm:p-8">
           <span className={step}>01</span>
           <h3 className="mt-3 font-display text-[1.75rem] font-light leading-[1.1] text-ink">Anyone can scan.</h3>
           <p className="mt-3 text-[0.9375rem] leading-relaxed text-text-2">
@@ -669,7 +673,7 @@ function Leads({ p }: { p: LandingPreview }) {
         </li>
 
         {/* 2 · The gate (D-021): the report waits behind their details. Placeholder bars, never real scores. */}
-        <li className="glass scroll-rise flex flex-col p-7 sm:p-8">
+        <li data-motion="step" className="glass flex flex-col p-7 sm:p-8">
           <span className={step}>02</span>
           <h3 className="mt-3 font-display text-[1.75rem] font-light leading-[1.1] text-ink">Their report, for their details.</h3>
           <p className="mt-3 text-[0.9375rem] leading-relaxed text-text-2">
@@ -687,7 +691,7 @@ function Leads({ p }: { p: LandingPreview }) {
                 </span>
               ))}
             </span>
-            <span className="absolute inset-x-4 bottom-4 block rounded-[14px] bg-white/85 p-3.5 shadow-[0_18px_36px_-20px_rgba(12,44,62,0.55)] ring-1 ring-white backdrop-blur-md">
+            <span className="m-gate absolute inset-x-4 bottom-4 block rounded-[14px] bg-white/85 p-3.5 shadow-[0_18px_36px_-20px_rgba(12,44,62,0.55)] ring-1 ring-white backdrop-blur-md">
               <span className="grid grid-cols-3 gap-2">
                 {["Name", "Email", "Phone"].map((f) => (
                   <span key={f} className="flex h-8 items-center rounded-[8px] bg-[#f3f7f9] px-2.5 text-[0.75rem] text-text-3 ring-1 ring-[#0c1a22]/[0.07]">
@@ -703,7 +707,7 @@ function Leads({ p }: { p: LandingPreview }) {
         </li>
 
         {/* 3 · Where it lands: the demo's own new lead, as the queue shows her. */}
-        <li className="glass scroll-rise flex flex-col p-7 sm:p-8">
+        <li data-motion="step" className="glass flex flex-col p-7 sm:p-8">
           <span className={step}>03</span>
           <h3 className="mt-3 font-display text-[1.75rem] font-light leading-[1.1] text-ink">A lead in the morning queue.</h3>
           <p className="mt-3 text-[0.9375rem] leading-relaxed text-text-2">
@@ -724,7 +728,7 @@ function Leads({ p }: { p: LandingPreview }) {
 /** The queue's new lead, stacked to fit a third of the page. */
 function LeadRow({ row }: { row: PreviewRow }) {
   return (
-    <li className="rounded-[18px] bg-white/75 p-4 ring-1 ring-white/90">
+    <li className="m-arrive rounded-[18px] bg-white/75 p-4 ring-1 ring-white/90">
       <p className="flex items-center gap-3">
         <Monogram row={row} className="!h-11 !w-11 !rounded-[13px] !text-[1rem]" />
         <span className="min-w-0">
@@ -977,8 +981,8 @@ function Try() {
           </p>
         </div>
         <ul className="grid gap-5 sm:grid-cols-2 lg:col-span-7">
-          {SEED_CLINICS.map((clinic) => (
-            <li key={clinic.id} style={clinicThemeStyle(clinic.accentHex)} className="scroll-rise flex">
+          {SEED_CLINICS.map((clinic, i) => (
+            <li key={clinic.id} data-motion={i % 2 ? "from-right" : "from-left"} style={clinicThemeStyle(clinic.accentHex)} className="flex">
               <Link href={`/c/${clinic.slug}`} className="glass lift sheen group flex w-full flex-col p-2.5">
                 <ClientPagePreview clinic={clinic} className="flex-1" />
                 <span className="flex items-center justify-between gap-4 px-3.5 pb-2 pt-4">
@@ -1064,8 +1068,12 @@ function Close() {
       <div className="sea on-dark relative overflow-hidden rounded-[32px] px-6 py-20 text-center shadow-[0_40px_80px_-44px_rgba(12,26,34,0.65)] sm:px-12 lg:py-28">
         <LightField variant="sea" className="opacity-75" />
         <div className="relative mx-auto max-w-3xl">
-          <h2 id="close-title" className="font-display text-[clamp(40px,5.2vw,72px)] font-light leading-[1.02] tracking-[-0.02em] text-white [text-wrap:balance]">
-            Your next bookings are already in your client list.
+          <h2 id="close-title" data-motion="words" data-seq className="font-display text-[clamp(40px,5.2vw,72px)] font-light leading-[1.02] tracking-[-0.02em] text-white [text-wrap:balance]">
+            {"Your next bookings are already in your client list.".split(" ").map((w, i) => (
+              <Fragment key={i}>
+                <span className="m-word">{w}</span>{" "}
+              </Fragment>
+            ))}
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-[1.0625rem] leading-relaxed text-[#dbe8ef]">
             No sign-up. Open the demo and see who Rebloom would have your team contact this morning, and why.
