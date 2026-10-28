@@ -1105,6 +1105,90 @@ html:has(.landing) {
       animation-timeline: view();
       animation-range: entry 20% cover 45%;
     }
+    /*
+     * The page breathes as it scrolls (D-100): each section's headline surfaces out of soft focus, its first line
+     * follows, and its cards settle in a short cascade. Tied to scroll, so it plays at the reader's own pace and
+     * reverses if they scroll back.
+     */
+    .landing main h2 {
+      animation: surface linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 28%;
+    }
+    .landing main h2 + p {
+      animation: surface linear both;
+      animation-timeline: view();
+      animation-range: entry 15% cover 32%;
+    }
+    .landing .scroll-rise {
+      animation: settle linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 24%;
+    }
+    .landing .scroll-rise:nth-child(2) {
+      animation-range: entry 12% cover 28%;
+    }
+    .landing .scroll-rise:nth-child(3) {
+      animation-range: entry 24% cover 32%;
+    }
+    .landing .scroll-rise:nth-child(4),
+    .landing .scroll-rise:nth-child(5) {
+      animation-range: entry 30% cover 34%;
+    }
+    /* The result drifts a little slower than the page, so the hero has depth as it leaves. */
+    .landing .hero-parallax {
+      animation: hero-recede linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 90vh;
+    }
+    /* A gold line reads the code once, the way a phone would. */
+    .landing .qr-sweep {
+      animation: qr-sweep linear both;
+      animation-timeline: view();
+      animation-range: cover 30% cover 62%;
+    }
+  }
+}
+@keyframes surface {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(36px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes hero-recede {
+  to {
+    transform: translateY(64px) scale(0.97);
+    opacity: 0.55;
+  }
+}
+@keyframes qr-sweep {
+  0% {
+    transform: translateY(-10%);
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(1000%);
+    opacity: 0;
   }
 }
 @keyframes lapse-out {

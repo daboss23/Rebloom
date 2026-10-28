@@ -181,20 +181,22 @@ function Hero({ p }: { p: LandingPreview }) {
 
         {face && (
           <div className="focus-in min-w-0" style={{ animationDelay: "240ms" }}>
-            <HeroFace
-              firstName={face.firstName}
-              photo={face.photo}
-              aspect={face.aspect}
-              points={face.points}
-              scanNumber={face.scanNumber}
-              priorities={face.priorities.map((c) => ({
-                key: c.key,
-                label: c.label,
-                from: c.from,
-                score: c.score,
-                anchor: c.anchor,
-              }))}
-            />
+            <div className="hero-parallax">
+              <HeroFace
+                firstName={face.firstName}
+                photo={face.photo}
+                aspect={face.aspect}
+                points={face.points}
+                scanNumber={face.scanNumber}
+                priorities={face.priorities.map((c) => ({
+                  key: c.key,
+                  label: c.label,
+                  from: c.from,
+                  score: c.score,
+                  anchor: c.anchor,
+                }))}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -412,7 +414,7 @@ function How({ p }: { p: LandingPreview }) {
 
 function Cell({ className, children }: { className?: string; children: ReactNode }) {
   // Clip, not hidden: a hidden overflow is a scroll container, and scroll-linked animations inside would track it instead of the page.
-  return <article className={cx("relative overflow-clip rounded-[22px] p-7 sm:p-9", className)}>{children}</article>;
+  return <article className={cx("scroll-rise relative overflow-clip rounded-[22px] p-7 sm:p-9", className)}>{children}</article>;
 }
 
 function CellTitle({ children, onDark }: { children: ReactNode; onDark?: boolean }) {
@@ -630,7 +632,7 @@ function Leads({ p }: { p: LandingPreview }) {
 
       <ol className="mt-14 grid gap-5 lg:grid-cols-3">
         {/* 1 · The way in: a real code for the demo clinic's scan. */}
-        <li className="glass flex flex-col p-7 sm:p-8">
+        <li className="glass scroll-rise flex flex-col p-7 sm:p-8">
           <span className={step}>01</span>
           <h3 className="mt-3 font-display text-[1.75rem] font-light leading-[1.1] text-ink">Anyone can scan.</h3>
           <p className="mt-3 text-[0.9375rem] leading-relaxed text-text-2">
@@ -641,28 +643,31 @@ function Leads({ p }: { p: LandingPreview }) {
               <ClinicWordmark clinic={clinic} />
             </span>
             <span className="mt-4 flex items-center gap-4">
-            <figure className="relative shrink-0 rounded-[12px] bg-white p-2 shadow-[0_14px_30px_-18px_rgba(12,44,62,0.45)] ring-1 ring-[#0c1a22]/[0.06]">
-              <svg viewBox={`0 0 ${box} ${box}`} width={112} height={112} role="img" aria-label={`Code that opens ${clinic.name}'s scan on your phone`} shapeRendering="crispEdges">
-                <path d={d} fill="#0c1a22" />
-              </svg>
-              <span aria-hidden className="absolute left-1/2 top-1/2 grid h-7 w-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white">
-                <Bloom size={17} className="text-[#b0802c]" />
+              <figure className="relative shrink-0 rounded-[12px] bg-white p-2 shadow-[0_14px_30px_-18px_rgba(12,44,62,0.45)] ring-1 ring-[#0c1a22]/[0.06]">
+                <svg viewBox={`0 0 ${box} ${box}`} width={112} height={112} role="img" aria-label={`Code that opens ${clinic.name}'s scan on your phone`} shapeRendering="crispEdges">
+                  <path d={d} fill="#0c1a22" />
+                </svg>
+                <span aria-hidden className="pointer-events-none absolute inset-2 overflow-hidden">
+                  <span className="qr-sweep block h-[10%] w-full bg-[linear-gradient(180deg,rgba(226,192,122,0)_0%,rgba(226,192,122,0.85)_50%,rgba(226,192,122,0)_100%)] opacity-0" />
+                </span>
+                <span aria-hidden className="absolute left-1/2 top-1/2 grid h-7 w-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white">
+                  <Bloom size={17} className="text-[#b0802c]" />
+                </span>
+              </figure>
+              <span className="min-w-0">
+                <span className="block font-display text-[1.25rem] font-light leading-tight text-ink">See your skin clearly.</span>
+                <span className="mt-2 hidden text-[0.8125rem] leading-snug text-text-3 sm:block">This code works. Point your phone at it.</span>
+                <Link href={`/c/${clinic.slug}`} className="mt-2 inline-flex min-h-11 items-center gap-1.5 text-[0.875rem] text-[#1e5a78] sm:hidden">
+                  Start a scan
+                  <IconArrowRight width={15} height={15} />
+                </Link>
               </span>
-            </figure>
-            <span className="min-w-0">
-              <span className="block font-display text-[1.25rem] font-light leading-tight text-ink">See your skin clearly.</span>
-              <span className="mt-2 hidden text-[0.8125rem] leading-snug text-text-3 sm:block">This code works. Point your phone at it.</span>
-              <Link href={`/c/${clinic.slug}`} className="mt-2 inline-flex min-h-11 items-center gap-1.5 text-[0.875rem] text-[#1e5a78] sm:hidden">
-                Start a scan
-                <IconArrowRight width={15} height={15} />
-              </Link>
-            </span>
             </span>
           </div>
         </li>
 
         {/* 2 · The gate (D-021): the report waits behind their details. Placeholder bars, never real scores. */}
-        <li className="glass flex flex-col p-7 sm:p-8">
+        <li className="glass scroll-rise flex flex-col p-7 sm:p-8">
           <span className={step}>02</span>
           <h3 className="mt-3 font-display text-[1.75rem] font-light leading-[1.1] text-ink">Their report, for their details.</h3>
           <p className="mt-3 text-[0.9375rem] leading-relaxed text-text-2">
@@ -696,7 +701,7 @@ function Leads({ p }: { p: LandingPreview }) {
         </li>
 
         {/* 3 · Where it lands: the demo's own new lead, as the queue shows her. */}
-        <li className="glass flex flex-col p-7 sm:p-8">
+        <li className="glass scroll-rise flex flex-col p-7 sm:p-8">
           <span className={step}>03</span>
           <h3 className="mt-3 font-display text-[1.75rem] font-light leading-[1.1] text-ink">A lead in the morning queue.</h3>
           <p className="mt-3 text-[0.9375rem] leading-relaxed text-text-2">
@@ -971,7 +976,7 @@ function Try() {
         </div>
         <ul className="grid gap-5 sm:grid-cols-2 lg:col-span-7">
           {SEED_CLINICS.map((clinic) => (
-            <li key={clinic.id} style={clinicThemeStyle(clinic.accentHex)} className="flex">
+            <li key={clinic.id} style={clinicThemeStyle(clinic.accentHex)} className="scroll-rise flex">
               <Link href={`/c/${clinic.slug}`} className="glass lift sheen group flex w-full flex-col p-2.5">
                 <ClientPagePreview clinic={clinic} className="flex-1" />
                 <span className="flex items-center justify-between gap-4 px-3.5 pb-2 pt-4">
