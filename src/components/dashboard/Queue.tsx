@@ -94,7 +94,8 @@ export function Queue({
 
   return (
     <>
-      <ol className="space-y-3">
+      {/* Rows lay out by the room they have, not the screen: beside Today's side column, a laptop leaves them narrow. */}
+      <ol className="@container space-y-3">
         {rows.map((row, i) => {
           const gone = leaving.has(key(row));
           return (
@@ -104,13 +105,13 @@ export function Queue({
               className={cx(
                 "glass lift sheen grid gap-x-6 gap-y-4 p-5 sm:p-6",
                 row.kind === "progress_moment" ? "moment !border-[#f4b9a3]/60" : "focus-in",
-                "md:grid-cols-[auto_minmax(0,1fr)_120px_auto] md:items-center",
+                "@2xl:grid-cols-[auto_minmax(0,1fr)_120px_auto] @2xl:items-center",
                 gone && "pointer-events-none !opacity-0 !-translate-y-1 transition-[opacity,transform] duration-300",
               )}
             >
-              <div className="flex items-center gap-4 md:contents">
+              <div className="flex items-center gap-4 @2xl:contents">
                 <Monogram row={row} />
-                <div className="min-w-0 md:hidden">
+                <div className="min-w-0 @2xl:hidden">
                   {!onBrief && <p className="font-display text-[1.375rem] leading-tight text-ink">{row.name}</p>}
                   <div className="mt-1">
                     <KindChip row={row} />
@@ -119,7 +120,7 @@ export function Queue({
               </div>
 
               <div className="min-w-0">
-                <div className="hidden flex-wrap items-center gap-x-3 gap-y-1.5 md:flex">
+                <div className="hidden flex-wrap items-center gap-x-3 gap-y-1.5 @2xl:flex">
                   {!onBrief && (
                     <Link
                       href={row.href}
@@ -130,7 +131,7 @@ export function Queue({
                   )}
                   <KindChip row={row} />
                 </div>
-                <p className="max-w-[52ch] text-[0.9375rem] leading-relaxed text-text-2 md:mt-1.5">{row.reason}</p>
+                <p className="max-w-[52ch] text-[0.9375rem] leading-relaxed text-text-2 @2xl:mt-1.5">{row.reason}</p>
                 {row.reply && (
                   // They wrote back (D-081): a pre-written message now would talk past them.
                   <p className="mt-3 max-w-[56ch] border-t border-[#0c1a22]/[0.06] pt-3 text-[0.875rem] leading-relaxed text-text-2">
@@ -145,24 +146,40 @@ export function Queue({
                     )}
                   </p>
                 )}
+                {row.agent?.status === "working" && (
+                  // The morning run is writing this one (D-097). The standard message is there meanwhile.
+                  <p aria-live="polite" className="mt-3 grid max-w-[56ch] grid-cols-[16px_minmax(0,1fr)] items-start gap-x-2.5 text-[0.8125rem] leading-relaxed text-text-3">
+                    <Bloom size={16} className="mt-[0.2em] bloom-breathe text-[#9e4a5d]" />
+                    <span>
+                      Rebloom is drafting {row.action === "text" ? "a text" : "an email"} for {row.name.split(" ")[0]}
+                      {row.agent.steps.length ? ` · ${row.agent.steps[row.agent.steps.length - 1]}` : "."}
+                    </span>
+                  </p>
+                )}
               </div>
 
-              <div className="flex items-baseline gap-2 md:block md:text-right">
+              <div className="flex items-baseline gap-2 @2xl:block @2xl:text-right">
                 {row.value ? (
                   <>
                     <p className="gold-foil font-display text-[2rem] font-light leading-none">{row.value}</p>
-                    <p className="t-caption !text-[0.8125rem] md:mt-1.5">{row.valueNote}</p>
+                    <p className="t-caption !text-[0.8125rem] @2xl:mt-1.5">{row.valueNote}</p>
                   </>
                 ) : (
                   row.valueNote && <p className="t-caption !text-[0.8125rem]">{row.valueNote}</p>
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 md:flex-col md:items-end">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 @2xl:flex-col @2xl:items-end">
                 {(row.action === "email" || row.action === "text") && (
                   <button type="button" onClick={() => setOpen(row)} className="btn-sea">
-                    {row.action === "text" ? <IconMessage width={16} height={16} /> : <IconMail width={16} height={16} />}
-                    Review &amp; send
+                    {row.agent?.status === "ready" ? (
+                      <Bloom size={16} className="text-[#f1d49a]" />
+                    ) : row.action === "text" ? (
+                      <IconMessage width={16} height={16} />
+                    ) : (
+                      <IconMail width={16} height={16} />
+                    )}
+                    {row.agent?.status === "ready" ? "Review draft" : <>Review &amp; send</>}
                   </button>
                 )}
                 {row.action === "call" && (
@@ -232,6 +249,8 @@ export interface Draft {
   subject: string;
   body: string;
   text: string;
+  /** Whether the agent's draft is the one in the field (D-097). */
+  fromAgent: boolean;
 }
 
 const field =
@@ -257,18 +276,33 @@ function SendSheet({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
-  const [channel, setChannel] = useState<Draft["channel"]>(draft?.channel ?? (row.draft ? "email" : "text"));
+  // The morning run's draft (D-097), for the channel it was written for, when the queue can still send that way.
+  const agent = row.agent?.status === "ready" && row.agent.body && (row.agent.channel === "sms" ? row.text : row.draft) ? row.agent : null;
+  const agentChannel: Draft["channel"] | null = agent ? (agent.channel === "sms" ? "text" : "email") : null;
+  const [fromAgent, setFromAgent] = useState(draft?.fromAgent ?? Boolean(agent));
+  // What each field starts from: the agent's version where it wrote one, else the engine's standard message.
+  const startBody = fromAgent && agentChannel === "email" ? agent!.body! : (row.draft?.body ?? "");
+  const startText = fromAgent && agentChannel === "text" ? agent!.body! : (row.text ?? "");
+  const [channel, setChannel] = useState<Draft["channel"]>(draft?.channel ?? agentChannel ?? (row.draft ? "email" : "text"));
   const [subject, setSubject] = useState(draft?.subject ?? row.draft?.subject ?? "");
-  const [body, setBody] = useState(draft?.body ?? row.draft?.body ?? "");
-  const [text, setText] = useState(draft?.text ?? row.text ?? "");
-  const edited = subject !== (row.draft?.subject ?? "") || body !== (row.draft?.body ?? "") || text !== (row.text ?? "");
+  const [body, setBody] = useState(draft?.body ?? startBody);
+  const [text, setText] = useState(draft?.text ?? startText);
+  const [how, setHow] = useState(false);
+  const edited = subject !== (row.draft?.subject ?? "") || body !== startBody || text !== startText;
+  /** Swaps the field between the agent's draft and the standard message. */
+  const useVersion = (agentVersion: boolean) => {
+    setFromAgent(agentVersion);
+    if (agentChannel === "email") setBody(agentVersion ? agent!.body! : (row.draft?.body ?? ""));
+    if (agentChannel === "text") setText(agentVersion ? agent!.body! : (row.text ?? ""));
+  };
+  const showingAgent = Boolean(agent) && fromAgent && channel === agentChannel;
   const both = Boolean(row.draft && row.text);
   // Only a switch animates; opening the sheet has its own slide.
   const [switched, setSwitched] = useState(false);
   const isText = channel === "text";
   // Close through the dialog, so the browser hands focus back to the button that opened it.
   const dismiss = () => {
-    onDraft({ channel, subject, body, text });
+    onDraft({ channel, subject, body, text, fromAgent });
     ref.current?.close();
     onClose();
   };
@@ -298,9 +332,11 @@ function SendSheet({
     start(async () => {
       setError(null);
       const to = !isText && realCopy ? copyTo.trim() : "";
+      // Sent from the agent's draft: what Dana sent is kept beside it, so the next one sounds more like her.
+      const draftId = showingAgent ? agent!.id : undefined;
       const result = isText
-        ? await sendRebookText({ clientId: row.clientId, dedupeKey: row.dedupeKey, body: text })
-        : await sendRebook({ clientId: row.clientId, dedupeKey: row.dedupeKey, subject, body, copyTo: to });
+        ? await sendRebookText({ clientId: row.clientId, dedupeKey: row.dedupeKey, body: text, draftId })
+        : await sendRebook({ clientId: row.clientId, dedupeKey: row.dedupeKey, subject, body, copyTo: to, draftId });
       if (result.ok) {
         try {
           if (to) localStorage.setItem(COPY_KEY, to);
@@ -356,6 +392,9 @@ function SendSheet({
         </header>
 
         <div className="flex-1 overflow-y-auto px-7 py-6">
+          {agent && channel === agentChannel && (
+            <AgentLine agent={agent} firstName={firstName} showing={showingAgent} how={how} onHow={() => setHow((h) => !h)} onUse={useVersion} />
+          )}
           {both && (
             <ChannelSwitch
               value={channel}
@@ -439,6 +478,68 @@ function SendSheet({
         </footer>
       </form>
     </dialog>
+  );
+}
+
+/**
+ * The morning run's draft in the sheet (D-097), in the brief's own words and look (D-093): one quiet line, what to
+ * check, how it was written behind a link, and the clinic's standard message one tap away.
+ */
+function AgentLine({
+  agent,
+  firstName,
+  showing,
+  how,
+  onHow,
+  onUse,
+}: {
+  agent: NonNullable<QueueRow["agent"]>;
+  firstName: string;
+  showing: boolean;
+  how: boolean;
+  onHow: () => void;
+  onUse: (agentVersion: boolean) => void;
+}) {
+  const stepsId = useId();
+  const link = "underline decoration-[#0c1a22]/20 underline-offset-4 transition-colors duration-150 hover:text-ink hover:decoration-ink";
+  return (
+    <div className="mb-6 grid grid-cols-[16px_minmax(0,1fr)] items-start gap-x-2.5 text-[0.8125rem] leading-relaxed text-text-3">
+      <Bloom size={16} unfurl={showing} className={cx("mt-[0.2em]", showing ? "text-[#9e4a5d]" : "text-text-3")} />
+      <div>
+        {showing ? (
+          <p>
+            <span className="text-ink">Drafted by Rebloom for {firstName}.</span> Read it, change anything, then send.{" "}
+            <span className="whitespace-nowrap">
+              <button type="button" onClick={onHow} aria-expanded={how} aria-controls={stepsId} className={link}>
+                How it was written
+              </button>
+              <span aria-hidden className="mx-2 text-text-3/60">·</span>
+              <button type="button" onClick={() => onUse(false)} className={link}>
+                Use the standard message
+              </button>
+            </span>
+          </p>
+        ) : (
+          <p>
+            The clinic&apos;s standard message.{" "}
+            <button type="button" onClick={() => onUse(true)} className={link}>
+              Use Rebloom&apos;s draft for {firstName}
+            </button>
+          </p>
+        )}
+        {showing && agent.note && <p className="mt-1.5 text-text-2">Before you send: {agent.note}</p>}
+        {showing && how && (
+          <ol id={stepsId} className="focus-in mt-2 space-y-1">
+            {agent.steps.map((step, i) => (
+              <li key={i} className="flex gap-2.5">
+                <span aria-hidden className="mt-[0.6em] h-1 w-1 shrink-0 rounded-full bg-[#9e4a5d]/60" />
+                {step}
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </div>
   );
 }
 

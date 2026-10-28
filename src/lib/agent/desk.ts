@@ -14,12 +14,14 @@ import type { ClientFacts, QueueItem } from "@/lib/rebook/engine";
 
 /** Real time on purpose: they're about real spend. */
 export const AGENT_LIMITS = {
-  /** Drafts one demo may start in a day. */
-  perSandboxPerDay: 15,
+  /** Drafts one demo may start in a day: a morning run, and the clock moved forward a couple of times. */
+  perSandboxPerDay: 20,
   /** Drafts every demo together may start in a day. */
   globalPerDay: 150,
   /** Drafts one page load may start, so a big book fills in over a few visits rather than all at once. */
   perLoad: 3,
+  /** Drafts opening Today may start: the morning run works through the whole book at once (D-097). */
+  morningRun: 10,
 } as const;
 
 /** A draft still marked working after this long was cut off (a deploy, a timeout): it's marked failed to retry. */
@@ -71,10 +73,14 @@ function runLater(ids: string[], origin: string): void {
 }
 
 /**
- * The agent's drafts for this book, after starting any it still needs. Once per request: the layout and the page
- * share it. Never throws: without the migration, or on any error, the agent is simply off.
+ * The agent's drafts for this book, after starting up to `perLoad` it still needs (0 only reads). Once per request.
+ * Never throws: without the migration, or on any error, the agent is simply off.
  */
-export const openDesk = cache(async (book: { clinic: { id: string }; sandboxId: string; facts: ClientFacts[]; queue: { items: QueueItem[] } }, origin: string): Promise<Desk> => {
+export const openDesk = cache(async (
+  book: { clinic: { id: string }; sandboxId: string; facts: ClientFacts[]; queue: { items: QueueItem[] } },
+  origin: string,
+  perLoad: number = AGENT_LIMITS.perLoad,
+): Promise<Desk> => {
   if (!agentEnabled()) return { enabled: false, drafts: [] };
   const store = getStore();
   try {
@@ -91,11 +97,23 @@ export const openDesk = cache(async (book: { clinic: { id: string }; sandboxId: 
       }
     }
     const wanted = wantedDrafts(book.facts, book.queue.items, drafts);
-    const room = wanted.length ? Math.min(AGENT_LIMITS.perLoad, await roomFor(book.sandboxId, drafts)) : 0;
+    const room = wanted.length && perLoad > 0 ? Math.min(perLoad, await roomFor(book.sandboxId, drafts)) : 0;
     const started: string[] = [];
+    let outreachOff = false;
     for (const w of wanted.slice(0, room)) {
+      if (w.kind === "outreach" && outreachOff) continue;
       const client = book.facts.find((f) => f.client.id === w.clientId)!.client;
-      const draft = await store.startAgentDraft(blank(w.kind, client, w.forKey));
+      let draft: AgentDraft | null;
+      try {
+        draft = await store.startAgentDraft(blank(w.kind, client, w.forKey));
+      } catch (error) {
+        // Before the outreach migration (D-097) the database refuses the new kind: the queue keeps its standard
+        // messages, and answers and second looks carry on as before.
+        if (w.kind !== "outreach") throw error;
+        console.error("The morning run is off until the outreach migration is applied.", error instanceof Error ? error.message : error);
+        outreachOff = true;
+        continue;
+      }
       // Null: another request started it a moment ago.
       if (draft) {
         drafts.push(draft);

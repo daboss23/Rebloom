@@ -4,6 +4,8 @@ import { TRIGGER_LABEL } from "@/lib/rebook/engine";
 import { formatPrice } from "@/lib/plan/build";
 import type { ClientFacts } from "@/lib/rebook/engine";
 import { fullName } from "@/lib/dashboard/view";
+import type { AgentDraft } from "@/lib/domain";
+import { draftView, type DraftView } from "@/lib/agent/view";
 
 export interface QueueRow {
   clientId: string;
@@ -26,9 +28,11 @@ export interface QueueRow {
   sender: string;
   /** Their reply, while it waits on an answer (D-081): answer it before sending anything pre-written. */
   reply: string | null;
+  /** The morning run's draft of this message (D-097): being written, ready, or null. */
+  agent: DraftView | null;
 }
 
-export function toQueueRow(item: QueueItem, facts: ClientFacts, clinicName: string): QueueRow {
+export function toQueueRow(item: QueueItem, facts: ClientFacts, clinicName: string, agent: AgentDraft | null = null): QueueRow {
   return {
     clientId: item.clientId,
     dedupeKey: item.dedupeKey,
@@ -47,6 +51,7 @@ export function toQueueRow(item: QueueItem, facts: ClientFacts, clinicName: stri
     text: item.text,
     sender: clinicName,
     reply: facts.reply ? excerpt(facts.reply.body) : null,
+    agent: agent?.kind === "outreach" && (agent.status === "working" || agent.status === "ready") ? draftView(agent) : null,
   };
 }
 

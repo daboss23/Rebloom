@@ -11,7 +11,7 @@ export function SkinTypeControl({ clientId, firstName, reading }: { clientId: st
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
-  const link = "text-[0.8125rem] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 transition-colors duration-150 hover:text-ink hover:decoration-ink";
+  const link = "text-[0.8125rem] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 transition-colors duration-150 hover:text-ink hover:decoration-ink tap";
 
   const save = (type: FitzpatrickType) =>
     start(async () => {

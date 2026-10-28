@@ -125,7 +125,23 @@ const draftInput = z.object({
   body: z.string().trim().min(1, "Write a message first.").max(5000),
   /** Demo mode only: the address of whoever is trying the demo, for a real copy of the email. */
   copyTo: z.union([z.literal(""), z.email("That email address doesn't look right.").max(254)]).optional(),
+  /** The morning run's draft this started from (D-097), so what Dana changed can teach the next one. */
+  draftId: z.string().min(1).max(64).optional(),
 });
+
+/**
+ * A queue message went out from the agent's draft (D-097): keep what Dana actually sent beside what it wrote, as
+ * answers do (D-093). Never stops the send.
+ */
+async function markDraftUsed(draftId: string | undefined, clientId: string, dedupeKey: string, sent: string): Promise<void> {
+  if (!draftId) return;
+  const store = getStore();
+  const draft = await store.getAgentDraft(draftId).catch(() => null);
+  if (draft?.clientId !== clientId || draft.forKey !== dedupeKey) return;
+  await store
+    .updateAgentDraft(draft.id, ["ready"], { status: "used", sentBody: sent, updatedAt: new Date().toISOString() })
+    .catch((e) => console.error(`Draft not marked used: ${e instanceof Error ? e.message : String(e)}`));
+}
 
 /**
  * Sends one rebook message, exactly as Dana edited it. The queue is worked out again on the server, so only an
@@ -227,6 +243,7 @@ export async function sendRebook(input: z.input<typeof draftInput>): Promise<Act
     sentAt: status === "sent" ? sentAt : null,
     createdAt: sentAt,
   });
+  if (message && status === "sent") await markDraftUsed(parsed.data.draftId, item.clientId, item.dedupeKey, body);
   revalidatePath("/dashboard", "layout");
   if (!message) return { ok: false, error: "This one has already been sent." };
   if (status === "failed") return { ok: false, error: "The email didn't go through. It's in the outbox to try again." };
@@ -257,6 +274,7 @@ const textInput = z.object({
   clientId: z.string().min(1),
   dedupeKey: z.string().min(1),
   body: z.string().trim().min(1, "Write a message first.").max(TEXT_MAX_CHARS, `Keep it under ${TEXT_MAX_CHARS} characters.`),
+  draftId: z.string().min(1).max(64).optional(),
 });
 
 /**
@@ -315,6 +333,7 @@ export async function sendRebookText(input: z.input<typeof textInput>): Promise<
     }
   }
   const message = await record("sent");
+  if (message) await markDraftUsed(parsed.data.draftId, item.clientId, item.dedupeKey, body);
   revalidatePath("/dashboard", "layout");
   if (!message) return { ok: false, error: "This one has already been sent." };
   return { ok: true, message: live ? `Texted ${name}.` : `Texted ${name}. Logged in the outbox, not sent (demo).` };

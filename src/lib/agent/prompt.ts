@@ -39,7 +39,9 @@ export function taskPrompt(ctx: AgentContext, voice: VoiceExamples): string {
   const job =
     ctx.kind === "answer"
       ? `${name} wrote to the clinic and is waiting on an answer. Draft ${ctx.staffName}'s answer, as ${how}. Start with the conversation, then look up whatever their message needs: if they ask about a time, find open times that fit what they asked for; if they ask about a treatment, check the menu and their plan.`
-      : `${name}'s rescans show almost no change on their priorities, so the rebook engine flagged them as stalled: "${ctx.item?.reason ?? ""}". Before anyone changes their plan, take a second look:
+      : ctx.kind === "outreach"
+        ? outreachJob(ctx, name, how)
+        : `${name}'s rescans show almost no change on their priorities, so the rebook engine flagged them as stalled: "${ctx.item?.reason ?? ""}". Before anyone changes their plan, take a second look:
 1. Call check_measurement first. If the scans can't be compared fairly, the honest next step is a rescan in the same light as the first, not a new plan: draft ${how} asking ${name} for a two-minute progress scan at home, with their rescan link, and say why in plain words without blaming them.
 2. If the scans can be trusted, read their scans, plan and the menu, and choose one change that works on what stalled. Call suggest_plan_change to record it for ${ctx.staffName}. Then draft ${how} to ${name} that's honest that progress has been slower than hoped, and suggests talking through an adjustment at their next visit. Don't present the change as decided.`;
   const examples = [
@@ -51,4 +53,26 @@ export function taskPrompt(ctx: AgentContext, voice: VoiceExamples): string {
       : null,
   ].filter(Boolean);
   return [`Today is ${today}, at ${ctx.clinic.name}.`, job, ...examples].join("\n\n");
+}
+
+/**
+ * The morning run (D-097): the rebook engine has already decided who to contact and why, and written a standard
+ * message. The agent writes Dana's own version for this one person. The engine's message is the brief, not a script.
+ */
+function outreachJob(ctx: AgentContext, name: string, how: string): string {
+  const item = ctx.item!;
+  const standard = ctx.channel === "sms" ? item.text : (item.draft?.body ?? null);
+  const text = ctx.channel === "sms";
+  return [
+    `This morning the rebook engine put ${name} in the queue: "${item.reason}" It has a standard ${text ? "text" : "email"} ready, below. Write ${ctx.staffName}'s own version, as ${how}, for this one person: the same purpose, said the way she would say it to them.`,
+    `- Start from what's true for ${name}: read their details, scans and plan. If they wrote a goal in their own words, let the message speak to it. Mention a change only if read_scans says you may claim it, in its points.`,
+    `- Make the next step easy. For a visit, call find_open_times, offer two of the times it gives, and add their booking link. For a progress scan, give their rescan link instead of times. Never promise to hold a time.`,
+    `- Keep it shorter than the standard one. No pressure and no invented urgency: if they've drifted, a light touch.`,
+    text
+      ? `- Open with who's writing: "Hi ${name}, it's ${ctx.staffName} at ${ctx.clinic.name}." End with her name. The opt-out line is added after it automatically, so leave it out.`
+      : `- The subject line stays as the clinic wrote it, so write only the body.`,
+    standard ? `<standard_message>\n${standard}\n</standard_message>` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }

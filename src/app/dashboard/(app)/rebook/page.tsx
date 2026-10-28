@@ -4,6 +4,9 @@ import { KindMarkStatic } from "@/components/dashboard/KindMarkStatic";
 import { PageHeader, pill } from "@/components/dashboard/PageHeader";
 import { Queue } from "@/components/dashboard/Queue";
 import { toQueueRow } from "@/components/dashboard/queue-row";
+import { openDesk } from "@/lib/agent/desk";
+import { draftFor } from "@/lib/agent/view";
+import { appOrigin } from "@/lib/origin";
 import { cx } from "@/components/ui/cx";
 import { loadBook } from "@/lib/dashboard/load";
 import { fullName, relativeDay } from "@/lib/dashboard/view";
@@ -38,7 +41,9 @@ export default async function RebookPage({ searchParams }: PageProps<"/dashboard
   const byId = new Map(book.facts.map((f) => [f.client.id, f]));
   const view = VIEWS.find((v) => v.key === show) ?? VIEWS[0];
   const items = view.actions ? book.queue.items.filter((i) => view.actions!.includes(i.action)) : book.queue.items;
-  const rows = items.map((i) => toQueueRow(i, byId.get(i.clientId)!, book.clinic.name));
+  // The morning run's drafts (D-097), read only: Today is where the run starts.
+  const desk = await openDesk(book, await appOrigin(), 0);
+  const rows = items.map((i) => toQueueRow(i, byId.get(i.clientId)!, book.clinic.name, draftFor(desk.drafts, i.clientId, i.dedupeKey)));
   const rebookTypes = new Set<string>(TRIGGER_ORDER);
   const outbox = book.input.messages.filter((m) => rebookTypes.has(m.type)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const ready = book.queue.items.reduce((n, i) => n + (i.valueCents ?? 0), 0);

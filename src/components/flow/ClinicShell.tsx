@@ -29,12 +29,12 @@ export function ClinicShell({
         </p>
       )}
       <header className="sticky top-0 z-30 border-b border-white/70 bg-white/75 backdrop-blur-xl backdrop-saturate-150">
-        <div className="mx-auto flex h-16 max-w-[600px] items-center justify-between px-5">
+        <div className="mx-auto flex h-16 max-w-[600px] items-center justify-between gap-4 px-5">
           <Link href={`/c/${clinic.slug}`} aria-label={`${clinic.name} home`}>
             <ClinicWordmark clinic={clinic} />
           </Link>
           {/* On the narrowest phones the clinic's name needs the whole bar. */}
-          {section && <span className="whitespace-nowrap text-[0.75rem] uppercase tracking-[0.22em] text-[#1e5a78] max-[359px]:hidden">{section}</span>}
+          {section && <span className="whitespace-nowrap text-[0.75rem] uppercase tracking-[0.14em] text-[#1e5a78] max-[359px]:hidden sm:tracking-[0.22em]">{section}</span>}
         </div>
       </header>
       <main className="relative mx-auto w-full max-w-[600px] flex-1 px-5">{children}</main>

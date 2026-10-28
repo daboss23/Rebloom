@@ -16,11 +16,12 @@ import { SEED_PRODUCTS, SEED_TREATMENTS } from "@/data/menu";
 import { SEED_STAFF } from "@/data/staff";
 import { bareTimesIn, describeClient, describeMenu, draftChannel, findOpenTimes, pricesIn, timesIn, type AgentContext } from "@/lib/agent/context";
 import { draftProblems, signOffProblem } from "@/lib/agent/guard";
+import { allowedPoints, pointsIn } from "@/lib/agent/context";
 import { answerEmail } from "@/lib/email/answer";
 import { checkMeasurement } from "@/lib/agent/measure";
 import { checkChange } from "@/lib/agent/plan-change";
-import { systemPrompt } from "@/lib/agent/prompt";
-import { runDraft, type AgentCall } from "@/lib/agent/run";
+import { systemPrompt, taskPrompt } from "@/lib/agent/prompt";
+import { runDraft, withOptOut, type AgentCall } from "@/lib/agent/run";
 import { buildTools } from "@/lib/agent/tools";
 import { draftView, wantedDrafts } from "@/lib/agent/view";
 import { checkVoice, plainPunctuation, voiceExamples } from "@/lib/agent/voice";
@@ -61,8 +62,8 @@ async function contextFor(demoKey: string, kind: AgentContext["kind"] = "answer"
     facts,
     busy: input.appointments.filter((a) => a.status === "booked"),
     reply: kind === "answer" ? facts.reply : null,
-    item: kind === "plan_review" ? item : null,
-    channel: draftChannel(facts, facts.reply?.channel ?? null)!,
+    item: kind !== "answer" ? item : null,
+    channel: kind === "outreach" ? (item!.action === "text" ? "sms" : "email") : draftChannel(facts, facts.reply?.channel ?? null)!,
   };
 }
 
@@ -346,19 +347,67 @@ describe("skin type (D-094)", () => {
 });
 
 describe("what the book still needs drafted", () => {
-  it("an answer for each reply waiting on Dana, then a second look at the stalled", async () => {
+  it("an answer for each reply waiting on Dana, a second look at the stalled, then the queue's messages", async () => {
     const input = await engineInput();
     const facts = clientFacts(input);
     const wanted = wantedDrafts(facts, buildQueue(input).items, []);
     const who = (w: { clientId: string }) => facts.find((f) => f.client.id === w.clientId)!.client.demoKey;
+    // Daniel and Priya wrote back, so their answers come first and nothing else is written for them. Chloe is a call.
     expect(wanted.map((w) => [w.kind, who(w)])).toEqual([
       ["answer", "daniel"],
       ["answer", "priya"],
       ["plan_review", "grace"],
+      ["outreach", "sofia"],
+      ["outreach", "rachel"],
+      ["outreach", "nina"],
     ]);
     // Once started, never again.
     const started = wanted.map((w) => ({ clientId: w.clientId, forKey: w.forKey }) as AgentDraft);
     expect(wantedDrafts(facts, buildQueue(input).items, started)).toEqual([]);
+  });
+});
+
+describe("the morning run (D-097)", () => {
+  it("tells the agent why the client is in the queue, and hands it the standard message as a brief", async () => {
+    const sofia = await contextFor("sofia", "outreach");
+    const task = taskPrompt(sofia, { written: [], edits: [] });
+    expect(task).toContain(`"${sofia.item!.reason}"`);
+    expect(task).toContain(`<standard_message>\n${sofia.item!.draft!.body}\n</standard_message>`);
+    expect(task).toMatch(/offer two of the times/);
+    expect(task).toMatch(/subject line stays/);
+  });
+
+  it("claims progress only in the points the report calls real change", async () => {
+    const sofia = await contextFor("sofia", "outreach");
+    const real = [...allowedPoints(sofia)];
+    expect(real.length).toBeGreaterThan(0);
+    expect(pointsIn("up 6 points, or 12 pts, or a point")).toEqual([6, 12]);
+    const link = `${ORIGIN}/r/${sofia.facts.report!.token}/book`;
+    const body = (n: number) => `Hi Sofia,\n\nYour wrinkles are up ${n} points since your first scan.\n\nBook your third session here: ${link}\n\nSpeak soon,\nDana`;
+    expect(draftProblems(sofia, body(real[0]), { offered: [], extraCents: [] })).toEqual([]);
+    expect(draftProblems(sofia, body(40), { offered: [], extraCents: [] })).toEqual(["40 points isn't a change their scans support. Use only what read_scans says you may claim."]);
+    // One scan, so no change to claim at all.
+    const priya = await contextFor("priya");
+    expect(draftProblems(priya, "Hi Priya,\n\nYou're up 5 points.\n\nDana", { offered: [], extraCents: [] })).toContain("Don't claim 5 points of change: their scans don't support a claim yet.");
+  });
+
+  it("gives them a way to act: one of their own links", async () => {
+    const nina = await contextFor("nina", "outreach");
+    const problems = draftProblems(nina, "Hi Nina,\n\nIt's been a while since your last peel. A maintenance visit keeps it where it is.\n\nSpeak soon,\nDana", { offered: [], extraCents: [] });
+    expect(problems).toEqual(["Give them a way to act on it: include their booking link (or their rescan link, for a progress scan), exactly as the tools give it."]);
+  });
+
+  it("says who a text is from, leaves room for the opt-out, and adds it after her name", async () => {
+    const sofia = { ...(await contextFor("sofia", "outreach")), channel: "sms" as const };
+    const link = `${ORIGIN}/r/${sofia.facts.report!.token}/book`;
+    expect(draftProblems(sofia, `Hi Sofia, your third session is ready to book: ${link}\nDana`, { offered: [], extraCents: [] })).toEqual([
+      'Say who\'s writing in the first line: "Hi Sofia, it\'s Dana at Maison Verre."',
+    ]);
+    const text = `Hi Sofia, it's Dana at Maison Verre. Your third session is ready to book: ${link}\nDana`;
+    expect(draftProblems(sofia, text, { offered: [], extraCents: [] })).toEqual([]);
+    expect(withOptOut(text, "sms")).toBe(`${text}\n\nReply STOP to opt out.`);
+    expect(withOptOut(`${text}\nReply STOP to opt out.`, "sms")).toBe(`${text}\nReply STOP to opt out.`);
+    expect(withOptOut(text, "email")).toBe(text);
   });
 });
 
@@ -453,6 +502,47 @@ describe("a run", () => {
       measurement: { trustworthy: true, reasons: [] },
       change: { treatmentName: "Signature Peel Series", sessions: 2, priceCents: 39000, replacesName: "IPL Photofacial" },
     });
+  });
+
+  it("writes Sofia's progress email: her scans, real open times, sent back once for a claim it couldn't make", async () => {
+    const draft = await start("sofia", "outreach");
+    let rejected = "";
+    const fake: AgentCall = async ({ task, tools }) => {
+      expect(task).toContain("This morning the rebook engine put Sofia in the queue");
+      expect((await callTool(tools, "read_scans")).text).toMatch(/You may say it is up \d+ points/);
+      const times = await callTool(tools, "find_open_times");
+      const [, day, time] = times.text.match(/- (\w+), \w+ \d+ at (\S+)/)!;
+      const link = times.text.match(/(https:\/\/\S+\/book)/)![1];
+      rejected = (await callTool(tools, "submit_draft", { message: `Hi Sofia,\n\nYou're up 30 points!\n\n${link}\n\nDana`, note_for_dana: "x" })).text;
+      const ctx = await contextFor("sofia", "outreach");
+      const points = [...allowedPoints(ctx)][0];
+      const ok = await callTool(tools, "submit_draft", {
+        message: `Hi Sofia,\n\nYour latest scan shows your wrinkles up ${points} points since you started. ${day} at ${time} is open for your third session, if it suits.\n\n${link}\n\nSpeak soon,\nDana`,
+        note_for_dana: "She mentioned a wedding; worth asking about at the visit.",
+      });
+      expect(ok.ok).toBe(true);
+      return { model: "claude-opus-5-5", tokens: 3600 };
+    };
+    const done = await runDraft(draft.id, ORIGIN, fake);
+    expect(rejected).toMatch(/30 points isn't a change their scans support/);
+    const ctx = await contextFor("sofia", "outreach");
+    expect(done).toMatchObject({ status: "ready", channel: "email", subject: ctx.item!.draft!.subject, tokens: 3600 });
+    expect(done!.offeredTimes.length).toBeGreaterThan(0);
+    expect(draftView(done!).steps).toEqual(expect.arrayContaining([expect.stringMatching(/^Found \w+ at \S+ open/), "Sent back to rewrite: 30 points isn't a change their scans support", "Drafted the email"]));
+    expect((await store.sumUsage({ provider: "anthropic", since: new Date(0), sandboxId: SANDBOX, features: ["agent_outreach"] })).units).toBe(3600);
+  });
+
+  it("stands down when the client writes back before the morning run reaches them", async () => {
+    // Daniel wrote back: a queue message now would talk past him, so the run leaves it for his answer.
+    const ctx = await contextFor("daniel", "outreach");
+    const draft = await store.startAgentDraft({
+      clinicId: MAISON_VERRE.id, clientId: ctx.facts.client.id, sandboxId: SANDBOX, kind: "outreach", forKey: ctx.item!.dedupeKey,
+      status: "working", channel: null, subject: null, body: null, note: null, steps: [], suggestion: null, offeredTimes: [],
+      model: null, tokens: 0, sentBody: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    });
+    const call = vi.fn<AgentCall>();
+    expect(await runDraft(draft!.id, ORIGIN, call)).toMatchObject({ status: "dismissed" });
+    expect(call).not.toHaveBeenCalled();
   });
 
   it("fails cleanly when the model never hands a draft over, and when it throws", async () => {

@@ -173,12 +173,15 @@ export function HeroFace({
                 setShowing(true);
                 setTake((n) => n + 1);
               }}
-              className="scan-chapter hero-card-in absolute right-3 top-3 flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[0.75rem] font-medium uppercase tracking-[0.14em] text-white transition-transform duration-150 active:scale-[0.96]"
+              aria-label="Replay the scan"
+              className="scan-chapter hero-card-in absolute right-3 top-3 flex min-h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-2.5 text-[0.75rem] sm:px-3 font-medium uppercase tracking-[0.14em] text-white transition-transform duration-150 active:scale-[0.96]"
             >
               <svg aria-hidden viewBox="0 0 16 16" width={12} height={12}>
                 <path d="M13 8a5 5 0 1 1-1.5-3.5M13 2.5v3h-3" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Replay the scan
+              <span aria-hidden className="max-sm:hidden">
+                Replay the scan
+              </span>
             </button>
           )}
         </div>

@@ -257,7 +257,7 @@ export function FaceMap({
       <p className="mt-4 text-[0.875rem] leading-snug text-text-2">
         {located ? "Choose a priority to see where it shows on your face." : "Choose a priority to see its score."}
       </p>
-      <div role="group" aria-label="Show a priority on your photo" className="mt-2.5 grid grid-cols-3 gap-2">
+      <div role="group" aria-label="Show a priority on your photo" className="mt-2.5 flex flex-wrap gap-2">
         {layers.map((layer) => (
           <Chip
             key={layer.key}
@@ -266,7 +266,7 @@ export function FaceMap({
               if (stage !== "done") skip();
               choose(layer.key);
             }}
-            className="justify-center px-2 text-center"
+            className="justify-center text-center"
           >
             {layer.label}
           </Chip>

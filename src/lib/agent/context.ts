@@ -380,6 +380,21 @@ export function pricesIn(text: string): number[] {
   return [...text.matchAll(/\$\s?(\d{1,3}(?:,\d{3})*|\d+)(?:\.(\d{2}))?/g)].map((m) => Number(m[1].replace(/,/g, "")) + Number(m[2] ?? 0) / 100);
 }
 
+/**
+ * Points of progress a draft may claim: only a change the report itself calls improved or improving, measured on the
+ * raw scores like with like, in the points the client sees (D-097). "Up 6 points" must be one of these.
+ */
+export function allowedPoints(ctx: AgentContext): Set<number> {
+  const progress = buildProgress(ctx.facts.scans, priorityKeys(ctx.facts));
+  if (!progress?.confident) return new Set();
+  return new Set(progress.items.filter((i) => i.verdict === "improved" || i.verdict === "improving").map((i) => i.uiDelta));
+}
+
+/** "6 points", "up 12 pts": the numbers of points a text claims. */
+export function pointsIn(text: string): number[] {
+  return [...text.matchAll(/\b(\d{1,3})\s?(?:points?|pts?)\b/gi)].map((m) => Number(m[1]));
+}
+
 /** Links a draft may carry: the client's own report, booking and rescan pages. */
 export function allowedLink(ctx: AgentContext, url: string): boolean {
   const base = reportLink(ctx);

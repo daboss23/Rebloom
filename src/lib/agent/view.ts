@@ -10,6 +10,8 @@ export interface DraftView {
   kind: AgentDraftKind;
   status: AgentDraft["status"];
   channel: Message["channel"] | null;
+  /** A queue email's subject line (D-097). */
+  subject: string | null;
   body: string | null;
   note: string | null;
   steps: string[];
@@ -22,6 +24,7 @@ export function draftView(d: AgentDraft): DraftView {
     kind: d.kind,
     status: d.status,
     channel: d.channel,
+    subject: d.subject,
     body: d.body,
     note: d.note,
     steps: d.steps.map((s) => s.text),
@@ -36,8 +39,10 @@ export interface WantedDraft {
 }
 
 /**
- * What the agent should draft and hasn't yet: an answer for each reply waiting on Dana that she could answer, and a
- * second look at each stalled client in the queue. Longest-waiting replies first, then the stalled.
+ * What the agent should draft and hasn't yet: an answer for each reply waiting on Dana that she could answer, a
+ * second look at each stalled client in the queue, and (the morning run, D-097) Dana's own version of every message
+ * the queue would send. Longest-waiting replies first, then the stalled, then the queue in its own order. Not for a
+ * client who wrote back: their answer comes first, and a message about something else would talk past them.
  */
 export function wantedDrafts(facts: ClientFacts[], items: QueueItem[], drafts: AgentDraft[]): WantedDraft[] {
   const has = new Set(drafts.map((d) => `${d.clientId}:${d.forKey}`));
@@ -52,7 +57,15 @@ export function wantedDrafts(facts: ClientFacts[], items: QueueItem[], drafts: A
       return f && draftChannel(f, null);
     })
     .map((i): WantedDraft => ({ kind: "plan_review", clientId: i.clientId, forKey: i.dedupeKey }));
-  return [...answers, ...reviews];
+  const outreach = items
+    .filter((i) => (i.action === "email" || i.action === "text") && !has.has(`${i.clientId}:${i.dedupeKey}`))
+    .filter((i) => {
+      const f = facts.find((x) => x.client.id === i.clientId);
+      const channel = i.action === "text" ? "sms" : "email";
+      return f && f.client.firstName && !f.reply && draftChannel(f, channel) === channel;
+    })
+    .map((i): WantedDraft => ({ kind: "outreach", clientId: i.clientId, forKey: i.dedupeKey }));
+  return [...answers, ...reviews, ...outreach];
 }
 
 /** The draft for what's in front of Dana now: the reply waiting on her, or the queue item on screen. */

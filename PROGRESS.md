@@ -1,5 +1,60 @@
 # Progress
 
+## Session 17 · Wednesday October 28, 2026 · The morning run
+
+**When Dana opens Today, the agent now works through her whole book, on screen, and leaves a draft in every row** (DECISIONS D-097). Before, it answered replies and took a second look at stalled plans; now it also writes Dana's own version of every message the rebook queue would send.
+
+### What's done
+- **The drafts:** for each queue email or text, the agent reads the client's scans, plan, goal in their own words and the calendar, and writes a short message in Dana's voice with two real open times and their link (or their rescan link). The engine's standard message stays one tap away and is the fallback.
+- **Checked in code:** everything D-093 checked, plus: any "N points" must be a change the report calls real; a message the clinic starts must carry the client's link; a text must say who it's from. The opt-out line is added after her name in code.
+- **On Today:** one panel, "Rebloom's morning run", shows each client and the step it's on, live, then folds to one line once the drafts are ready. Queue rows show "Rebloom is drafting..." and then "Review draft". The send sheet opens on the draft with how it was written and "Use the standard message". What Dana sends teaches the next run.
+- **In the demo:** Daniel and Priya get answers, Grace a second look, and Sofia, Rachel and Nina their messages: six drafts at once. Chloe stays a call.
+- **The landing page** has a fourth promise in the agent section, "It works through the morning with her.", and says every change a draft mentions is one the scans measured.
+- **Fixed on the way:** at 1280px (a common laptop) the queue's rows squeezed each reason to one word per line beside Today's side column. Rows now lay out by their own width.
+- **Tests:** 7 new unit tests (the queue's drafts and their order, the task, the points check, the link check, texts saying who they're from and the opt-out, a full run for Sofia sent back once for a claim it couldn't make, and standing down when a client writes back). All 507 unit tests pass (one skipped, as before), plus lint, typecheck and the copy check. Browser tests weren't run on this machine.
+- **Checked on screen** with drafts staged in a local store (the Anthropic account has no credit, so the agent can't run here): the panel while working and when done, at 1280px and on a phone; the rows; Sofia's sheet, switching to the standard message and back, and sending (the draft is kept as used, with what was sent). On the live database before the migration: the run is skipped, answers carry on, and the panel stays hidden.
+
+### The README, for judges
+- **Rewritten in full:** a three-minute walkthrough of the live demo, the problem, how it works, all three YouCam APIs, the agent and its checks, an architecture diagram, setup, tests, privacy, and a copyright notice (all rights reserved, shared privately with Perfect Corp). The repository is now private, per the hackathon's second option.
+- **Nine screenshots** in `docs/screenshots`, taken by `scripts/screenshots.mjs` from a running app (it needs `npx playwright install chromium` once). The agent's drafts aren't pictured yet: they'll be taken from real runs once the account has credit, never staged.
+- **Fixed on the way, on phones:** a report's "Week 8" broke between its two words, and "10:00 AM" left "AM" alone on the next line.
+
+### What Joshua needs to do
+1. **Add credit to the Anthropic account.** Nothing the agent writes appears without it.
+2. **One database change** (`20261028120000_agent_outreach`): in Supabase, SQL Editor, run the two lines in that file, or `pnpm db:migrate`. Until then the morning run is skipped and everything else works.
+3. **Try it:** open the dashboard as Dana and watch the panel at the top of Today.
+
+### What's next
+1. Once there's credit: retake the screenshots with the morning run and a drafted message (`node scripts/screenshots.mjs`).
+2. The demo video and the Devpost text. Add contact_event@PerfectCorp.com as a collaborator when submitting.
+
+---
+
+## Session 16 · Wednesday October 28, 2026 · The pre-submission audit
+
+**Every page checked at phone and desktop width, one real bug fixed and seven layout problems on phones.**
+
+### What's done
+- **A returning client's report tells one story** (DECISIONS D-096). Sofia's report offered "Book session 3 of 3" but showed a new plan starting at session 1 below it. A client on a confirmed course now sees "Your course": sessions done, booked and to book, and the agreed total.
+- **On phones:**
+  - "$2,450 ready to rebook" overflowed its third of the landing page's figures.
+  - "Replay the scan" sat on top of the hero's score card; it's now an icon on phones.
+  - "Send text" ran out of the answer box on a brief.
+  - The clinic's name touched "Skin report" in the client header.
+  - "Lower eyelid firmness" was crushed into three lines; the face map's choices now size to their words.
+  - "Maison Verre · Santa Monica" left one word on its own line.
+  - Confirm, Change, Stop emails and No answer needed get a finger-sized target on touch screens, without changing how they look.
+- **Checked and fine:** no page scrolls sideways at 375px or 1440px, no text under 12px, no broken images, every image has alt text.
+- **Tests:** all 501 unit tests (one skipped, as before), lint, typecheck and the copy check pass. The browser tests weren't run on this machine (no Playwright browser installed).
+
+### Found, needs Joshua
+- **The agent's drafts fail: "Your credit balance is too low to access the Anthropic API."** Credit is per Anthropic account, so if the live site's key is in the same account, judges see "Rebloom couldn't draft this one". Top up at console.anthropic.com, Plans & Billing, then press "Try again" on Daniel's brief.
+
+### What's next
+1. The licence file and the full README (screenshots, the demo, the YouCam APIs).
+2. The demo video and the Devpost text.
+
+---
 ## Session 15 · Tuesday October 13, 2026 · Skin type keeps unsafe treatments off the plan
 
 **Rebloom now reads each client's Fitzpatrick skin type with YouCam's third API, and the plan leaves out treatments the clinic doesn't offer to that type** (DECISIONS D-094). On Marcus's brief (type V, in for redness), the plan's note now says "IPL Photofacial isn't offered to skin type V"; if his scores had made IPL the best fit, it would have been left out.

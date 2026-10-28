@@ -195,6 +195,72 @@ export interface BookingSummary {
   nextOpen: string | null;
   /** A returning client's visit to book, "Session 2 of 3" or "A maintenance visit", for the line at the top. */
   returning: string | null;
+  /** The course they confirmed, when there is one. */
+  course: CourseSummary | null;
+}
+
+export interface CourseSummary {
+  lines: { name: string; sessions: number; done: number; booked: number; totalCents: number }[];
+  homeCare: { name: string; totalCents: number }[];
+  totalCents: number;
+  /** "September 15". */
+  confirmedOn: string | null;
+}
+
+/** A returning client's confirmed course: where they are in it, at the prices they agreed. */
+export function YourCourse({ course }: { course: CourseSummary }) {
+  return (
+    <section className="mt-16" aria-labelledby="course-heading">
+      <h2 id="course-heading" className="t-h2">
+        Your course
+      </h2>
+      <ul className="glass mt-6 divide-y divide-[#0c1a22]/[0.07] px-5">
+        {course.lines.map((line) => {
+          const left = Math.max(0, line.sessions - line.done - line.booked);
+          return (
+            <li key={line.name} className="py-4">
+              <p className="flex items-baseline justify-between gap-4">
+                <span className="text-[0.9375rem] text-ink">
+                  {line.name} · {plural(line.sessions, "session")}
+                </span>
+                <span className="text-[0.9375rem] tabular-nums text-ink">{formatPrice(line.totalCents)}</span>
+              </p>
+              <p className="t-caption mt-1">
+                {[`${line.done} of ${line.sessions} done`, line.booked ? `${line.booked} booked` : null, left ? `${left} to book` : null]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+              <span aria-hidden className="mt-3 flex gap-1.5">
+                {Array.from({ length: line.sessions }, (_, i) => (
+                  <span
+                    key={i}
+                    className={
+                      "h-1.5 flex-1 rounded-full " +
+                      (i < line.done ? "bg-[#1f7a63]" : i < line.done + line.booked ? "bg-[#9fc9dd]" : "bg-[#0c1a22]/[0.08]")
+                    }
+                  />
+                ))}
+              </span>
+            </li>
+          );
+        })}
+        {course.homeCare.map((h) => (
+          <li key={h.name} className="flex items-baseline justify-between gap-4 py-4 text-[0.9375rem]">
+            <span className="text-text-2">{h.name}</span>
+            <span className="tabular-nums text-text-2">{formatPrice(h.totalCents)}</span>
+          </li>
+        ))}
+        <li className="flex items-end justify-between gap-4 pb-5 pt-4">
+          <span className="text-[0.9375rem] text-ink">Course total</span>
+          <span className="gold-foil font-display text-[2.25rem] font-light leading-none tabular-nums">{formatPrice(course.totalCents)}</span>
+        </li>
+      </ul>
+      <p className="t-caption mt-4">
+        {course.confirmedOn ? `Agreed with your practitioner on ${course.confirmedOn}` : "Agreed with your practitioner"}, at the
+        prices on our menu that day. Progress scans are included.
+      </p>
+    </section>
+  );
 }
 
 /**

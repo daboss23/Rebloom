@@ -17,8 +17,9 @@ import { TRIGGER_LABEL, daysBetween } from "@/lib/rebook/engine";
 import { at } from "@/lib/replies/thread";
 import { excerpt } from "@/components/dashboard/queue-row";
 import { isoDateInZone } from "@/lib/clock";
-import { openDesk } from "@/lib/agent/desk";
-import { draftFor } from "@/lib/agent/view";
+import { AGENT_LIMITS, openDesk } from "@/lib/agent/desk";
+import { draftFor, draftView } from "@/lib/agent/view";
+import { MorningRun, type RunEntry } from "@/components/dashboard/MorningRun";
 
 /** Today may start the agent's drafts (D-093), which run after the page has gone out. */
 export const maxDuration = 300;
@@ -36,7 +37,9 @@ export default async function TodayPage() {
   const book = await loadBook();
   const { clinic, queue, facts, today, now } = book;
   const byId = new Map(facts.map((f) => [f.client.id, f]));
-  const rows = queue.items.map((item) => toQueueRow(item, byId.get(item.clientId)!, clinic.name));
+  // The morning run (D-097): opening Today starts the agent on the whole book at once, after the page has gone out.
+  const desk = await openDesk(book, await appOrigin(), AGENT_LIMITS.morningRun);
+  const rows = queue.items.map((item) => toQueueRow(item, byId.get(item.clientId)!, clinic.name, draftFor(desk.drafts, item.clientId, item.dedupeKey)));
   const visits = visitsOn(today, facts, book.input.treatments, clinic.timezone);
   const ready = queue.items.reduce((n, i) => n + (i.valueCents ?? 0), 0);
   const date = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(
@@ -47,9 +50,6 @@ export default async function TodayPage() {
   const recent = queue.handled.slice(0, 4);
   // Demo only: a code that carries this demo to a phone, to scan in as a new prospect (D-090).
   const scanIn = env.DEMO_MODE ? scanLink(await appOrigin(), book.sandboxId, clinic) : null;
-  // The agent drafts answers for the replies below while Dana reads this page (D-093). A ready one changes the
-  // row's button, nothing more.
-  const desk = await openDesk(book, await appOrigin());
 
   // One line that reads the queue back in words: the best moment first, then who needs care.
   const first = (id: string) => byId.get(id)!.client.firstName!;
@@ -61,6 +61,22 @@ export default async function TodayPage() {
     .map((f) => ({ facts: f, reply: f.reply!, days: daysBetween(isoDateInZone(new Date(at(f.reply!)), clinic.timezone), today) }))
     .sort((a, b) => b.days - a.days);
   const waited = (days: number) => (days <= 0 ? "Today" : days === 1 ? "Yesterday" : `${days} days ago`);
+
+  // What the run is working on, in the order Dana meets it below: answers, then the queue (D-097).
+  const run: RunEntry[] = desk.enabled
+    ? [
+        ...replies.map(({ facts: f, reply }) => {
+          const d = draftFor(desk.drafts, f.client.id, reply.id);
+          const how = reply.channel === "sms" ? "text" : "email";
+          return d && { draft: draftView(d), name: fullName(f.client), what: `Answer to their ${how}`, href: `/dashboard/clients/${f.client.id}#conversation` };
+        }),
+        ...queue.items.map((item) => {
+          const d = draftFor(desk.drafts, item.clientId, item.dedupeKey);
+          const what = d?.kind === "plan_review" ? "A second look at the plan" : `${TRIGGER_LABEL[item.kind]} · ${item.action === "text" ? "text" : "email"}`;
+          return d && { draft: draftView(d), name: fullName(byId.get(item.clientId)!.client), what, href: `/dashboard/clients/${item.clientId}` };
+        }),
+      ].filter((e): e is RunEntry => Boolean(e) && e!.draft.status !== "used" && e!.draft.status !== "dismissed")
+    : [];
 
   const story = [
     replies.length ? `${names(replies.slice(0, 3).map((r) => r.facts.client.firstName!))} wrote back.` : null,
@@ -111,6 +127,7 @@ export default async function TodayPage() {
 
       <div className="mt-12 grid gap-x-10 gap-y-12 xl:grid-cols-[minmax(0,1fr)_336px]">
         <div className="min-w-0 space-y-12">
+        {run.length > 0 && <MorningRun entries={run} staffName={book.staff.name} />}
         {replies.length > 0 && (
           <section aria-labelledby="wrote-back">
             <div className="mb-5">

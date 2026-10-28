@@ -320,13 +320,13 @@ export function Conversation({
             <p className="t-caption !text-[0.8125rem]">
               {demo ? `Demo mode: logged here, not ${isText ? "texted" : "emailed"}.` : `${firstName}'s answer comes back here.`}
             </p>
-            <div className="flex items-center gap-5">
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-x-5 gap-y-3">
               {waiting && (
                 <button
                   type="button"
                   disabled={pending}
                   onClick={handled}
-                  className="whitespace-nowrap text-[0.8125rem] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 transition-colors duration-150 hover:text-ink hover:decoration-ink"
+                  className="tap whitespace-nowrap text-[0.8125rem] text-text-3 underline decoration-[#0c1a22]/20 underline-offset-4 transition-colors duration-150 hover:text-ink hover:decoration-ink"
                 >
                   No answer needed
                 </button>
