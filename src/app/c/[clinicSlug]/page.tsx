@@ -21,7 +21,7 @@ export default async function ScanStartPage({ params }: PageProps<"/c/[clinicSlu
         <img src={clinic.lockupUrl} alt={clinic.name} width={240} height={110} className="focus-in mx-auto mb-12 h-auto w-[200px]" />
       )}
       {/* Centred under the clinic's lockup, so the page holds one axis down to the button. */}
-      <p className="focus-in flex items-center justify-center gap-3 text-center text-[0.75rem] uppercase tracking-[0.22em] text-[#1e5a78]" style={{ animationDelay: "60ms" }}>
+      <p className="focus-in flex items-center justify-center gap-3 text-center text-[0.75rem] uppercase tracking-[0.16em] text-[#1e5a78] [text-wrap:balance] sm:tracking-[0.22em]" style={{ animationDelay: "60ms" }}>
         <span aria-hidden className="block h-[2px] w-8 shrink-0 rounded-full bg-accent" />
         {clinic.name} · {clinic.city}
         <span aria-hidden className="block h-[2px] w-8 shrink-0 rounded-full bg-accent" />

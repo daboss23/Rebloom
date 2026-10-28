@@ -225,8 +225,8 @@ function Today({ p }: { p: LandingPreview }) {
         <div className="min-w-0">
           <ul className="grid grid-cols-3 gap-px overflow-hidden rounded-[18px] bg-white/80 ring-1 ring-white/80 pointer-fine:bg-white/60 pointer-fine:backdrop-blur-xl">
             {figures.map((f, i) => (
-              <li key={f.words} className="bg-white/70 px-4 py-4 pointer-fine:bg-white/45 sm:px-5">
-                <span className={cx("block font-display text-[clamp(32px,3.4vw,44px)] font-light leading-none tracking-[-0.02em]", f.gold ? "gold-foil" : "text-ink")}>
+              <li key={f.words} className="bg-white/70 px-3 py-4 pointer-fine:bg-white/45 sm:px-5">
+                <span className={cx("block font-display text-[clamp(28px,3.4vw,44px)] font-light leading-none tracking-[-0.02em]", f.gold ? "gold-foil" : "text-ink")}>
                   <CountUp value={f.value} format={f.gold ? "money" : "int"} delay={200 + i * 120} />
                 </span>
                 <span className="mt-2 block text-[0.8125rem] leading-snug text-text-2 sm:text-[0.875rem]">{f.words}</span>

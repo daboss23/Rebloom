@@ -594,6 +594,18 @@ html:has(.rebloom) body {
   }
 }
 
+/* A small text button keeps its look but gets a finger-sized target (44px tall) on touch screens. */
+@media (pointer: coarse) {
+  .tap {
+    position: relative;
+  }
+  .tap::before {
+    content: "";
+    position: absolute;
+    inset: -11px -6px;
+  }
+}
+
 /* Things arriving come into focus: rise a little, sharpen from a soft blur. */
 .focus-in {
   animation: focus-in 760ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;

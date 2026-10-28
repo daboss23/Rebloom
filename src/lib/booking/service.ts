@@ -6,7 +6,7 @@ import "server-only";
 // no-overlap rule (D-049) keeps it while the client pays. Paid, it's confirmed. Abandoned, the hold lapses after
 // HOLD_MINUTES and the time opens again. Without Stripe the visit is confirmed at once, with no deposit taken.
 
-import type { Appointment, Client, Clinic, ISODate, Treatment } from "@/lib/domain";
+import type { Appointment, Client, Clinic, ISODate, Product, Treatment } from "@/lib/domain";
 import { env, features } from "@/lib/env";
 import { isoDateInZone, sandboxClock, virtualNow } from "@/lib/clock";
 import { bookingCancelledEmail, bookingConfirmationEmail, visitInvite, visitWhen, type BookingDetails } from "@/lib/email/booking";
@@ -47,6 +47,10 @@ export interface BookingContext {
   practitionerId: string | null;
   /** The deposit this booking takes, in cents. 0 when the owner has switched deposits off or Stripe isn't set up. */
   depositCents: number;
+  /** This client's own visits, holds left out. */
+  appointments: Appointment[];
+  treatments: Treatment[];
+  products: Product[];
 }
 
 /** The virtual "now" for this client's sandbox (DECISIONS D-016), whichever browser opens their link. */
@@ -111,6 +115,9 @@ export async function bookingContext(token: string): Promise<BookingContext | nu
     practitionerId: staff.find((s) => s.role === "practitioner")?.id ?? null,
     // The owner's switch (DECISIONS D-066), and only when Stripe can take it.
     depositCents: settings.depositRequired && depositsLive() ? clinic.depositCents : 0,
+    appointments: mine,
+    treatments,
+    products,
   };
 }
 

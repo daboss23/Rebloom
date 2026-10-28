@@ -603,3 +603,9 @@ Joshua asked whether Dana can override the skin type rule. She could change the 
 - **Per client, per treatment.** Kept on the client (`clients.skin_type_exceptions`), never on the menu. Changing the client's type keeps the record; an exception for a treatment that suits the new type simply isn't shown.
 - **Never shown to the client,** like the type itself.
 - **Migration note:** the column was first added as not null, which broke the demo seed's bulk insert (it sends null for columns it doesn't name) for about two minutes on the live project, until `20261013131000_skin_type_exceptions_nullable` dropped the constraint. Null and [] both mean "no exceptions".
+
+### D-096 · A returning client's report shows the course they're on (C, Oct 28)
+Found in the pre-submission audit: Sofia's report said "Session 3 of 3 is ready to book" for her microneedling course, while "Your path" and "Your investment" below it showed a fresh plan built from her latest scan (a facial and RF course, starting at "Session 1 of 3", $1,845). Two stories on one page.
+- **A confirmed plan wins.** When the client has a confirmed plan, the report shows "Your course" in place of the suggested path, investment and home care: each treatment with its sessions done, booked and still to book (a bar per session), any home care on the plan, and the course total at the prices fixed when it was confirmed (D-055), with the date it was agreed. "Ready when you are" stays below it.
+- **Everyone else is unchanged.** A first report, or one with only a proposed plan, still shows the suggested plan, as the brief describes.
+- **Computed once.** The course comes from the same booking context as the booking line (`bookingSummary`), so the page makes no extra trip to the database.

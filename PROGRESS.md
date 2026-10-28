@@ -1,5 +1,30 @@
 # Progress
 
+## Session 16 · Wednesday October 28, 2026 · The pre-submission audit
+
+**Every page checked at phone and desktop width, one real bug fixed and seven layout problems on phones.**
+
+### What's done
+- **A returning client's report tells one story** (DECISIONS D-096). Sofia's report offered "Book session 3 of 3" but showed a new plan starting at session 1 below it. A client on a confirmed course now sees "Your course": sessions done, booked and to book, and the agreed total.
+- **On phones:**
+  - "$2,450 ready to rebook" overflowed its third of the landing page's figures.
+  - "Replay the scan" sat on top of the hero's score card; it's now an icon on phones.
+  - "Send text" ran out of the answer box on a brief.
+  - The clinic's name touched "Skin report" in the client header.
+  - "Lower eyelid firmness" was crushed into three lines; the face map's choices now size to their words.
+  - "Maison Verre · Santa Monica" left one word on its own line.
+  - Confirm, Change, Stop emails and No answer needed get a finger-sized target on touch screens, without changing how they look.
+- **Checked and fine:** no page scrolls sideways at 375px or 1440px, no text under 12px, no broken images, every image has alt text.
+- **Tests:** all 501 unit tests (one skipped, as before), lint, typecheck and the copy check pass. The browser tests weren't run on this machine (no Playwright browser installed).
+
+### Found, needs Joshua
+- **The agent's drafts fail: "Your credit balance is too low to access the Anthropic API."** Credit is per Anthropic account, so if the live site's key is in the same account, judges see "Rebloom couldn't draft this one". Top up at console.anthropic.com, Plans & Billing, then press "Try again" on Daniel's brief.
+
+### What's next
+1. The MIT licence file and the full README (screenshots, the demo, the YouCam APIs).
+2. The demo video and the Devpost text.
+
+---
 ## Session 15 · Tuesday October 13, 2026 · Skin type keeps unsafe treatments off the plan
 
 **Rebloom now reads each client's Fitzpatrick skin type with YouCam's third API, and the plan leaves out treatments the clinic doesn't offer to that type** (DECISIONS D-094). On Marcus's brief (type V, in for redness), the plan's note now says "IPL Photofacial isn't offered to skin type V"; if his scores had made IPL the best fit, it would have been left out.

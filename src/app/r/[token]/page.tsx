@@ -3,7 +3,7 @@ import { LightField } from "@/components/dashboard/LightField";
 import { ClinicSide } from "@/components/flow/ClinicSide";
 import { DeleteData } from "@/components/report/DeleteData";
 import { FaceMap, FaceMapFocus, FaceMapPriority } from "@/components/report/FaceMap";
-import { BookingLine, HomeCare, Investment, PlanTimeline, ReadyWhenYouAre } from "@/components/report/PlanSections";
+import { BookingLine, HomeCare, Investment, PlanTimeline, ReadyWhenYouAre, YourCourse } from "@/components/report/PlanSections";
 import { RescanInvite, ScanPair, WhatsChanged } from "@/components/report/ProgressSections";
 import { WhatToExpect } from "@/components/report/WhatToExpect";
 import { IconPlus } from "@/components/ui/Icons";
@@ -235,7 +235,13 @@ export default async function ReportPage({ params }: PageProps<"/r/[token]">) {
         </figure>
       )}
 
-      {hasPlan ? (
+      {booking?.course ? (
+        // A returning client on a confirmed course sees that course, not a fresh suggestion that contradicts it.
+        <>
+          <YourCourse course={booking.course} />
+          <ReadyWhenYouAre plan={plan} clinic={clinic} booking={booking} />
+        </>
+      ) : hasPlan ? (
         <>
           <PlanTimeline plan={plan} rationale={planRationale(plan)} clinic={clinic} intake={intake} />
           <WhatToExpect
