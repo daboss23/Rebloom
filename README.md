@@ -48,6 +48,15 @@ Demo emails and texts are logged in the outbox, never sent to the sample clients
   </tr>
 </table>
 
+**The agent at work,** from a real run on the live site: the morning run drafting six messages in about half a minute, then Sofia's draft with what to check before sending and every step it took.
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/morning-run.jpg" alt="Rebloom's morning run: six drafts ready, each with the step worth a glance, including one sent back to rewrite"></td>
+    <td><img src="docs/screenshots/draft.jpg" alt="Sofia's drafted email in the send sheet, with the agent's note and how it was written"></td>
+  </tr>
+</table>
+
 ## The problem
 
 Skin clinics sell treatment as a series: peels, microneedling, IPL, laser. A client who comes once and disappears is barely profitable, and most don't come back for the second session. They stop because they can't see the first one working, and nobody notices until they're gone.
