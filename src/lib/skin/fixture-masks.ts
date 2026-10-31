@@ -24,8 +24,13 @@ const dist = (a: P, b: P) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 /** Region ellipses in pixel space, from normalised landmarks. */
 /** Where a concern shows, as a point on the photo (0 to 1 each way): the centre of its first facial region. */
 export function concernAnchor(landmarks: [number, number][], concern: ConcernKey): [number, number] {
-  const region = faceRegions(landmarks, 1, 1)[CONCERNS[concern].regions[0]];
-  return [Math.round(region.cx * 1000) / 1000, Math.round(region.cy * 1000) / 1000];
+  return regionAnchor(landmarks, CONCERNS[concern].regions[0]);
+}
+
+/** The centre of one facial region, as a point on the photo (0 to 1 each way). */
+export function regionAnchor(landmarks: [number, number][], region: FaceRegion): [number, number] {
+  const r = faceRegions(landmarks, 1, 1)[region];
+  return [Math.round(r.cx * 1000) / 1000, Math.round(r.cy * 1000) / 1000];
 }
 
 export function faceRegions(landmarks: [number, number][], width: number, height: number): Record<FaceRegion, Ellipse> {

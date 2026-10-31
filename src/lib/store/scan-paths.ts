@@ -15,6 +15,15 @@ export function bundledPortraitUrl(imagePath: string): string | null {
   return key ? `/demo-portraits/${key}.jpg` : null;
 }
 
+/** Portraits that also ship sharp enough for the landing page's close-ups (2700 × 3600, the same crop). */
+const HD_PORTRAITS = new Set(["amelia"]);
+
+/** The sharp copy of a bundled portrait, for close-ups. Null when it has none. */
+export function bundledPortraitHdUrl(imagePath: string): string | null {
+  const key = imagePath.match(/^demo\/portraits\/([a-z]+)\.jpg$/)?.[1];
+  return key && HD_PORTRAITS.has(key) ? `/demo-portraits/hd/${key}.jpg` : null;
+}
+
 /**
  * A demo client's mask (DECISIONS D-070). Shared like the portraits and never stored: the mask route draws it
  * from the portrait's committed landmarks (src/lib/demo/landmarks.ts) on request. The path doubles as the drawing's seed, so every

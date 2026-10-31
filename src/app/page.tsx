@@ -187,6 +187,7 @@ function Hero({ p }: { p: LandingPreview }) {
               <HeroFace
                 firstName={face.firstName}
                 photo={face.photo}
+                photoHd={face.photoHd}
                 aspect={face.aspect}
                 points={face.points}
                 scanNumber={face.scanNumber}

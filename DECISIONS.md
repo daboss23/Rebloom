@@ -639,3 +639,16 @@ Joshua asked for subtle motion to liven the page. A first version tied every ent
   - Every other headline and its first line only fade in, so the moments that mean something stand out.
 - **The hero's face recedes a little as the page leaves it** (drifts down 110px, to 94% and faded), so the first screen has depth.
 - **Not added:** hover lifts on cards that aren't links (they'd suggest a click that does nothing), and nothing that loops forever beyond what was already there.
+
+### D-101 · A new face for Amelia (J + C, Oct 31)
+Joshua replaced the hero's sample client with a new AI-generated portrait: a Latina woman in her late thirties, light-olive skin with freckles and fine lines, dark hair worn back, a green knit top. Chosen for real, unretouched skin texture, since the hero now zooms in on it (D-102).
+- **The same Amelia Reyes:** her name, story, scores and plan are unchanged. Her profile now says 35 to 44, skin type III, and describes her as she looks. Nothing on her plan (peels, microneedling, a hydrating facial) is limited by skin type, so nothing new is flagged.
+- **Two copies, one crop:** `public/demo-portraits/amelia.jpg` (1080 × 1440, everywhere in the app) and `public/demo-portraits/hd/amelia.jpg` (2700 × 3600, 687 KB, only for the hero's close-ups), cut from the same crop of the 4K original so the face model's points fit both. The points were found again with `scripts/demo-landmarks.mjs`; only hers changed. The original stays off `main`, as with the other portraits (D-030).
+
+### D-102 · The hero reads her skin up close (J + C, Oct 31). Replaces the hero's part of D-092
+Joshua found the hero's cards too big, too pale against the page, and one ("+13 Texture since scan 01") just sitting there. The five-act scan show stays on the real scan page; the hero gets its own sequence:
+- **The camera** pushes in on one area of her face, holds, then pulls back to the whole face (where the scan's light crosses it) before the next. Transforms only.
+- **Three areas, one at a time:** her three priorities, each in a different region its report maps (texture on one cheek, pigmentation on the other, radiance on the forehead), rather than two on the same cheek.
+- **The marks:** a red aim locks onto the spot and keeps pulsing; a hairline draws to a loupe showing that patch of skin at about 3.6 times the wide view, from the sharp copy; one small card in frosted dark glass with a crisp edge counts her score up from scan 01, with a hairline bar and "+13 since scan 01". All of it sits inside the photo, clear of the headline, and leaves together.
+- **Interactive:** hovering holds a reading; the chips at the foot jump to an area. Off screen it stops; with reduced motion it rests on the first reading.
+- **Phones:** the same sequence, less close, with a smaller loupe and card. The hero's scroll "recede" (D-100) now runs side by side only: on a phone the face sits below the headline and was already fading by the time it scrolled into view.
