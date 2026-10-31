@@ -16,9 +16,9 @@ import { stableId } from "@/lib/ids";
 import { nextOpenDay, shiftDate } from "@/lib/plan/build";
 import { bestChange, buildQueue, clientFacts, priorityKeys, TRIGGER_LABEL, type ClientFacts, type EngineInput, type TriggerKind } from "@/lib/rebook/engine";
 import { demoFace } from "@/lib/demo/landmarks";
-import { concernAnchor } from "@/lib/skin/fixture-masks";
-import { concernLabel, type ConcernKey } from "@/lib/skin/concerns";
-import { bundledPortraitUrl } from "@/lib/store/scan-paths";
+import { regionAnchor } from "@/lib/skin/fixture-masks";
+import { CONCERNS, concernLabel, type ConcernKey } from "@/lib/skin/concerns";
+import { bundledPortraitHdUrl, bundledPortraitUrl } from "@/lib/store/scan-paths";
 
 export interface PreviewRow {
   name: string;
@@ -76,6 +76,8 @@ export interface LandingFace {
   firstName: string;
   /** The bundled demo portrait, public. */
   photo: string;
+  /** A sharp copy of it for the hero's close-ups, the same crop. Null when there isn't one. */
+  photoHd: string | null;
   /** The photo's width over its height. */
   aspect: number;
   /** The face model's points on the portrait (0 to 1 each way). */
@@ -88,7 +90,7 @@ export interface LandingFace {
     /** ui scores, scan 01 and latest. */
     from: number;
     score: number;
-    /** Where it shows on the face (0 to 1 each way), as the report's target rests on it. */
+    /** Where it shows on the face (0 to 1 each way): one of the regions its report maps, a different one for each. */
     anchor: [number, number];
   }[];
 }
@@ -235,6 +237,8 @@ function faceOf(f: ClientFacts, featured: ConcernKey): LandingFace | null {
   const photo = bundledPortraitUrl(last.imagePath);
   if (!points || !photo || !last.result) return null;
   const keys = [featured, ...priorityKeys(f).filter((k) => k !== featured)].slice(0, 3);
+  // Each priority shows in a region of its own, so the hero visits three places on the face, not one twice.
+  const used = new Set<string>();
   const priorities = keys.flatMap((key) => {
     const now = last.result!.concerns.find((c) => c.key === key);
     const then = first.result?.concerns.find((c) => c.key === key);
@@ -245,7 +249,12 @@ function faceOf(f: ClientFacts, featured: ConcernKey): LandingFace | null {
         label: concernLabel(key),
         from: Math.round(then?.ui ?? now.ui),
         score: Math.round(now.ui),
-        anchor: concernAnchor(points, key),
+        anchor: (() => {
+          const regions = CONCERNS[key].regions;
+          const region = regions.find((r) => !used.has(r)) ?? regions[0];
+          used.add(region);
+          return regionAnchor(points, region);
+        })(),
       },
     ];
   });
@@ -253,6 +262,7 @@ function faceOf(f: ClientFacts, featured: ConcernKey): LandingFace | null {
   return {
     firstName: f.client.firstName!,
     photo,
+    photoHd: bundledPortraitHdUrl(last.imagePath),
     aspect: last.imageWidth / last.imageHeight,
     points: points.slice(0, 468).map(([x, y]) => [Math.round(x * 1000) / 1000, Math.round(y * 1000) / 1000]),
     scanNumber: last.scanNumber,

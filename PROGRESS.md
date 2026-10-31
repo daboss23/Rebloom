@@ -1,5 +1,18 @@
 # Progress
 
+## Session 19 · Saturday October 31, 2026 · Amelia, up close
+
+**A new face for the hero's sample client, and a hero that reads her skin up close** (DECISIONS D-101, D-102).
+
+### What's done
+- **New Amelia:** Joshua's new portrait, in the app at 1080 × 1440 and as a sharp 2700 × 3600 copy for close-ups, the same crop; her face points found again; her profile updated (35 to 44, skin type III).
+- **The hero:** the camera pushes in on three areas of her face in turn (texture, pigmentation, radiance, each in its own region), a pulsing red aim locks on, a loupe shows that patch of skin up close, and one small dark-glass card counts up her score and its change since scan 01, then everything clears and the camera pulls back. Hover holds it; the chips jump to an area. The old ruler card and the "+13" card are gone.
+- **Phones:** the same sequence, less close, and the hero no longer starts half faded below the headline.
+- **The light effects** from session 18's unfinished work (light on the glass, a section marker) were discarded at Joshua's request; they were never committed.
+- **Tests:** all 508 unit tests (one skipped), lint, typecheck and the copy check pass. Checked on screen at 1440px and on a phone, at each area's reading.
+
+---
+
 ## Session 18 · Wednesday October 28, 2026 · New clients, on the landing page
 
 **The landing page now sells the scan as a way in for new clients, not only for rebooking** (DECISIONS D-098).
